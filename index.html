@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fashion AI Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0c;--s1:#161616;--s2:#1e1e1e;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.14);
+  --acc:#c8a96e;--adim:rgba(200,169,110,.1);--aglow:rgba(200,169,110,.18);
+  --tx:#ede9e0;--tx2:#7a7a7a;--tx3:#3f3f3f;
+  --red:#bf5050;--rbg:rgba(191,80,80,.1);--green:#5a9e6f;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:3rem 2rem 6rem}
+
+header{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:.5px solid var(--b1)}
+.eye{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eye::before{content:'';width:24px;height:1px;background:var(--acc);display:block}
+h1{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,4.5vw,3rem);font-weight:400;line-height:1.18;margin-bottom:10px}
+h1 em{color:var(--acc);font-style:italic}
+header p{font-size:13px;color:var(--tx2);max-width:520px;line-height:1.75}
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(90,158,111,.1);border:.5px solid rgba(90,158,111,.3);color:var(--green);font-size:11px;padding:4px 12px;border-radius:100px;margin-top:10px}
+
+.kcard{background:var(--s1);border:.5px solid var(--b1);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:2rem}
+.kt{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);margin-bottom:14px}
+.kr{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.klbl{font-size:12px;color:var(--tx2);min-width:80px}
+.ki{flex:1;min-width:180px;background:var(--s2);border:.5px solid var(--b1);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tx);transition:border-color .2s}
+.ki::placeholder{color:var(--tx3)}
+.ki:focus{outline:none;border-color:rgba(200,169,110,.45)}
+.ksave{padding:9px 18px;background:var(--adim);border:.5px solid rgba(200,169,110,.25);border-radius:8px;color:var(--acc);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:background .15s}
+.ksave:hover{background:var(--aglow)}
+.kst{font-size:11px;color:var(--tx3);margin-top:8px}
+.kst.ok{color:var(--green)}
+.klinks{font-size:11px;color:var(--tx3);margin-top:5px}
+.klinks a{color:var(--acc);text-decoration:none}
+
+.step{margin-bottom:1.75rem}
+.slbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.sn{width:19px;height:19px;border:.5px solid var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--acc);flex-shrink:0}
+
+.dz{border:1px dashed rgba(200,169,110,.25);border-radius:12px;padding:2.5rem 1rem;text-align:center;cursor:pointer;background:var(--adim);transition:all .2s}
+.dz:hover,.dz.drag{border-color:var(--acc);background:var(--aglow)}
+#fi{display:none}
+.dz h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:400;margin-bottom:4px}
+.dz p{font-size:12px;color:var(--tx2)}
+
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:12px}
+.thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--s2);border:.5px solid var(--b1)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .del{position:absolute;top:3px;right:3px;width:18px;height:18px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.thumb:hover .del{display:flex}
+.tname{position:absolute;bottom:0;left:0;right:0;padding:10px 4px 3px;background:linear-gradient(transparent,rgba(0,0,0,.65));font-size:8px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.pc{background:var(--s1);border:.5px solid var(--b1);border-radius:12px;padding:1.25rem}
+textarea{width:100%;min-height:90px;background:var(--s2);border:.5px solid var(--b1);border-radius:8px;padding:11px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--tx);resize:vertical;line-height:1.65;transition:border-color .2s}
+textarea::placeholder{color:var(--tx3)}
+textarea:focus{outline:none;border-color:rgba(200,169,110,.45)}
+.sels{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+select{flex:1;min-width:130px;background:var(--s2);border:.5px solid var(--b1);border-radius:8px;padding:9px 26px 9px 12px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tx2);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23555' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+
+.badge{display:inline-flex;align-items:center;background:var(--adim);border:.5px solid rgba(200,169,110,.2);color:var(--acc);font-size:11px;font-weight:500;padding:4px 12px;border-radius:100px;margin-bottom:12px}
+.go{width:100%;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:.04em;background:var(--acc);color:#0c0c0c;border:none;border-radius:10px;cursor:pointer;transition:all .2s}
+.go:hover:not(:disabled){background:#d4b87e}
+.go:active:not(:disabled){transform:scale(.99)}
+.go:disabled{background:var(--s2);color:var(--tx3);cursor:not-allowed}
+
+.prog{background:var(--s1);border:.5px solid var(--b1);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;display:none}
+.pt{background:var(--s2);border-radius:100px;height:3px;margin-bottom:8px;overflow:hidden}
+.pf{height:100%;background:var(--acc);border-radius:100px;transition:width .5s ease;width:0}
+.ptxt{font-size:12px;color:var(--tx2)}
+
+.divhr{border:none;border-top:.5px solid var(--b1);margin:2.5rem 0}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+.rcard{background:var(--s1);border:.5px solid var(--b1);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.rcard:hover{border-color:var(--b2)}
+.lstate{min-height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--s2)}
+.spin{width:26px;height:26px;border:1.5px solid var(--b2);border-top-color:var(--acc);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stg{font-size:11px;color:var(--tx3);text-align:center;padding:0 1rem;line-height:1.5}
+.rimg{position:relative;background:#000}
+.rimg img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.rov{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:10px;background:rgba(0,0,0,0);transition:background .2s}
+.rimg:hover .rov{background:rgba(0,0,0,.4)}
+.dl{background:rgba(0,0,0,.85);color:#fff;font-size:11px;font-family:'DM Sans',sans-serif;padding:6px 12px;border-radius:6px;opacity:0;transition:opacity .2s;cursor:pointer;border:.5px solid rgba(255,255,255,.2);text-decoration:none}
+.rimg:hover .dl{opacity:1}
+.rmeta{padding:8px 12px 12px}
+.rname{font-size:12px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.rvar{font-size:10px;color:var(--tx3)}
+.rerr{padding:12px;background:var(--rbg);margin:10px;border-radius:8px;font-size:11px;color:var(--red);line-height:1.6}
+.rtry{margin-top:6px;padding:5px 12px;background:transparent;border:.5px solid rgba(191,80,80,.4);color:var(--red);border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+@media(max-width:600px){.wrap{padding:1.5rem 1rem 4rem}.rgrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eye">Fashion AI Studio</div>
+  <h1>Drop products.<br>Get <em>real model images.</em></h1>
+  <p>Powered by <strong>Nano Banana 2</strong> — Google's Gemini image model. It reads your product photo directly and places it on a model. No separate AI needed for prompting.</p>
+  <div class="pill">✦ Nano Banana 2 · fal.ai · $0.08 per image</div>
+</header>
+
+<div class="kcard">
+  <div class="kt">fal.ai API Key</div>
+  <div class="kr">
+    <span class="klbl">fal.ai key</span>
+    <input type="password" class="ki" id="fk" placeholder="fal-..." autocomplete="off"/>
+    <button class="ksave" onclick="saveKey()">Save</button>
+  </div>
+  <div class="kst" id="kst">Enter your fal.ai key above.</div>
+  <div class="klinks"><a href="https://fal.ai/dashboard/keys" target="_blank">Get your fal.ai key</a></div>
+</div>
+
+<div class="step">
+  <div class="slbl"><span class="sn">1</span> Upload product images (up to 20)</div>
+  <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
+    <input type="file" id="fi" multiple accept="image/*"/>
+    <h3>Drop clothing &amp; eyewear photos here</h3>
+    <p>JPG · PNG · WEBP — drag &amp; drop or click to browse</p>
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+</div>
+
+<div class="step">
+  <div class="slbl"><span class="sn">2</span> Describe the model &amp; scene — write once</div>
+  <div class="pc">
+    <textarea id="prompt" placeholder="E.g: A tall female model with long dark hair, standing in a bright minimalist white studio, soft natural lighting, fashion editorial style, full body shot showing the clothing clearly"></textarea>
+    <div class="sels">
+      <select id="style">
+        <option value="">Style: automatic</option>
+        <option value="editorial fashion photography, magazine quality">Editorial / Magazine</option>
+        <option value="street style photography, urban outdoor">Street Style</option>
+        <option value="luxury fashion boutique, high-end elegant">Luxury Boutique</option>
+        <option value="clean ecommerce, pure white background, studio lighting">E-commerce (white bg)</option>
+        <option value="lifestyle photography, casual outdoor, natural light">Lifestyle / Casual</option>
+      </select>
+      <select id="gdr">
+        <option value="female">Model: Female</option>
+        <option value="male">Model: Male</option>
+      </select>
+      <select id="res">
+        <option value="1K">Quality: 1K (fast)</option>
+        <option value="2K">Quality: 2K (better)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="slbl"><span class="sn">3</span> Generate</div>
+  <div id="bwrap" style="display:none"><div class="badge" id="badge"></div></div>
+  <button class="go" id="go" disabled onclick="run()">Save fal.ai key &amp; upload products to begin</button>
+</div>
+
+<div class="prog" id="prog">
+  <div class="pt"><div class="pf" id="pf"></div></div>
+  <div class="ptxt" id="ptxt"></div>
+</div>
+
+<div id="results" style="display:none">
+  <hr class="divhr"/>
+  <div class="slbl" style="margin-bottom:16px"><span class="sn">✓</span> Generated images — hover to download</div>
+  <div class="rgrid" id="grid"></div>
+</div>
+
+</div>
+<script>
+let fk = '';
+const files = [];
+
+document.getElementById('fk').addEventListener('focus', function(){ if(this.value.startsWith('•')) this.value=''; });
+document.getElementById('fk').addEventListener('keydown', e => { if(e.key==='Enter') saveKey(); });
+document.getElementById('prompt').addEventListener('input', updateBtn);
+
+function saveKey(){
+  const v = document.getElementById('fk').value.trim();
+  if(v && !v.startsWith('•')) fk = v;
+  if(fk) document.getElementById('fk').value = '••••••••••••••';
+  const el = document.getElementById('kst');
+  el.textContent = fk ? '✓ Key saved.' : 'No key entered.';
+  el.className = fk ? 'kst ok' : 'kst';
+  updateBtn();
+}
+
+function updateBtn(){
+  const n = files.length, p = document.getElementById('prompt').value.trim(), ok = n>0 && p && fk;
+  document.getElementById('go').disabled = !ok;
+  document.getElementById('bwrap').style.display = n>0 ? 'block' : 'none';
+  document.getElementById('badge').textContent = `${n} item${n!==1?'s':''} × 2 = ${n*2} images · ~$${(n*2*0.08).toFixed(2)}`;
+  document.getElementById('go').textContent =
+    !fk ? 'Save your fal.ai key to begin' :
+    !n  ? 'Upload product photos to begin' :
+    !p  ? 'Write a scene description to continue' :
+    `Generate ${n*2} images`;
+}
+
+function renderThumbs(){
+  const el = document.getElementById('thumbs');
+  el.innerHTML = '';
+  files.forEach((f,i) => {
+    const r = new FileReader();
+    r.onload = e => {
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      d.innerHTML = `<img src="${e.target.result}"><button class="del" onclick="rmFile(${i})">×</button><div class="tname">${f.name.replace(/\.[^.]+$/,'')}</div>`;
+      el.appendChild(d);
+    };
+    r.readAsDataURL(f);
+  });
+  updateBtn();
+}
+
+function rmFile(i){ files.splice(i,1); renderThumbs(); }
+function addFiles(list){
+  for(const f of list){ if(files.length>=20) break; if(f.type.startsWith('image/')) files.push(f); }
+  renderThumbs();
+}
+document.getElementById('fi').addEventListener('change', e => addFiles(Array.from(e.target.files)));
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', ()=> dz.classList.remove('drag'));
+dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('drag'); addFiles(Array.from(e.dataTransfer.files)); });
+
+function toB64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// Upload product image to fal storage so NB2 can access it via URL
+async function uploadToFal(file){
+  const b64 = await toB64(file);
+  const resp = await fetch('/api/fal/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${fk}` },
+    body: JSON.stringify({ base64: b64, mimeType: file.type || 'image/jpeg' })
+  });
+  const data = await resp.json();
+  if(data.error) throw new Error(`Upload failed: ${data.error}`);
+  return data.url;
+}
+
+// Submit image edit job to Nano Banana 2
+async function submitJob(imageUrl, scene, style, gender, variant){
+  const styleNote = style ? `, ${style}` : '';
+  const poseNote  = variant===1 ? 'front-facing, full body, relaxed natural stance' : 'three-quarter angle, confident dynamic pose';
+  const prompt = `Place this exact clothing/product item on a ${gender} fashion model. ${scene}${styleNote}. Model pose: ${poseNote}. Keep the product/clothing exactly as shown. Photorealistic, professional fashion photography, high resolution.`;
+  const resolution = document.getElementById('res').value;
+
+  const resp = await fetch('/api/fal/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Key ${fk}` },
+    body: JSON.stringify({
+      prompt,
+      image_urls: [imageUrl],
+      num_images: 1,
+      aspect_ratio: '3:4',
+      output_format: 'jpeg',
+      safety_tolerance: '4',
+      resolution
+    })
+  });
+  const data = await resp.json();
+  if(!data.request_id) throw new Error(data.detail || data.error || 'Failed to submit job');
+  return data.request_id;
+}
+
+// Poll until done
+async function pollResult(requestId){
+  for(let i=0; i<60; i++){
+    await new Promise(r => setTimeout(r, 3000));
+    const resp = await fetch(`/api/fal/status/${requestId}`, {
+      headers: { 'Authorization': `Key ${fk}` }
+    });
+    const data = await resp.json();
+    if(data.status === 'COMPLETED'){
+      const res = await fetch(`/api/fal/result/${requestId}`, {
+        headers: { 'Authorization': `Key ${fk}` }
+      });
+      const result = await res.json();
+      if(!result.images?.[0]?.url) throw new Error('No image in result');
+      return result.images[0].url;
+    }
+    if(data.status === 'FAILED') throw new Error('Generation failed on fal.ai');
+  }
+  throw new Error('Timed out after 3 minutes');
+}
+
+async function run(){
+  const scene = document.getElementById('prompt').value.trim();
+  const style = document.getElementById('style').value;
+  const gender = document.getElementById('gdr').value;
+  if(!scene || !files.length || !fk) return;
+
+  document.getElementById('go').disabled = true;
+  document.getElementById('go').textContent = 'Generating...';
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('pf').style.width = '0%';
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const total = files.length*2;
+  let done = 0;
+
+  const tasks = [];
+  files.forEach((f,fi) => {
+    [1,2].forEach(v => {
+      const id = `c${fi}-${v}`, name = f.name.replace(/\.[^.]+$/,'');
+      const card = document.createElement('div');
+      card.className = 'rcard'; card.id = id;
+      card.innerHTML = `<div class="lstate"><div class="spin"></div><div class="stg" id="st${id}">Waiting...</div></div><div class="rmeta"><div class="rname">${name}</div><div class="rvar">Image ${v} of 2</div></div>`;
+      grid.appendChild(card);
+      tasks.push({fi,v,id,file:f,name});
+    });
+  });
+
+  const setP = msg => {
+    document.getElementById('pf').style.width = Math.round(done/total*100)+'%';
+    document.getElementById('ptxt').textContent = msg || `${done} of ${total} images ready...`;
+  };
+  setP(`0 of ${total} images ready...`);
+
+  // Run 2 at a time
+  for(let i=0; i<tasks.length; i+=2){
+    await Promise.all(tasks.slice(i,i+2).map(async t => {
+      await doTask(t, scene, style, gender);
+      done++; setP();
+    }));
+  }
+
+  setP(`✓ All ${total} images generated! Hover any image to download.`);
+  document.getElementById('go').disabled = false;
+  document.getElementById('go').textContent = `Generate ${total} images`;
+}
+
+async function doTask({fi,v,id,file,name}, scene, style, gender){
+  const card = document.getElementById(id);
+  const setS = t => { const e = document.getElementById('st'+id); if(e) e.textContent=t; };
+  try {
+    setS('Uploading product image...');
+    const imageUrl = await uploadToFal(file);
+
+    setS('Submitting to Nano Banana 2...');
+    const requestId = await submitJob(imageUrl, scene, style, gender, v);
+
+    setS('Generating model image... (30–90s)');
+    const imgUrl = await pollResult(requestId);
+
+    card.innerHTML = `
+      <div class="rimg">
+        <img src="${imgUrl}" alt="${name}" loading="lazy"/>
+        <div class="rov"><a class="dl" href="${imgUrl}" target="_blank" download="${name}-v${v}.jpg">↓ Download</a></div>
+      </div>
+      <div class="rmeta">
+        <div class="rname">${name}</div>
+        <div class="rvar">${v===1?'Front pose':'Dynamic pose'}</div>
+      </div>`;
+  } catch(err) {
+    card.dataset.fi=fi; card.dataset.v=v; card.dataset.name=name;
+    card.dataset.scene=scene; card.dataset.style=style; card.dataset.gender=gender;
+    card.innerHTML = `
+      <div class="rmeta">
+        <div class="rerr">⚠ ${err.message}<br><button class="rtry" onclick="retryCard('${id}')">↺ Retry</button></div>
+        <div class="rname">${name}</div><div class="rvar">Image ${v} — failed</div>
+      </div>`;
+  }
+}
+
+function retryCard(id){
+  const card = document.getElementById(id);
+  const {fi,v,name,scene,style,gender} = card.dataset;
+  const file = files[parseInt(fi)];
+  if(!file) return;
+  card.innerHTML = `<div class="lstate"><div class="spin"></div><div class="stg" id="st${id}">Retrying...</div></div><div class="rmeta"><div class="rname">${name}</div><div class="rvar">Image ${v} of 2</div></div>`;
+  doTask({fi:parseInt(fi),v:parseInt(v),id,file,name}, card.dataset.scene, card.dataset.style, card.dataset.gender);
+}
+</script>
+</body>
+</html>
