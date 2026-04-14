@@ -6,7 +6,7 @@ const app  = express();
 const PORT = process.env.PORT || 3456;
 
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // ── Nano Banana 2 — submit to queue ──────────────────────────────────
 app.post('/api/fal/submit', async (req, res) => {
@@ -91,7 +91,7 @@ app.post('/api/fal/upload', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
