@@ -278,8 +278,8 @@ async function submitJob(imageUrl, scene, style, gender, variant){
 
 // Poll until done
 async function pollResult(requestId){
-  for(let i=0; i<60; i++){
-    await new Promise(r => setTimeout(r, 3000));
+  for(let i=0; i<200; i++){
+    await new Promise(r => setTimeout(r, 2000));
     const resp = await fetch(`/api/fal/status/${requestId}`, {
       headers: { 'Authorization': `Key ${fk}` }
     });
@@ -294,7 +294,7 @@ async function pollResult(requestId){
     }
     if(data.status === 'FAILED') throw new Error('Generation failed on fal.ai');
   }
-  throw new Error('Timed out after 3 minutes');
+  throw new Error('Timed out after 10 minutes');
 }
 
 async function run(){
