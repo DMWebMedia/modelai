@@ -289,8 +289,10 @@ async function pollResult(requestId){
         headers: { 'Authorization': `Key ${fk}` }
       });
       const result = await res.json();
-      if(!result.images?.[0]?.url) throw new Error('No image in result');
-      return result.images[0].url;
+      // fal.ai returns image URL directly in result.image.url
+      const imageUrl = result.image?.url || result.images?.[0]?.url || result.url;
+      if(!imageUrl) throw new Error(`No image in result: ${JSON.stringify(result)}`);
+      return imageUrl;
     }
     if(data.status === 'FAILED') throw new Error('Generation failed on fal.ai');
   }
