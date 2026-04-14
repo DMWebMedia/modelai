@@ -55,22 +55,52 @@ function hashKey(key) {
   return Math.abs(h).toString(16);
 }
 
-async function falPost(path, body, auth) {
-  const r = await fetch(`https://queue.fal.run${path}`, {
+async function falPost(falPath, body, auth) {
+  const r = await fetch(`https://queue.fal.run${falPath}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: auth },
     body: JSON.stringify(body),
     timeout: 15000,
   });
-  return r.json();
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { return { error: text }; }
 }
 
-async function falGet(path, auth) {
-  const r = await fetch(`https://queue.fal.run${path}`, {
+// Map pixel W:H to nearest valid Nano Banana 2 aspect_ratio string
+function toNBRatio(w, h) {
+  const valid = [
+    { r: '1:1',  v: 1 },
+    { r: '4:5',  v: 4/5 },
+    { r: '3:4',  v: 3/4 },
+    { r: '2:3',  v: 2/3 },
+    { r: '9:16', v: 9/16 },
+    { r: '4:3',  v: 4/3 },
+    { r: '3:2',  v: 3/2 },
+    { r: '16:9', v: 16/9 },
+    { r: '21:9', v: 21/9 },
+    { r: '4:1',  v: 4/1 },
+    { r: '1:4',  v: 1/4 },
+    { r: '5:4',  v: 5/4 },
+    { r: '1:8',  v: 1/8 },
+    { r: '8:1',  v: 8/1 },
+  ];
+  if (!w || !h) return '3:4';
+  const target = w / h;
+  let best = '3:4', bestDiff = Infinity;
+  for (const { r, v } of valid) {
+    const diff = Math.abs(v - target);
+    if (diff < bestDiff) { bestDiff = diff; best = r; }
+  }
+  return best;
+}
+
+async function falGet(falPath, auth) {
+  const r = await fetch(`https://queue.fal.run${falPath}`, {
     headers: { Authorization: auth },
     timeout: 15000,
   });
-  return r.json();
+  const text = await r.text();
+  try { return JSON.parse(text); } catch { return { status: 'IN_QUEUE', _raw: text }; }
 }
 
 async function uploadBase64ToFal(base64, mimeType, auth) {
@@ -130,7 +160,10 @@ async function processItem(batchId, itemId, auth) {
     }, auth);
 
     if (!submitData.request_id) {
-      throw new Error(submitData.detail || submitData.error || 'No request_id returned');
+      const errMsg = Array.isArray(submitData.detail)
+        ? submitData.detail.map(d => d.msg).join(', ')
+        : (submitData.detail || submitData.error || 'No request_id returned');
+      throw new Error(errMsg);
     }
     item.requestId = submitData.request_id;
 
@@ -172,7 +205,7 @@ app.post('/api/batch/create', async (req, res) => {
   if (items.length > 100) return res.status(400).json({ error: 'Max 100 products per batch' });
 
   const batchId = uuidv4();
-  const aspectRatio = width && height ? `${width}:${height}` : '3:4';
+  const aspectRatio = toNBRatio(parseInt(width) || 768, parseInt(height) || 1024);
 
   jobs[batchId] = {
     status: 'processing',
