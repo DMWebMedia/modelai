@@ -7,170 +7,178 @@ const { v4: uuidv4 } = require('uuid');
 
 const app  = express();
 const PORT = process.env.PORT || 3456;
-
-app.use(express.json({ limit: '100mb' }));
+app.use(express.json({ limit: '150mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── In-memory job store ───────────────────────────────────────────────
-// jobs[batchId] = { status, items: [{id, name, status, requestId, imageUrl, error, prompt}], created }
-const jobs = {};
-const STYLES = {}; // styles[userId][styleName] = styleObj  (userId = fal key hash for simplicity)
+const jobs   = {};
+const STYLES = {};
 
-function cleanOldJobs() {
-  const cutoff = Date.now() - 2 * 60 * 60 * 1000; // 2 hours
-  for (const id of Object.keys(jobs)) {
-    if (jobs[id].created < cutoff) delete jobs[id];
-  }
-}
-setInterval(cleanOldJobs, 30 * 60 * 1000);
+setInterval(() => {
+  const cutoff = Date.now() - 3 * 60 * 60 * 1000;
+  for (const id of Object.keys(jobs)) { if (jobs[id].created < cutoff) delete jobs[id]; }
+}, 30 * 60 * 1000);
 
-// ── Style prompts per category ────────────────────────────────────────
-const CATEGORY_HINTS = {
-  sunglasses: 'person wearing sunglasses, face clearly visible, stylish eyewear shot',
-  bags:       'person holding or wearing the bag, fashion editorial',
-  shirts:     'person wearing the shirt, full body or upper body shot',
-  dresses:    'person wearing the dress, full body, fashion editorial',
-  shoes:      'person wearing the shoes, full body including feet',
-  watches:    'person wearing the watch on wrist, close-up wrist detail',
-  jackets:    'person wearing the jacket, full body',
-  pants:      'person wearing the pants, full body',
-  jewelry:    'person wearing the jewelry, close-up detail',
-  hats:       'person wearing the hat, portrait or full body',
-  other:      'person wearing or holding the product, fashion editorial',
-};
-
-const STYLE_ENHANCEMENTS = {
-  editorial:   'editorial fashion photography, magazine quality, professional studio lighting, Vogue aesthetic',
-  street:      'street style photography, urban outdoor environment, candid fashion',
-  luxury:      'luxury fashion boutique, high-end elegant, soft dramatic lighting',
-  ecommerce:   'clean ecommerce product shot, pure white background, studio lighting, product-focused',
-  lifestyle:   'lifestyle photography, casual outdoor, natural golden hour light',
-  minimal:     'minimalist photography, clean neutral background, soft light, modern aesthetic',
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────
-function hashKey(key) {
-  let h = 0;
-  for (let i = 0; i < key.length; i++) { h = (Math.imul(31, h) + key.charCodeAt(i)) | 0; }
-  return Math.abs(h).toString(16);
-}
-
-async function falPost(falPath, body, auth) {
-  const r = await fetch(`https://queue.fal.run${falPath}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: auth },
-    body: JSON.stringify(body),
-    timeout: 15000,
-  });
-  const text = await r.text();
-  try { return JSON.parse(text); } catch { return { error: text }; }
-}
-
-// Map pixel W:H to nearest valid Nano Banana 2 aspect_ratio string
-function toNBRatio(w, h) {
-  const valid = [
-    { r: '1:1',  v: 1 },
-    { r: '4:5',  v: 4/5 },
-    { r: '3:4',  v: 3/4 },
-    { r: '2:3',  v: 2/3 },
-    { r: '9:16', v: 9/16 },
-    { r: '4:3',  v: 4/3 },
-    { r: '3:2',  v: 3/2 },
-    { r: '16:9', v: 16/9 },
-    { r: '21:9', v: 21/9 },
-    { r: '4:1',  v: 4/1 },
-    { r: '1:4',  v: 1/4 },
-    { r: '5:4',  v: 5/4 },
-    { r: '1:8',  v: 1/8 },
-    { r: '8:1',  v: 8/1 },
-  ];
-  if (!w || !h) return '3:4';
-  const target = w / h;
-  let best = '3:4', bestDiff = Infinity;
-  for (const { r, v } of valid) {
-    const diff = Math.abs(v - target);
-    if (diff < bestDiff) { bestDiff = diff; best = r; }
-  }
-  return best;
-}
-
-async function falGet(falPath, auth) {
-  const r = await fetch(`https://queue.fal.run${falPath}`, {
-    headers: { Authorization: auth },
-    timeout: 15000,
-  });
-  const text = await r.text();
-  try { return JSON.parse(text); } catch { return { status: 'IN_QUEUE', _raw: text }; }
-}
-
-async function uploadBase64ToFal(base64, mimeType, auth) {
-  // Use fal's initiate upload flow
-  const initResp = await fetch('https://rest.alpha.fal.ai/storage/upload/initiate', {
-    method: 'POST',
+// ── fal.ai helpers ────────────────────────────────────────────────────
+async function falRequest(method, url, auth, body) {
+  const opts = {
+    method,
     headers: { Authorization: auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ file_name: `product_${Date.now()}.jpg`, content_type: mimeType || 'image/jpeg' }),
-    timeout: 15000,
-  });
-  const { upload_url, file_url } = await initResp.json();
-  if (!upload_url) throw new Error('Could not get upload URL from fal.ai');
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  const text = await r.text();
+  if (!text || !text.trim()) return {};
+  try { return JSON.parse(text); } catch { return { _raw: text, _status: r.status }; }
+}
 
+const falPost = (path, body, auth) =>
+  falRequest('POST', `https://queue.fal.run${path}`, auth, body);
+
+const falGet = (path, auth) =>
+  falRequest('GET', `https://queue.fal.run${path}`, auth, null);
+
+// Upload base64 image to fal storage, return public URL
+async function uploadToFal(base64, mimeType, auth) {
+  // Step 1: get presigned URL
+  const init = await falRequest('POST', 'https://rest.alpha.fal.ai/storage/upload/initiate', auth, {
+    file_name: `img_${Date.now()}.jpg`,
+    content_type: mimeType || 'image/jpeg',
+  });
+  if (!init.upload_url) throw new Error('fal upload initiate failed: ' + JSON.stringify(init));
+
+  // Step 2: PUT the file
   const buf = Buffer.from(base64, 'base64');
-  await fetch(upload_url, {
+  const putResp = await fetch(init.upload_url, {
     method: 'PUT',
     headers: { 'Content-Type': mimeType || 'image/jpeg' },
     body: buf,
-    timeout: 30000,
   });
-  return file_url;
+  if (!putResp.ok) throw new Error(`fal upload PUT failed: ${putResp.status}`);
+
+  return init.file_url;
 }
 
-const BACKGROUND_HINTS = {
-  same:    '',
-  white:   'pure white seamless studio background',
-  outdoor: 'natural outdoor environment, realistic location',
-  studio:  'professional photography studio, soft gradient grey background',
-  street:  'urban street city background, realistic location',
-  luxury:  'luxury interior, marble floors, high-end boutique ambiance',
+// Convert pixel W×H to nearest valid Nano Banana aspect_ratio string
+function toNBRatio(w, h) {
+  const VALID = [
+    ['1:1',4/4],['4:5',4/5],['3:4',3/4],['2:3',2/3],['9:16',9/16],
+    ['4:3',4/3],['5:4',5/4],['3:2',3/2],['16:9',16/9],['21:9',21/9],
+    ['4:1',4/1],['1:4',1/4],['8:1',8/1],['1:8',1/8],
+  ];
+  if (!w || !h) return '3:4';
+  const t = w / h;
+  let best = '3:4', diff = Infinity;
+  for (const [r, v] of VALID) { const d = Math.abs(v - t); if (d < diff) { diff = d; best = r; } }
+  return best;
+}
+
+// ── Prompt building ───────────────────────────────────────────────────
+const CAT_HINTS = {
+  sunglasses: 'person wearing sunglasses, face clearly visible',
+  bags:       'person holding or wearing the bag elegantly',
+  shirts:     'person wearing the shirt, upper body or full body',
+  dresses:    'person wearing the dress, full body',
+  shoes:      'person wearing the shoes, full body including feet visible',
+  watches:    'person wearing the watch on wrist, wrist detail visible',
+  jackets:    'person wearing the jacket, full body',
+  pants:      'person wearing the pants, full body',
+  jewelry:    'person wearing the jewelry, close-up detail',
+  hats:       'person wearing the hat',
+  other:      'person wearing or holding the product',
 };
 
-const REALISM_PRESETS = {
+const STYLE_HINTS = {
+  editorial:   'high fashion editorial, Vogue magazine, dramatic studio lighting, high contrast',
+  street:      'street style fashion, urban outdoor, candid, real environment',
+  luxury:      'luxury fashion, elegant, soft dramatic lighting, high-end aesthetic',
+  ecommerce:   'clean ecommerce shot, white background, product-focused, neutral lighting',
+  lifestyle:   'lifestyle photography, casual, natural golden hour light, outdoor',
+  minimal:     'minimalist, clean neutral background, soft light, modern',
+  athletic:    'athletic lifestyle, sport, dynamic movement, action photography',
+  bohemian:    'bohemian style, earthy tones, natural textures, relaxed vibe',
+  formal:      'formal professional look, corporate setting, polished',
+  vintage:     'vintage aesthetic, retro color grade, film photography look',
+  streetwear:  'streetwear, urban, graffiti backdrop, youthful energy',
+  haute:       'haute couture, avant-garde, artistic fashion photography',
+};
+
+const BG_HINTS = {
+  ai:       '', // let AI choose based on prompt
+  white:    'pure white seamless studio background, clean white backdrop',
+  grey:     'professional grey seamless studio background, soft gradient',
+  black:    'dramatic black studio background, dark backdrop',
+  outdoor:  'natural outdoor environment, realistic location, natural light',
+  street:   'urban street environment, city sidewalk, realistic',
+  luxury:   'luxury interior, marble floors, upscale boutique ambiance',
+  beach:    'tropical beach background, golden sand, ocean horizon',
+  forest:   'lush green forest background, natural dappled light',
+  studio:   'professional photography studio, soft box lighting setup',
+  custom:   '', // user provides via prompt
+};
+
+const REALISM = {
   ultra: [
-    'shot on Sony A7R V', '85mm f/1.4 lens', 'natural skin texture with realistic pores',
-    'not AI generated', 'hyperrealistic photo', 'ultra sharp focus', 'natural lighting',
-    'professional commercial photography', 'award winning fashion editorial photo',
-    '8K resolution detail', 'subtle film grain', 'true to life skin tone',
-    'micro details on fabric', 'photo taken by professional photographer',
-    'does not look like AI image', 'genuine photographic quality',
+    'shot on Hasselblad H6D-100c', '110mm f/2.2 lens',
+    'natural skin texture with realistic pores', 'micro fabric detail visible',
+    'does NOT look AI generated', 'hyperrealistic photograph',
+    'indistinguishable from real photo', 'ultra sharp focus',
+    'professional commercial photographer', 'award-winning fashion photography',
+    'subtle natural film grain', 'true-to-life skin tones',
+    'realistic subsurface skin scattering', 'photographic realism',
   ].join(', '),
   editorial: [
-    'high fashion editorial photography', 'Vogue magazine quality', 'studio strobe lighting',
-    'professional retouching', 'ultra sharp', 'commercial fashion photo',
+    'high fashion editorial', 'Vogue quality retouching',
+    'professional strobe studio lighting', 'ultra sharp', 'commercial grade',
   ].join(', '),
   cinematic: [
-    'cinematic film photography', 'anamorphic lens flare', 'shallow depth of field',
-    'film color grading', 'natural bokeh', 'cinematic mood lighting', '35mm film look',
+    'cinematic film look', 'anamorphic bokeh', 'shallow depth of field',
+    'Kodak film color grade', 'natural lens flare', 'cinema camera quality',
+  ].join(', '),
+  raw: [
+    'raw unretouched photo', 'documentary photography', 'natural ambient light',
+    'candid authentic look', 'film reportage style',
   ].join(', '),
 };
 
-const GENDER_HINTS = {
-  female: 'female model, woman',
-  male:   'male model, man',
-};
+const GENDER_HINT = { female: 'female model, woman', male: 'male model, man', neutral: 'androgynous model' };
+const IMAGES_HINT = { 1: '', 2: '', 3: '', 4: '', 5: '' };
 
-function buildPrompt(userPrompt, category, styleKey, variant, bgOption, gender, realismOption) {
-  const catHint = CATEGORY_HINTS[category] || CATEGORY_HINTS.other;
-  const styleHint = STYLE_ENHANCEMENTS[styleKey] || '';
-  const bgHint = BACKGROUND_HINTS[bgOption] || '';
-  const genderHint = GENDER_HINTS[gender] || '';
-  const poseHint = variant === 2
-    ? 'three-quarter angle, dynamic confident pose'
-    : 'front-facing, relaxed natural stance, full body visible';
-  const realismHint = REALISM_PRESETS[realismOption] || REALISM_PRESETS.ultra;
-  return [userPrompt, genderHint, catHint, styleHint, bgHint, poseHint, realismHint].filter(Boolean).join(', ');
+function buildPrompt(userPrompt, opts = {}) {
+  const { category = 'other', styleKey = '', bgOption = 'ai', gender = 'female',
+          realism = 'ultra', bgCustom = '', variantHint = '' } = opts;
+
+  const parts = [
+    userPrompt,
+    GENDER_HINT[gender] || GENDER_HINT.female,
+    CAT_HINTS[category] || CAT_HINTS.other,
+    STYLE_HINTS[styleKey] || '',
+    bgOption === 'custom' ? bgCustom : (BG_HINTS[bgOption] || ''),
+    variantHint,
+    REALISM[realism] || REALISM.ultra,
+  ];
+  return parts.filter(Boolean).join(', ');
 }
 
+// Website photos prompt (product-only, white bg, no model)
+function buildProductPhotoPrompt(userPrompt, bgCustom, refDesc) {
+  return [
+    userPrompt,
+    refDesc || '',
+    'professional product photography',
+    'pure white seamless background',
+    'shot on Phase One XT camera',
+    '120mm macro lens',
+    'perfect studio lighting with soft boxes',
+    'ultra sharp product detail',
+    'commercial grade product photo',
+    'zero shadows on background',
+    'professional color grading',
+    'e-commerce ready',
+    bgCustom || '',
+  ].filter(Boolean).join(', ');
+}
 
-// ── Background job processor ──────────────────────────────────────────
+// ── Job processor ─────────────────────────────────────────────────────
 async function processItem(batchId, itemId, auth) {
   const batch = jobs[batchId];
   if (!batch) return;
@@ -179,134 +187,214 @@ async function processItem(batchId, itemId, auth) {
 
   try {
     item.status = 'uploading';
-    const imageUrl = await uploadBase64ToFal(item.base64, item.mimeType, auth);
-    item.status = 'generating';
+    // Upload product image
+    const imageUrl = await uploadToFal(item.base64, item.mimeType, auth);
 
-    const submitData = await falPost('/fal-ai/nano-banana-2/edit', {
+    // Upload reference images if any
+    const refUrls = [];
+    if (item.refImages && item.refImages.length) {
+      for (const ref of item.refImages) {
+        const u = await uploadToFal(ref.base64, ref.mimeType, auth);
+        refUrls.push(u);
+      }
+    }
+
+    item.status = 'generating';
+    const allImageUrls = [imageUrl, ...refUrls];
+
+    // Determine endpoint based on batch type
+    const endpoint = batch.type === 'website' ? '/fal-ai/nano-banana-2/edit' : '/fal-ai/nano-banana-2/edit';
+
+    const submitBody = {
       prompt: item.prompt,
-      image_urls: [imageUrl],
+      image_urls: allImageUrls,
       num_images: 1,
       aspect_ratio: item.aspectRatio || '3:4',
       output_format: 'jpeg',
       safety_tolerance: '4',
       resolution: item.resolution || '1K',
-    }, auth);
+    };
+
+    const submitData = await falPost(endpoint, submitBody, auth);
 
     if (!submitData.request_id) {
-      const errMsg = Array.isArray(submitData.detail)
-        ? submitData.detail.map(d => d.msg).join(', ')
-        : (submitData.detail || submitData.error || JSON.stringify(submitData).slice(0, 200));
-      throw new Error(errMsg);
+      const msg = Array.isArray(submitData.detail)
+        ? submitData.detail.map(d => d.msg || d).join('; ')
+        : (submitData.detail || submitData.error || JSON.stringify(submitData).slice(0, 300));
+      throw new Error('Submit failed: ' + msg);
     }
-    item.requestId = submitData.request_id;
 
-    const maxAttempts = 120;
+    item.requestId = submitData.request_id;
+    item.statusUrl  = submitData.status_url;
+    item.responseUrl = submitData.response_url;
+
+    // ── Poll status then fetch result separately ───────────────────
+    const maxAttempts = 150; // 10 minutes
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 4000));
-      const statusResp = await falGet('/fal-ai/nano-banana-2/edit/requests/' + item.requestId + '/status?logs=0', auth);
 
-      if (statusResp.status === 'COMPLETED') {
-        let imgUrl = (statusResp.output && statusResp.output.images && statusResp.output.images[0] && statusResp.output.images[0].url)
-          || (statusResp.images && statusResp.images[0] && statusResp.images[0].url);
+      // Use the status_url from submit response if available
+      const statusPath = item.statusUrl
+        ? item.statusUrl.replace('https://queue.fal.run', '')
+        : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
+
+      const statusData = await falGet(statusPath, auth);
+
+      if (statusData.status === 'COMPLETED') {
+        // Fetch result via response_url or standard result endpoint
+        const resultPath = item.responseUrl
+          ? item.responseUrl.replace('https://queue.fal.run', '')
+          : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
+
+        const resultData = await falGet(resultPath, auth);
+
+        // Extract image URL — try every possible location in the response
+        const imgUrl =
+          resultData?.images?.[0]?.url ||
+          resultData?.output?.images?.[0]?.url ||
+          resultData?.image?.url ||
+          resultData?.output?.image?.url ||
+          resultData?.data?.images?.[0]?.url ||
+          null;
 
         if (!imgUrl) {
-          const resultResp = await falGet('/fal-ai/nano-banana-2/edit/requests/' + item.requestId, auth);
-          imgUrl = (resultResp.output && resultResp.output.images && resultResp.output.images[0] && resultResp.output.images[0].url)
-            || (resultResp.images && resultResp.images[0] && resultResp.images[0].url)
-            || (resultResp.image && resultResp.image.url);
+          throw new Error('COMPLETED but no image URL in result: ' + JSON.stringify(resultData).slice(0, 300));
         }
 
-        if (!imgUrl) throw new Error('Completed but no image URL returned');
         item.resultUrl = imgUrl;
         item.status = 'done';
         batch.completedCount = (batch.completedCount || 0) + 1;
         return;
       }
 
-      if (statusResp.status === 'FAILED') {
-        throw new Error(statusResp.error || 'Generation failed on fal.ai');
+      if (statusData.status === 'FAILED') {
+        throw new Error(statusData.error || statusData.detail || 'fal.ai generation failed');
       }
+      // IN_QUEUE or IN_PROGRESS — keep polling
     }
-    throw new Error('Timed out after 8 minutes');
+    throw new Error('Timed out after 10 minutes');
 
   } catch (err) {
     item.status = 'error';
-    item.error = err.message;
+    item.error  = err.message;
     batch.completedCount = (batch.completedCount || 0) + 1;
+    console.error(`[Item ${itemId}] Error:`, err.message);
   }
 }
 
-
-// ── Routes ────────────────────────────────────────────────────────────
-
-// Create batch job
-app.post('/api/batch/create', async (req, res) => {
-  const auth = req.headers['authorization'];
-  if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
-
-  const { items, globalPrompt, promptMode, category, styleKey, resolution, width, height, bgOption, modelOption, gender, realismOption } = req.body;
-  // items: [{id, name, base64, mimeType, prompt?}]
-  if (!items?.length) return res.status(400).json({ error: 'No items provided' });
-  if (items.length > 100) return res.status(400).json({ error: 'Max 100 products per batch' });
-
-  const batchId = uuidv4();
-  const aspectRatio = toNBRatio(parseInt(width) || 768, parseInt(height) || 1024);
-
-  jobs[batchId] = {
-    status: 'processing',
-    created: Date.now(),
-    completedCount: 0,
-    items: items.map(it => ({
-      id: it.id || uuidv4(),
-      name: it.name || 'product',
-      base64: it.base64,
-      mimeType: it.mimeType || 'image/jpeg',
-      prompt: buildPrompt(
-        promptMode === 'individual' && it.prompt ? it.prompt : globalPrompt,
-        category,
-        styleKey,
-        1,
-        bgOption || 'same',
-        gender || 'female',
-        realismOption || 'ultra'
-      ),
-      bgOption: bgOption || 'same',
-      modelOption: modelOption || 'different',
-      gender: gender || 'female',
-      realismOption: realismOption || 'ultra',
-      aspectRatio,
-      resolution: resolution || '1K',
-      status: 'queued',
-      requestId: null,
-      resultUrl: null,
-      error: null,
-    })),
-  };
-
-  res.json({ batchId, total: items.length });
-
-  // Process in background — max 3 concurrent
-  const CONCURRENCY = 3;
-  const queue = [...jobs[batchId].items];
+// Run a batch's items with concurrency limit
+function runBatch(batchId, auth, concurrency = 3) {
+  const queue = [...jobs[batchId].items.filter(i => i.status === 'queued')];
   const runNext = async () => {
     const item = queue.shift();
     if (!item) return;
     await processItem(batchId, item.id, auth);
     await runNext();
   };
-  const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, runNext);
-  Promise.all(workers).then(() => { if (jobs[batchId]) jobs[batchId].status = 'done'; });
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, runNext);
+  Promise.all(workers).then(() => {
+    if (jobs[batchId]) jobs[batchId].status = 'done';
+  });
+}
+
+// ── Routes ────────────────────────────────────────────────────────────
+
+// Helper to build items list from request
+function buildItems(items, opts) {
+  const { globalPrompt, promptMode, category, styleKey, bgOption, bgMode,
+          gender, realism, resolution, width, height,
+          bgCustom, type, globalBgPrompts } = opts;
+  const aspectRatio = toNBRatio(parseInt(width) || 768, parseInt(height) || 1024);
+
+  return items.map((it, idx) => {
+    // Background selection:
+    // bgMode = 'same' → use bgOption for all
+    // bgMode = 'different' → cycle through globalBgPrompts array or rotate presets
+    // bgMode = 'per-product' → use it.bgOption
+    let itemBg = bgOption || 'ai';
+    let itemBgCustom = bgCustom || '';
+    if (bgMode === 'different' && globalBgPrompts && globalBgPrompts.length) {
+      itemBg = 'custom';
+      itemBgCustom = globalBgPrompts[idx % globalBgPrompts.length];
+    } else if (bgMode === 'per-product' && it.bgOption) {
+      itemBg = it.bgOption;
+      itemBgCustom = it.bgCustom || '';
+    }
+
+    // Images per product (1–5)
+    const imgCount = Math.min(5, Math.max(1, parseInt(it.imageCount || opts.imagesPerProduct || 1)));
+
+    // Build one item per image requested
+    const variants = [];
+    for (let v = 0; v < imgCount; v++) {
+      const variantHint = imgCount > 1
+        ? ['front-facing full body', 'three-quarter angle', 'side profile', 'close-up detail', 'dynamic pose'][v] || ''
+        : '';
+
+      let userPrompt = globalPrompt;
+      if (promptMode === 'individual' && it.prompt) userPrompt = it.prompt;
+
+      const prompt = type === 'website'
+        ? buildProductPhotoPrompt(userPrompt, itemBgCustom, it.refDesc)
+        : buildPrompt(userPrompt, { category, styleKey, bgOption: itemBg, gender, realism, bgCustom: itemBgCustom, variantHint });
+
+      variants.push({
+        id: uuidv4(),
+        name: imgCount > 1 ? `${it.name || 'product'}-v${v + 1}` : (it.name || 'product'),
+        originalName: it.name || 'product',
+        base64: it.base64,
+        mimeType: it.mimeType || 'image/jpeg',
+        refImages: it.refImages || [],
+        prompt,
+        aspectRatio,
+        resolution: resolution || '1K',
+        bgOption: itemBg,
+        gender,
+        realism,
+        status: 'queued',
+        requestId: null,
+        resultUrl: null,
+        error: null,
+      });
+    }
+    return variants;
+  }).flat();
+}
+
+// Create batch
+app.post('/api/batch/create', async (req, res) => {
+  const auth = req.headers['authorization'];
+  if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
+  const { items, type = 'model' } = req.body;
+  if (!items?.length) return res.status(400).json({ error: 'No items' });
+  if (items.length > 100) return res.status(400).json({ error: 'Max 100 products' });
+
+  const batchId = uuidv4();
+  const builtItems = buildItems(items, { ...req.body, type });
+
+  jobs[batchId] = {
+    type,
+    status: 'processing',
+    created: Date.now(),
+    completedCount: 0,
+    items: builtItems,
+  };
+
+  res.json({ batchId, total: builtItems.length });
+  runBatch(batchId, auth, 3);
 });
 
-// Poll batch status
+// Poll status
 app.get('/api/batch/:batchId/status', (req, res) => {
   const batch = jobs[req.params.batchId];
   if (!batch) return res.status(404).json({ error: 'Batch not found' });
   res.json({
     status: batch.status,
+    type: batch.type,
     total: batch.items.length,
     completed: batch.completedCount || 0,
-    items: batch.items.map(({ id, name, status, resultUrl, error }) => ({ id, name, status, resultUrl, error })),
+    items: batch.items.map(({ id, name, originalName, status, resultUrl, error }) =>
+      ({ id, name, originalName, status, resultUrl, error })),
   });
 });
 
@@ -314,159 +402,100 @@ app.get('/api/batch/:batchId/status', (req, res) => {
 app.post('/api/item/:batchId/:itemId/regenerate', async (req, res) => {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
-
   const batch = jobs[req.params.batchId];
   if (!batch) return res.status(404).json({ error: 'Batch not found' });
   const item = batch.items.find(i => i.id === req.params.itemId);
   if (!item) return res.status(404).json({ error: 'Item not found' });
 
-  const { prompt, category, styleKey, resolution, aspectRatio } = req.body;
-  if (prompt) item.prompt = buildPrompt(prompt, category || 'other', styleKey || '', 1, item.bgOption || 'same', item.gender || 'female', item.realismOption || 'ultra');
+  const { prompt, category, styleKey, bgOption, bgCustom, gender, realism, resolution } = req.body;
+  if (prompt) {
+    item.prompt = batch.type === 'website'
+      ? buildProductPhotoPrompt(prompt, bgCustom || item.bgCustom)
+      : buildPrompt(prompt, { category: category || 'other', styleKey: styleKey || '',
+          bgOption: bgOption || item.bgOption || 'ai', gender: gender || item.gender || 'female',
+          realism: realism || item.realism || 'ultra', bgCustom: bgCustom || item.bgCustom || '' });
+  }
   if (resolution) item.resolution = resolution;
-  if (aspectRatio) item.aspectRatio = aspectRatio;
-
-  item.status = 'queued';
-  item.resultUrl = null;
-  item.error = null;
-
+  item.status = 'queued'; item.resultUrl = null; item.error = null;
   res.json({ ok: true });
-
-  processItem(req.params.batchId, item.id, auth).then(() => {});
+  processItem(req.params.batchId, item.id, auth);
 });
 
-// Edit batch prompt & regenerate all
+// Edit entire batch
 app.post('/api/batch/:batchId/edit', async (req, res) => {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
-
   const batch = jobs[req.params.batchId];
   if (!batch) return res.status(404).json({ error: 'Batch not found' });
 
-  const { globalPrompt, category, styleKey, resolution } = req.body;
+  const { globalPrompt, category, styleKey, bgOption, bgCustom, gender, realism, resolution } = req.body;
   batch.completedCount = 0;
   batch.status = 'processing';
   batch.items.forEach(item => {
-    item.prompt = buildPrompt(globalPrompt, category || 'other', styleKey || '', 1, bgOption || 'same', item.gender || 'female', item.realismOption || 'ultra');
+    item.prompt = batch.type === 'website'
+      ? buildProductPhotoPrompt(globalPrompt, bgCustom)
+      : buildPrompt(globalPrompt, { category: category || 'other', styleKey: styleKey || '',
+          bgOption: bgOption || item.bgOption || 'ai', gender: gender || item.gender || 'female',
+          realism: realism || item.realism || 'ultra', bgCustom: bgCustom || '' });
     if (resolution) item.resolution = resolution;
-    item.status = 'queued';
-    item.resultUrl = null;
-    item.error = null;
+    item.status = 'queued'; item.resultUrl = null; item.error = null;
   });
-
   res.json({ ok: true });
-
-  const CONCURRENCY = 3;
-  const queue = [...batch.items];
-  const runNext = async () => {
-    const item = queue.shift();
-    if (!item) return;
-    await processItem(batch.id || req.params.batchId, item.id, auth);
-    await runNext();
-  };
-  // Fix: attach batchId properly
-  const batchId = req.params.batchId;
-  const runNextFixed = async () => {
-    const item = queue.shift();
-    if (!item) return;
-    await processItem(batchId, item.id, auth);
-    await runNextFixed();
-  };
-  const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, runNextFixed);
-  Promise.all(workers).then(() => { if (jobs[batchId]) jobs[batchId].status = 'done'; });
+  runBatch(req.params.batchId, auth, 3);
 });
 
-// Upscale single item via fal creative upscaler
+// Upscale
 app.post('/api/item/:batchId/:itemId/upscale', async (req, res) => {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
-
-  const batch = jobs[req.params.batchId];
-  const item = batch?.items.find(i => i.id === req.params.itemId);
+  const item = jobs[req.params.batchId]?.items.find(i => i.id === req.params.itemId);
   if (!item?.resultUrl) return res.status(400).json({ error: 'No image to upscale' });
-
   try {
-    const submit = await falPost('/fal-ai/creative-upscaler', {
-      image_url: item.resultUrl,
-      scale: 2,
-    }, auth);
-    if (!submit.request_id) throw new Error('Upscale submit failed');
-
-    // Poll
+    const submit = await falPost('/fal-ai/aura-sr', { image_url: item.resultUrl, upscaling_factor: 4 }, auth);
+    if (!submit.request_id) {
+      // Try alternative upscaler
+      const submit2 = await falPost('/fal-ai/esrgan', { image_url: item.resultUrl, upscaling_factor: 4 }, auth);
+      if (!submit2.request_id) throw new Error('Upscale submit failed');
+    }
+    const reqId = submit.request_id || submit2?.request_id;
     for (let i = 0; i < 60; i++) {
       await new Promise(r => setTimeout(r, 3000));
-      const s = await falGet(`/fal-ai/creative-upscaler/requests/${submit.request_id}/status`, auth);
+      const s = await falGet(`/fal-ai/aura-sr/requests/${reqId}/status`, auth);
       if (s.status === 'COMPLETED') {
-        const result = await falGet(`/fal-ai/creative-upscaler/requests/${submit.request_id}`, auth);
-        return res.json({ url: result.image?.url || result.images?.[0]?.url });
+        const r = await falGet(`/fal-ai/aura-sr/requests/${reqId}`, auth);
+        const url = r.image?.url || r.images?.[0]?.url || r.output?.image?.url;
+        if (url) { item.resultUrl = url; return res.json({ url }); }
       }
       if (s.status === 'FAILED') throw new Error('Upscale failed');
     }
     throw new Error('Upscale timed out');
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Download ZIP
+// ZIP download
 app.get('/api/batch/:batchId/zip', async (req, res) => {
   const batch = jobs[req.params.batchId];
-  if (!batch) return res.status(404).json({ error: 'Batch not found' });
-
-  const doneItems = batch.items.filter(i => i.resultUrl);
-  if (!doneItems.length) return res.status(400).json({ error: 'No completed images' });
-
+  if (!batch) return res.status(404).json({ error: 'Not found' });
+  const done = batch.items.filter(i => i.resultUrl);
+  if (!done.length) return res.status(400).json({ error: 'No completed images' });
   res.setHeader('Content-Type', 'application/zip');
   res.setHeader('Content-Disposition', `attachment; filename="fashion-ai-${req.params.batchId.slice(0,8)}.zip"`);
-
   const archive = archiver('zip', { zlib: { level: 6 } });
   archive.pipe(res);
-
-  for (const item of doneItems) {
+  for (const item of done) {
     try {
-      const r = await fetch(item.resultUrl, { timeout: 30000 });
-      const buf = await r.buffer();
-      archive.append(buf, { name: `${item.name.replace(/[^a-z0-9]/gi,'_')}.jpg` });
-    } catch { /* skip failed */ }
+      const r = await fetch(item.resultUrl);
+      archive.append(await r.buffer(), { name: `${item.name.replace(/[^a-z0-9_-]/gi,'_')}.jpg` });
+    } catch {}
   }
   await archive.finalize();
 });
 
-// Style library — save
-app.post('/api/styles/save', (req, res) => {
-  const auth = req.headers['authorization'];
-  if (!auth) return res.status(401).json({ error: 'Missing key' });
-  const userId = hashKey(auth);
-  const { name, prompt, styleKey, category } = req.body;
-  if (!name) return res.status(400).json({ error: 'Name required' });
-  if (!STYLES[userId]) STYLES[userId] = {};
-  STYLES[userId][name] = { name, prompt, styleKey, category, created: Date.now() };
-  res.json({ ok: true });
-});
+// Style library
+function uid(auth) { let h=0; for(let i=0;i<auth.length;i++){h=(Math.imul(31,h)+auth.charCodeAt(i))|0;} return Math.abs(h).toString(16); }
+app.post('/api/styles/save', (req,res)=>{ const a=req.headers['authorization']; if(!a) return res.status(401).json({error:'Missing key'}); const u=uid(a); const {name,prompt,styleKey,category,bgOption,gender,realism}=req.body; if(!name) return res.status(400).json({error:'Name required'}); if(!STYLES[u]) STYLES[u]={}; STYLES[u][name]={name,prompt,styleKey,category,bgOption,gender,realism,created:Date.now()}; res.json({ok:true}); });
+app.get('/api/styles',(req,res)=>{ const a=req.headers['authorization']; if(!a) return res.status(401).json({error:'Missing key'}); res.json(Object.values(STYLES[uid(a)]||{})); });
+app.delete('/api/styles/:name',(req,res)=>{ const a=req.headers['authorization']; if(!a) return res.status(401).json({error:'Missing key'}); delete STYLES[uid(a)]?.[req.params.name]; res.json({ok:true}); });
 
-// Style library — list
-app.get('/api/styles', (req, res) => {
-  const auth = req.headers['authorization'];
-  if (!auth) return res.status(401).json({ error: 'Missing key' });
-  const userId = hashKey(auth);
-  res.json(Object.values(STYLES[userId] || {}));
-});
-
-// Style library — delete
-app.delete('/api/styles/:name', (req, res) => {
-  const auth = req.headers['authorization'];
-  if (!auth) return res.status(401).json({ error: 'Missing key' });
-  const userId = hashKey(auth);
-  if (STYLES[userId]) delete STYLES[userId][req.params.name];
-  res.json({ ok: true });
-});
-
-// Cost estimate
-app.post('/api/cost', (req, res) => {
-  const { count, resolution } = req.body;
-  const rate = resolution === '2K' ? 0.12 : resolution === '4K' ? 0.16 : 0.08;
-  res.json({ cost: (count * rate).toFixed(2), rate, count });
-});
-
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
-app.listen(PORT, () => console.log(`\n✅  Fashion AI Studio v3 → http://localhost:${PORT}\n`));
+app.get('*', (req,res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.listen(PORT, () => console.log(`\n✅  Fashion AI Studio → http://localhost:${PORT}\n`));

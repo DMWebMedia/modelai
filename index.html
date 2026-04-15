@@ -1,458 +1,600 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Fashion AI Studio</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f7fa;
-  --white:#ffffff;
-  --blue:#2563eb;
-  --blue-dark:#1d4ed8;
-  --blue-light:#eff6ff;
-  --blue-mid:#dbeafe;
-  --text:#111827;
-  --text2:#6b7280;
-  --text3:#9ca3af;
-  --border:#e5e7eb;
-  --border2:#d1d5db;
-  --red:#dc2626;
-  --red-bg:#fef2f2;
-  --green:#16a34a;
-  --green-bg:#f0fdf4;
-  --yellow:#d97706;
-  --yellow-bg:#fffbeb;
-  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
-  --radius:8px;
-  --radius-lg:12px;
+  --bg:#f0f4f8;--white:#fff;--blue:#2563eb;--blue-d:#1d4ed8;--blue-l:#eff6ff;--blue-m:#dbeafe;
+  --text:#111827;--t2:#6b7280;--t3:#9ca3af;--border:#e5e7eb;--border2:#d1d5db;
+  --red:#dc2626;--red-bg:#fef2f2;--green:#16a34a;--green-bg:#f0fdf4;
+  --yellow:#d97706;--yellow-bg:#fffbeb;--purple:#7c3aed;--purple-bg:#f5f3ff;
+  --sh:0 1px 3px rgba(0,0,0,.1);--sh2:0 4px 12px rgba(0,0,0,.1);
+  --r:8px;--rl:12px;--rxl:16px;
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
 
-/* Layout */
-.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--blue)}
-.logo-icon{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.logo-icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.topbar-right{display:flex;align-items:center;gap:12px}
-.credit-badge{background:var(--blue-light);color:var(--blue);font-size:12px;font-weight:600;padding:4px 12px;border-radius:100px;border:1px solid var(--blue-mid)}
+/* ── Topbar ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 1.5rem;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--blue);text-decoration:none}
+.logo-mark{width:30px;height:30px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.nav-tabs{display:flex;gap:2px;background:var(--bg);border-radius:10px;padding:3px}
+.nav-tab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--t2);font-family:'Inter',sans-serif;transition:all .15s}
+.nav-tab.active{background:var(--white);color:var(--blue);box-shadow:var(--sh)}
+.top-right{display:flex;align-items:center;gap:10px}
+.credit-pill{background:var(--blue-l);color:var(--blue);font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;border:1px solid var(--blue-m)}
 
-.layout{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 60px)}
-.sidebar{background:var(--white);border-right:1px solid var(--border);padding:1.5rem;overflow-y:auto}
-.main{padding:2rem;overflow-y:auto}
+/* ── Layout ── */
+.page{display:none}.page.active{display:flex;gap:0;min-height:calc(100vh - 58px)}
+.sidebar{width:272px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);padding:1.25rem;overflow-y:auto;height:calc(100vh - 58px);position:sticky;top:58px}
+.main-area{flex:1;padding:1.75rem;overflow-y:auto}
 
-/* Sidebar */
-.sidebar-section{margin-bottom:1.75rem}
-.sidebar-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
-.key-input-wrap{position:relative}
-.key-input-wrap input{width:100%;padding:8px 36px 8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;font-family:'Inter',sans-serif;color:var(--text);background:var(--white);transition:border-color .15s}
-.key-input-wrap input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.key-save-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--blue);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
-.key-status{font-size:11px;margin-top:5px;color:var(--text3)}
-.key-status.ok{color:var(--green)}
+/* ── Sidebar ── */
+.sb-sec{margin-bottom:1.5rem}
+.sb-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.key-wrap{display:flex;gap:6px}
+.key-wrap input{flex:1;min-width:0;font-size:12px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-family:'Inter',sans-serif;color:var(--text);background:var(--white)}
+.key-wrap input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.key-save{padding:7px 12px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.key-st{font-size:11px;margin-top:4px;color:var(--t3)}
+.key-st.ok{color:var(--green)}
 
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.cat-btn{padding:7px 4px;border:1px solid var(--border);border-radius:var(--radius);background:var(--white);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s;font-family:'Inter',sans-serif}
-.cat-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.cat-btn{padding:6px 4px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;transition:all .15s}
+.cat-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
 .cat-btn.active{border-color:var(--blue);background:var(--blue);color:#fff}
 
-.style-select{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;font-family:'Inter',sans-serif;color:var(--text);background:var(--white);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;margin-bottom:8px}
-.style-select:focus{outline:none;border-color:var(--blue)}
+select,input[type=number],input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--text);background:var(--white);appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+select:focus,input[type=number]:focus,input[type=text]:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-row{margin-bottom:8px}
+.form-lbl{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px;display:block}
 
-.size-row{display:flex;gap:6px;align-items:center}
-.size-row input{width:70px;padding:7px 8px;border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;font-family:'Inter',sans-serif;color:var(--text);text-align:center}
-.size-row input:focus{outline:none;border-color:var(--blue)}
-.size-sep{color:var(--text3);font-size:12px}
+.img-count-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.img-count-btn{padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;transition:all .15s}
+.img-count-btn:hover{border-color:var(--blue);color:var(--blue)}
+.img-count-btn.active{border-color:var(--blue);background:var(--blue);color:#fff}
 
-.style-lib-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
-.style-lib-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;font-size:12px}
-.style-lib-item:hover{border-color:var(--blue);background:var(--blue-light)}
-.style-lib-item.active{border-color:var(--blue);background:var(--blue);color:#fff}
-.style-lib-del{background:none;border:none;color:inherit;cursor:pointer;opacity:.5;font-size:14px;line-height:1;padding:0 2px}
-.style-lib-del:hover{opacity:1}
-.save-style-btn{width:100%;margin-top:6px;padding:7px;border:1px dashed var(--border2);border-radius:var(--radius);background:none;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
-.save-style-btn:hover{border-color:var(--blue);color:var(--blue)}
+.bg-tags{display:flex;flex-wrap:wrap;gap:4px}
+.bg-tag{padding:4px 10px;border:1px solid var(--border);border-radius:100px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--t2);background:var(--white);transition:all .15s}
+.bg-tag:hover{border-color:var(--blue);color:var(--blue)}
+.bg-tag.active{border-color:var(--blue);background:var(--blue);color:#fff}
 
-/* Main area */
-.page-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
-.page-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
+.style-lib-list{display:flex;flex-direction:column;gap:4px;max-height:150px;overflow-y:auto}
+.slib-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:11px;transition:all .15s}
+.slib-item:hover{border-color:var(--blue);background:var(--blue-l)}
+.slib-item.active{border-color:var(--blue);background:var(--blue);color:#fff}
+.slib-del{background:none;border:none;cursor:pointer;color:inherit;opacity:.5;font-size:14px;line-height:1;padding:0 2px}
+.slib-del:hover{opacity:1}
+.slib-save{width:100%;margin-top:5px;padding:6px;border:1px dashed var(--border2);border-radius:var(--r);background:none;color:var(--t2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+.slib-save:hover{border-color:var(--blue);color:var(--blue)}
 
-.steps-nav{display:flex;gap:4px;margin-bottom:2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:4px}
-.step-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--text2);transition:all .15s;border:none;background:none;font-family:'Inter',sans-serif}
-.step-tab.active{background:var(--blue);color:#fff;box-shadow:var(--shadow)}
-.step-tab.done{color:var(--green)}
+/* ── Cards & Dropzone ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.25rem;box-shadow:var(--sh)}
+.card-hd{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
+.card-sub{font-size:12px;color:var(--t2);margin-bottom:1rem}
+.badge{display:inline-flex;align-items:center;background:var(--blue-l);color:var(--blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;margin-left:6px}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-purple{background:var(--purple-bg);color:var(--purple)}
 
-/* Cards */
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
-.card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.card-sub{font-size:12px;color:var(--text2);margin-bottom:1.25rem}
-.badge-blue{display:inline-block;background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px}
+.dropzone{border:2px dashed var(--border2);border-radius:var(--rl);padding:2.5rem 1rem;text-align:center;cursor:pointer;background:var(--bg);transition:all .2s;position:relative}
+.dropzone:hover,.dropzone.over{border-color:var(--blue);background:var(--blue-l)}
+.dropzone input[type=file]{display:none}
+.dz-icon{width:44px;height:44px;background:var(--blue-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.dz-icon svg{width:20px;height:20px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dz-title{font-size:14px;font-weight:600;margin-bottom:3px}
+.dz-sub{font-size:11px;color:var(--t2)}
 
-/* Drop zone */
-.dropzone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:3rem 1rem;text-align:center;cursor:pointer;background:var(--bg);transition:all .2s;position:relative}
-.dropzone:hover,.dropzone.over{border-color:var(--blue);background:var(--blue-light)}
-.dropzone input{display:none}
-.drop-icon{width:48px;height:48px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
-.drop-icon svg{width:22px;height:22px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.drop-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
-.drop-sub{font-size:12px;color:var(--text2)}
+.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:1rem}
+.thumb{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg);border:1px solid var(--border)}
+.thumb img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.thumb .tdel{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.thumb:hover .tdel{display:flex}
+.tname{position:absolute;bottom:0;left:0;right:0;padding:12px 4px 4px;background:linear-gradient(transparent,rgba(0,0,0,.7));font-size:9px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb-per-prod{display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg)}
+.thumb-per-prod img{width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.thumb-per-prod textarea{flex:1;min-height:56px;font-size:12px;resize:vertical}
 
-/* Thumb grid */
-.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;margin-top:1rem}
-.thumb-item{position:relative;aspect-ratio:1;border-radius:var(--radius);overflow:hidden;background:var(--bg);border:1px solid var(--border)}
-.thumb-item img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb-del{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center}
-.thumb-item:hover .thumb-del{display:flex}
-.thumb-name{position:absolute;bottom:0;left:0;right:0;padding:12px 4px 4px;background:linear-gradient(transparent,rgba(0,0,0,.6));font-size:9px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── Mode toggle ── */
+.mode-tog{display:flex;gap:5px;margin-bottom:1rem}
+.mode-btn{flex:1;padding:7px;border:1px solid var(--border2);border-radius:var(--r);background:var(--white);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;text-align:center}
+.mode-btn.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue)}
 
-/* Prompt modes */
-.mode-toggle{display:flex;gap:6px;margin-bottom:1rem}
-.mode-btn{flex:1;padding:8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--white);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
-.mode-btn.active{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
-
-textarea{width:100%;border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:vertical;line-height:1.6;transition:border-color .15s;background:var(--white)}
+textarea{width:100%;border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:vertical;line-height:1.55;background:var(--white)}
 textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-textarea::placeholder{color:var(--text3)}
+textarea::placeholder{color:var(--t3)}
 
-.per-product-prompts{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
-.per-product-row{display:flex;align-items:flex-start;gap:10px}
-.per-product-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
-.per-product-row textarea{min-height:60px;font-size:12px}
+/* ── Cost bar ── */
+.cost-bar{background:var(--yellow-bg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.cost-amt{font-size:20px;font-weight:700;color:var(--yellow)}
+.cost-info{font-size:12px;color:var(--t2)}
 
-/* Cost bar */
-.cost-bar{display:flex;align-items:center;justify-content:space-between;background:var(--yellow-bg);border:1px solid rgba(217,119,6,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem}
-.cost-amount{font-size:18px;font-weight:700;color:var(--yellow)}
-.cost-detail{font-size:12px;color:var(--text2)}
-
-/* Buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .15s;line-height:1}
-.btn-primary{background:var(--blue);color:#fff}
-.btn-primary:hover:not(:disabled){background:var(--blue-dark)}
-.btn-primary:disabled{background:var(--text3);cursor:not-allowed}
-.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border2)}
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all .15s;line-height:1;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover:not(:disabled){background:var(--blue-d)}
+.btn-primary:disabled{background:var(--t3);border-color:var(--t3);cursor:not-allowed}
+.btn-outline{background:var(--white);color:var(--text);border-color:var(--border2)}
 .btn-outline:hover{border-color:var(--blue);color:var(--blue)}
-.btn-danger{background:var(--white);color:var(--red);border:1px solid rgba(220,38,38,.3)}
+.btn-danger{background:var(--white);color:var(--red);border-color:rgba(220,38,38,.3)}
 .btn-danger:hover{background:var(--red-bg)}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-full{width:100%}
-.btn-icon{padding:6px;border-radius:6px}
+.btn-purple{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-purple:hover{background:#6d28d9}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-full{width:100%;padding:12px}
+.btn-xl{padding:13px;font-size:15px}
 
-/* Progress */
-.progress-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.5rem}
-.progress-bar-bg{background:var(--bg);border-radius:100px;height:8px;overflow:hidden;margin-bottom:8px}
-.progress-bar-fill{height:100%;background:var(--blue);border-radius:100px;transition:width .4s ease}
-.progress-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
+/* ── Progress ── */
+.prog-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.25rem}
+.prog-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.prog-title{font-size:14px;font-weight:600}
+.prog-pct{font-size:14px;font-weight:700;color:var(--blue)}
+.prog-bar{background:var(--bg);border-radius:100px;height:8px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),#7c3aed);border-radius:100px;transition:width .5s ease}
+.prog-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
 
-/* Results grid */
-.results-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
-.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-.result-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .15s}
-.result-card:hover{box-shadow:var(--shadow-md)}
+/* ── Results ── */
+.results-tb{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:14px}
+.rc{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
+.rc:hover{box-shadow:var(--sh2)}
+.rc-img-wrap{position:relative;background:var(--bg)}
+.rc-img-wrap img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+.rc-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;padding:8px;gap:4px;transition:background .2s}
+.rc-img-wrap:hover .rc-overlay{background:rgba(0,0,0,.55)}
+.rc-overlay button,.rc-overlay a{flex:1;opacity:0;transform:translateY(3px);transition:all .2s;background:rgba(255,255,255,.93);color:var(--text);font-size:11px;font-weight:600;padding:5px 4px;border-radius:6px;border:none;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;text-decoration:none}
+.rc-img-wrap:hover .rc-overlay button,.rc-img-wrap:hover .rc-overlay a{opacity:1;transform:translateY(0)}
+.rc-meta{padding:8px 10px 10px}
+.rc-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.rc-actions{display:flex;gap:4px;flex-wrap:wrap}
+.rc-status{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-q{background:var(--t3)}
+.dot-u,.dot-g{background:var(--blue);animation:pulse 1s infinite}
+.dot-d{background:var(--green)}
+.dot-e{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-.result-img-wrap{position:relative;background:var(--bg)}
-.result-img-wrap img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
-.result-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;padding:8px;gap:4px;transition:background .2s}
-.result-img-wrap:hover .result-overlay{background:rgba(0,0,0,.5)}
-.result-overlay .btn{opacity:0;transform:translateY(4px);transition:all .2s}
-.result-img-wrap:hover .result-overlay .btn{opacity:1;transform:translateY(0)}
-.result-overlay .btn{background:rgba(255,255,255,.9);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;border:none;flex:1;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
-
-.result-meta{padding:10px 12px 12px}
-.result-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
-.result-actions{display:flex;gap:4px;flex-wrap:wrap}
-.result-status{display:flex;align-items:center;gap:4px;font-size:11px}
-.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.dot-queued{background:var(--text3)}
-.dot-uploading,.dot-generating{background:var(--blue);animation:pulse 1s infinite}
-.dot-done{background:var(--green)}
-.dot-error{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-.loading-card-body{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg)}
+.lc-body{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg)}
 .spin{width:24px;height:24px;border:2.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin-label{font-size:11px;color:var(--text3);text-align:center;padding:0 8px;line-height:1.5}
+.spin-lbl{font-size:11px;color:var(--t3);text-align:center;padding:0 8px;line-height:1.5}
 
-/* Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+.err-body{padding:12px;background:var(--red-bg);margin:8px;border-radius:var(--r);font-size:11px;color:var(--red);line-height:1.6}
+.err-retry{margin-top:6px;padding:4px 10px;border:1px solid rgba(220,38,38,.35);color:var(--red);background:none;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'Inter',sans-serif}
+
+/* ── BG Mode panel ── */
+.bg-mode-panel{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;font-size:12px}
+.bg-mode-panel strong{color:var(--blue)}
+.bg-prompts-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.bg-prompt-row{display:flex;gap:6px;align-items:center}
+.bg-prompt-row input[type=text]{flex:1}
+.bg-remove{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+
+/* ── Modals ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .modal-bg.open{display:flex}
-.modal{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;width:90%;max-width:480px;box-shadow:0 20px 25px -5px rgba(0,0,0,.1)}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
-.modal-sub{font-size:13px;color:var(--text2);margin-bottom:1.25rem}
+.modal{background:var(--white);border-radius:var(--rxl);padding:1.5rem;width:90%;max-width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--t2);margin-bottom:1.25rem}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
-.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block}
-.form-group{margin-bottom:1rem}
 
-/* Empty state */
-.empty-state{text-align:center;padding:4rem 2rem}
-.empty-icon{width:64px;height:64px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
-.empty-icon svg{width:28px;height:28px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.empty-title{font-size:16px;font-weight:600;margin-bottom:6px}
-.empty-sub{font-size:13px;color:var(--text2)}
+/* ── Toast ── */
+.toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column;gap:7px}
+.toast{background:#1f2937;color:#fff;padding:10px 16px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:slideUp .2s ease}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* Toast */
-.toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:8px}
-.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow-md);animation:slideIn .2s ease}
-.toast.success{background:var(--green)}
-.toast.error{background:var(--red)}
-@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── Step tabs ── */
+.steps{display:flex;gap:3px;background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:4px;margin-bottom:1.5rem}
+.stab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--t2);transition:all .15s;border:none;background:none;font-family:'Inter',sans-serif}
+.stab.active{background:var(--blue);color:#fff;box-shadow:var(--sh)}
+.stab.done::after{content:' ✓'}
 
-@media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{border-right:none;border-bottom:1px solid var(--border)}.results-grid{grid-template-columns:repeat(2,1fr)}}
+/* ── Per-product BG ── */
+.ppbg-toggle{font-size:11px;color:var(--blue);cursor:pointer;text-decoration:underline;margin-top:4px;display:inline-block}
+
+@media(max-width:768px){.page.active{flex-direction:column}.sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border)}.results-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<!-- Topbar -->
 <div class="topbar">
-  <div class="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-    </div>
+  <a class="logo" href="#">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.7z"/></svg></div>
     Fashion AI Studio
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPage('model')">Model Images</button>
+    <button class="nav-tab" onclick="switchPage('website')">Website Photos</button>
   </div>
-  <div class="topbar-right">
-    <div class="credit-badge" id="credit-badge">$0.00 used</div>
+  <div class="top-right">
+    <div class="credit-pill" id="credit-pill">$0.00 used</div>
   </div>
 </div>
 
-<div class="layout">
-
-<!-- Sidebar -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- MODEL IMAGES PAGE -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-model">
 <div class="sidebar">
 
-  <div class="sidebar-section">
-    <div class="sidebar-label">fal.ai API Key</div>
-    <div class="key-input-wrap">
+  <div class="sb-sec">
+    <div class="sb-lbl">fal.ai API Key</div>
+    <div class="key-wrap">
       <input type="password" id="fk" placeholder="fal-..." autocomplete="off"/>
-      <button class="key-save-btn" onclick="saveKey()">Save</button>
+      <button class="key-save" onclick="saveKey()">Save</button>
     </div>
-    <div class="key-status" id="kst">Enter your fal.ai key</div>
+    <div class="key-st" id="kst">Enter your key</div>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-label">Product Category</div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Product Category <span style="color:var(--red)">*</span></div>
     <div class="cat-grid" id="cat-grid">
-      <button class="cat-btn" data-cat="shirts" onclick="selectCat(this)">Shirts</button>
-      <button class="cat-btn" data-cat="dresses" onclick="selectCat(this)">Dresses</button>
-      <button class="cat-btn" data-cat="sunglasses" onclick="selectCat(this)">Sunglasses</button>
-      <button class="cat-btn" data-cat="bags" onclick="selectCat(this)">Bags</button>
-      <button class="cat-btn" data-cat="shoes" onclick="selectCat(this)">Shoes</button>
-      <button class="cat-btn" data-cat="jackets" onclick="selectCat(this)">Jackets</button>
-      <button class="cat-btn" data-cat="watches" onclick="selectCat(this)">Watches</button>
-      <button class="cat-btn" data-cat="pants" onclick="selectCat(this)">Pants</button>
-      <button class="cat-btn" data-cat="jewelry" onclick="selectCat(this)">Jewelry</button>
-      <button class="cat-btn" data-cat="hats" onclick="selectCat(this)">Hats</button>
-      <button class="cat-btn" data-cat="other" onclick="selectCat(this)" style="grid-column:span 2">Other</button>
+      <button class="cat-btn" data-cat="shirts" onclick="selCat(this)">Shirts</button>
+      <button class="cat-btn" data-cat="dresses" onclick="selCat(this)">Dresses</button>
+      <button class="cat-btn" data-cat="sunglasses" onclick="selCat(this)">Sunglasses</button>
+      <button class="cat-btn" data-cat="bags" onclick="selCat(this)">Bags</button>
+      <button class="cat-btn" data-cat="shoes" onclick="selCat(this)">Shoes</button>
+      <button class="cat-btn" data-cat="jackets" onclick="selCat(this)">Jackets</button>
+      <button class="cat-btn" data-cat="watches" onclick="selCat(this)">Watches</button>
+      <button class="cat-btn" data-cat="pants" onclick="selCat(this)">Pants</button>
+      <button class="cat-btn" data-cat="jewelry" onclick="selCat(this)">Jewelry</button>
+      <button class="cat-btn" data-cat="hats" onclick="selCat(this)">Hats</button>
+      <button class="cat-btn" data-cat="other" onclick="selCat(this)" style="grid-column:span 2">Other</button>
     </div>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-label">Style Preset</div>
-    <select class="style-select" id="style-sel" onchange="updateCost()">
-      <option value="">No preset</option>
-      <option value="editorial">Editorial / Magazine</option>
-      <option value="street">Street Style</option>
-      <option value="luxury">Luxury Boutique</option>
-      <option value="ecommerce">E-commerce (white bg)</option>
-      <option value="lifestyle">Lifestyle / Casual</option>
-      <option value="minimal">Minimalist</option>
-    </select>
-    <select class="style-select" id="model-sel">
-      <option value="female">Female Model</option>
-      <option value="male">Male Model</option>
-    </select>
-    <div class="sidebar-label" style="margin-top:12px;margin-bottom:6px">Background</div>
-    <select class="style-select" id="bg-sel" style="margin-bottom:6px">
-      <option value="same">Keep same background</option>
-      <option value="white">Pure white studio</option>
-      <option value="studio">Grey studio gradient</option>
-      <option value="outdoor">Natural outdoor</option>
-      <option value="street">Urban / Street</option>
-      <option value="luxury">Luxury interior</option>
-    </select>
-    <div class="sidebar-label" style="margin-bottom:6px">Model Realism</div>
-    <select class="style-select" id="realism-sel" style="margin-bottom:6px">
-      <option value="ultra">Ultra realistic (default)</option>
-      <option value="editorial">Editorial / Fashion</option>
-      <option value="cinematic">Cinematic film look</option>
-    </select>
-    <select class="style-select" id="res-sel" onchange="updateCost()">
-      <option value="1K">1K Resolution — $0.08/image</option>
-      <option value="2K">2K Resolution — $0.12/image</option>
-    </select>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-label">Image Size</div>
-    <div class="size-row">
-      <input type="number" id="img-w" value="768" min="512" max="2048" step="64" placeholder="W"/>
-      <span class="size-sep">×</span>
-      <input type="number" id="img-h" value="1024" min="512" max="2048" step="64" placeholder="H"/>
-      <span class="size-sep" style="font-size:10px;color:var(--text3)">px</span>
+  <div class="sb-sec">
+    <div class="sb-lbl">Style Preset</div>
+    <div class="form-row"><select id="style-sel">
+      <option value="">No preset — AI chooses</option>
+      <optgroup label="Fashion">
+        <option value="editorial">Editorial / Vogue</option>
+        <option value="street">Street Style</option>
+        <option value="luxury">Luxury Boutique</option>
+        <option value="formal">Formal / Corporate</option>
+        <option value="haute">Haute Couture</option>
+        <option value="streetwear">Streetwear</option>
+        <option value="bohemian">Bohemian / Boho</option>
+        <option value="athletic">Athletic / Sport</option>
+        <option value="vintage">Vintage / Retro</option>
+      </optgroup>
+      <optgroup label="Commercial">
+        <option value="ecommerce">E-commerce White</option>
+        <option value="minimal">Minimalist Clean</option>
+        <option value="lifestyle">Lifestyle Casual</option>
+      </optgroup>
+    </select></div>
+    <div class="form-row">
+      <select id="model-sel">
+        <option value="female">Female Model</option>
+        <option value="male">Male Model</option>
+        <option value="neutral">Gender Neutral</option>
+      </select>
     </div>
-  </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-label">Style Library</div>
-    <div class="style-lib-list" id="style-lib-list">
-      <div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">No saved styles yet</div>
+    <div class="form-row">
+      <select id="realism-sel">
+        <option value="ultra">Ultra Realistic (default)</option>
+        <option value="editorial">Editorial Fashion</option>
+        <option value="cinematic">Cinematic Film Look</option>
+        <option value="raw">Raw Documentary</option>
+      </select>
     </div>
-    <button class="save-style-btn" onclick="openSaveStyleModal()">+ Save current style</button>
-  </div>
-
-</div>
-
-<!-- Main -->
-<div class="main">
-
-  <div class="page-title">Generate Model Images</div>
-  <div class="page-sub">Upload products, configure settings, generate professional fashion photos</div>
-
-  <!-- Step tabs -->
-  <div class="steps-nav">
-    <button class="step-tab active" id="tab-upload" onclick="goStep(1)">1 · Upload</button>
-    <button class="step-tab" id="tab-prompt" onclick="goStep(2)">2 · Prompts</button>
-    <button class="step-tab" id="tab-generate" onclick="goStep(3)">3 · Generate</button>
-    <button class="step-tab" id="tab-results" onclick="goStep(4)">4 · Results</button>
-  </div>
-
-  <!-- Step 1: Upload -->
-  <div id="step-1">
-    <div class="card">
-      <div class="card-title">Upload Product Images <span class="badge-blue">Up to 100</span></div>
-      <div class="card-sub">Drop your product photos below. Select the category in the sidebar first.</div>
-      <div class="dropzone" id="dz" onclick="document.getElementById('fi').click()">
-        <input type="file" id="fi" multiple accept="image/*"/>
-        <div class="drop-icon">
-          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
-        </div>
-        <div class="drop-title">Drop product photos here</div>
-        <div class="drop-sub">JPG · PNG · WEBP — click to browse</div>
+    <div class="form-row">
+      <select id="res-sel" onchange="updateCost()">
+        <option value="1K">1K — $0.08/image</option>
+        <option value="2K">2K — $0.12/image</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-lbl">Image size (px)</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="number" id="img-w" value="768" min="512" max="2048" step="64" style="width:70px"/>
+        <span style="color:var(--t3);font-size:12px">×</span>
+        <input type="number" id="img-h" value="1024" min="512" max="2048" step="64" style="width:70px"/>
+        <span style="color:var(--t3);font-size:11px">px</span>
       </div>
-      <div class="thumb-grid" id="thumb-grid"></div>
+    </div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Images per Product</div>
+    <div class="img-count-row" id="img-count-grid">
+      <button class="img-count-btn active" data-n="1" onclick="selImgCount(this)">1</button>
+      <button class="img-count-btn" data-n="2" onclick="selImgCount(this)">2</button>
+      <button class="img-count-btn" data-n="3" onclick="selImgCount(this)">3</button>
+      <button class="img-count-btn" data-n="4" onclick="selImgCount(this)">4</button>
+      <button class="img-count-btn" data-n="5" onclick="selImgCount(this)">5</button>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-top:4px">Each image = different pose/angle</div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Background Mode</div>
+    <div class="form-row">
+      <select id="bg-mode" onchange="onBgModeChange()">
+        <option value="same">Same background for all</option>
+        <option value="different">Different per image (rotate list)</option>
+        <option value="ai">Let AI decide from prompt</option>
+      </select>
+    </div>
+    <div id="bg-preset-wrap">
+      <label class="form-lbl">Background</label>
+      <div class="bg-tags" id="bg-tags">
+        <span class="bg-tag active" data-bg="ai" onclick="selBg(this)">AI Decides</span>
+        <span class="bg-tag" data-bg="white" onclick="selBg(this)">White</span>
+        <span class="bg-tag" data-bg="grey" onclick="selBg(this)">Grey</span>
+        <span class="bg-tag" data-bg="black" onclick="selBg(this)">Black</span>
+        <span class="bg-tag" data-bg="outdoor" onclick="selBg(this)">Outdoor</span>
+        <span class="bg-tag" data-bg="street" onclick="selBg(this)">Street</span>
+        <span class="bg-tag" data-bg="luxury" onclick="selBg(this)">Luxury</span>
+        <span class="bg-tag" data-bg="beach" onclick="selBg(this)">Beach</span>
+        <span class="bg-tag" data-bg="forest" onclick="selBg(this)">Forest</span>
+        <span class="bg-tag" data-bg="studio" onclick="selBg(this)">Studio</span>
+        <span class="bg-tag" data-bg="custom" onclick="selBg(this)">Custom</span>
+      </div>
+      <div id="bg-custom-wrap" style="display:none;margin-top:6px">
+        <input type="text" id="bg-custom" placeholder="Describe the background..."/>
+      </div>
+    </div>
+    <div id="bg-rotate-wrap" style="display:none">
+      <label class="form-lbl">Background list (rotated per image)</label>
+      <div class="bg-prompts-list" id="bg-prompts-list"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:6px;width:100%" onclick="addBgPrompt()">+ Add background</button>
+    </div>
+  </div>
+
+  <div class="sb-sec">
+    <div class="sb-lbl">Style Library</div>
+    <div class="style-lib-list" id="slib-list">
+      <div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">No saved styles</div>
+    </div>
+    <button class="slib-save" onclick="openModal('modal-save-style')">+ Save current style</button>
+  </div>
+
+</div><!-- /sidebar -->
+
+<div class="main-area">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+    <div>
+      <div style="font-size:22px;font-weight:700">Generate Model Images</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:1.5rem">Upload products → configure → generate ultra-realistic model photos</div>
+    </div>
+  </div>
+
+  <div class="steps" id="model-steps">
+    <button class="stab active" id="stab-1" onclick="goStep(1)">1 · Upload</button>
+    <button class="stab" id="stab-2" onclick="goStep(2)">2 · Prompts</button>
+    <button class="stab" id="stab-3" onclick="goStep(3)">3 · Generate</button>
+    <button class="stab" id="stab-4" onclick="goStep(4)">4 · Results</button>
+  </div>
+
+  <!-- Step 1 -->
+  <div id="ms1">
+    <div class="card">
+      <div class="card-hd">Upload Products <span class="badge">Up to 100</span></div>
+      <div class="card-sub">Drop your clothing or eyewear product photos. You can also upload reference images per product.</div>
+      <div class="dropzone" id="dz-main" onclick="document.getElementById('fi-main').click()">
+        <input type="file" id="fi-main" multiple accept="image/*"/>
+        <div class="dz-icon"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
+        <div class="dz-title">Drop product photos here</div>
+        <div class="dz-sub">JPG · PNG · WEBP — click to browse</div>
+      </div>
+      <div class="thumb-grid" id="thumb-main"></div>
     </div>
     <div style="display:flex;justify-content:flex-end">
-      <button class="btn btn-primary" onclick="goStep(2)" id="btn-next-1" disabled>Next: Set Prompts →</button>
+      <button class="btn btn-primary" id="btn-next1" onclick="goStep(2)" disabled>Next: Set Prompts →</button>
     </div>
   </div>
 
-  <!-- Step 2: Prompts -->
-  <div id="step-2" style="display:none">
+  <!-- Step 2 -->
+  <div id="ms2" style="display:none">
     <div class="card">
-      <div class="card-title">Prompt Configuration</div>
-      <div class="card-sub">Choose how to write prompts for your products</div>
-      <div class="mode-toggle">
-        <button class="mode-btn active" id="mode-global" onclick="setMode('global')">Single prompt for all products</button>
-        <button class="mode-btn" id="mode-individual" onclick="setMode('individual')">Different prompt per product</button>
+      <div class="card-hd">Prompt Configuration</div>
+      <div class="card-sub">Write one prompt for all products, or a custom prompt per product</div>
+      <div class="mode-tog">
+        <button class="mode-btn active" id="mode-global" onclick="setMode('global')">Single prompt for all</button>
+        <button class="mode-btn" id="mode-individual" onclick="setMode('individual')">Per-product prompts</button>
       </div>
-      <div id="global-prompt-wrap">
-        <label class="form-label">Scene Description</label>
-        <textarea id="global-prompt" rows="4" placeholder="E.g: A tall female model with long dark hair, standing in a bright minimalist white studio, soft natural lighting, fashion editorial style, full body shot"></textarea>
+      <div id="global-wrap">
+        <label class="form-lbl">Scene Description</label>
+        <textarea id="global-prompt" rows="4" placeholder="E.g: A tall female model with long dark hair, standing in a bright minimalist white studio, soft natural lighting, fashion editorial style, full body shot showing the product clearly"></textarea>
       </div>
-      <div id="individual-prompt-wrap" style="display:none">
-        <label class="form-label">Prompt per product</label>
-        <div class="per-product-prompts" id="per-product-prompts"></div>
+      <div id="individual-wrap" style="display:none">
+        <label class="form-lbl">Per-product prompts</label>
+        <div id="per-prod-list"></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-hd">Reference Images (optional)</div>
+      <div class="card-sub">Upload reference images to guide the model style, pose, or look</div>
+      <div class="dropzone" id="dz-ref" onclick="document.getElementById('fi-ref').click()">
+        <input type="file" id="fi-ref" multiple accept="image/*"/>
+        <div class="dz-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+        <div class="dz-title">Drop reference images</div>
+        <div class="dz-sub">Applied to all products in batch</div>
+      </div>
+      <div class="thumb-grid" id="thumb-ref"></div>
+    </div>
+
     <div style="display:flex;justify-content:space-between">
       <button class="btn btn-outline" onclick="goStep(1)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(3)">Next: Review & Generate →</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next: Review →</button>
     </div>
   </div>
 
-  <!-- Step 3: Generate -->
-  <div id="step-3" style="display:none">
+  <!-- Step 3 -->
+  <div id="ms3" style="display:none">
     <div class="card">
-      <div class="card-title">Review & Generate</div>
-      <div class="card-sub">Confirm settings before generating</div>
-
+      <div class="card-hd">Review & Generate</div>
+      <div class="card-sub">Confirm settings then start generation</div>
       <div class="cost-bar">
-        <div>
-          <div class="cost-amount" id="cost-amount">$0.00</div>
-          <div class="cost-detail" id="cost-detail">0 images × $0.08</div>
-        </div>
+        <div><div class="cost-amt" id="cost-amt">$0.00</div><div class="cost-info" id="cost-info">0 images</div></div>
         <div style="text-align:right">
-          <div style="font-size:12px;font-weight:600;color:var(--text);" id="review-count">0 products</div>
-          <div style="font-size:11px;color:var(--text2)" id="review-settings">—</div>
+          <div style="font-size:13px;font-weight:600" id="rev-count">—</div>
+          <div style="font-size:11px;color:var(--t2)" id="rev-settings">—</div>
         </div>
       </div>
-
-      <div id="review-warnings" style="margin-bottom:1rem"></div>
-
-      <button class="btn btn-primary btn-full" id="gen-btn" onclick="startGeneration()" style="padding:14px;font-size:15px" disabled>
-        Generate Images
-      </button>
+      <div id="rev-warnings"></div>
+      <button class="btn btn-primary btn-xl btn-full" id="gen-btn" onclick="startGeneration()" disabled>Generate Images</button>
     </div>
     <div style="display:flex;justify-content:space-between">
       <button class="btn btn-outline" onclick="goStep(2)">← Back</button>
     </div>
   </div>
 
-  <!-- Step 4: Results -->
-  <div id="step-4" style="display:none">
-    <!-- Progress -->
-    <div class="progress-wrap" id="progress-wrap" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:14px;font-weight:600">Generating images...</div>
-        <div id="prog-pct" style="font-size:13px;color:var(--blue);font-weight:600">0%</div>
-      </div>
-      <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
-      <div class="progress-stats">
-        <span id="prog-done">0 done</span>
-        <span id="prog-total">of 0</span>
-      </div>
+  <!-- Step 4 -->
+  <div id="ms4" style="display:none">
+    <div class="prog-wrap" id="prog-wrap" style="display:none">
+      <div class="prog-hd"><div class="prog-title" id="prog-title">Generating images...</div><div class="prog-pct" id="prog-pct">0%</div></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="prog-stats"><span id="prog-done">0 done</span><span id="prog-total">of 0</span></div>
     </div>
-
-    <!-- Toolbar -->
-    <div class="results-toolbar">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="openBatchEditModal()">Edit all prompts</button>
-        <button class="btn btn-outline btn-sm" onclick="downloadZip()" id="zip-btn" disabled>↓ Download ZIP</button>
-        <button class="btn btn-outline btn-sm" onclick="goStep(1)">New batch</button>
+    <div class="results-tb">
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="openModal('modal-batch-edit')">Edit all prompts</button>
+        <button class="btn btn-outline btn-sm" id="zip-btn" onclick="downloadZip()" disabled>↓ Download ZIP</button>
+        <button class="btn btn-outline btn-sm" onclick="goStep(1);resetBatch()">New batch</button>
       </div>
-      <div id="results-count" style="font-size:12px;color:var(--text2)"></div>
+      <div id="res-count" style="font-size:12px;color:var(--t2)"></div>
     </div>
-
-    <!-- Results grid -->
     <div class="results-grid" id="results-grid">
-      <div class="empty-state" style="grid-column:1/-1">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </div>
-        <div class="empty-title">No images yet</div>
-        <div class="empty-sub">Start a generation to see results here</div>
-      </div>
+      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--t3)">Results will appear here</div>
     </div>
   </div>
 
-</div>
+</div><!-- /main-area -->
+</div><!-- /page-model -->
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- WEBSITE PHOTOS PAGE -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-website">
+<div class="sidebar">
+  <div class="sb-sec">
+    <div class="sb-lbl">fal.ai API Key</div>
+    <div class="key-wrap">
+      <input type="password" id="fk2" placeholder="fal-..." autocomplete="off"/>
+      <button class="key-save" onclick="saveKey2()">Save</button>
+    </div>
+    <div class="key-st" id="kst2">Enter your key</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Output Quality</div>
+    <div class="form-row"><select id="wp-res" onchange="updateWebCost()">
+      <option value="1K">1K Resolution — $0.08/image</option>
+      <option value="2K">2K Resolution — $0.12/image</option>
+    </select></div>
+    <div class="form-row">
+      <label class="form-lbl">Output size (px)</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="number" id="wp-w" value="1024" min="512" max="2048" step="64" style="width:70px"/>
+        <span style="color:var(--t3);font-size:12px">×</span>
+        <input type="number" id="wp-h" value="1024" min="512" max="2048" step="64" style="width:70px"/>
+      </div>
+    </div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Background</div>
+    <div class="bg-tags">
+      <span class="bg-tag active" data-wbg="white" onclick="selWBg(this)">Pure White</span>
+      <span class="bg-tag" data-wbg="grey" onclick="selWBg(this)">Light Grey</span>
+      <span class="bg-tag" data-wbg="custom" onclick="selWBg(this)">Custom</span>
+    </div>
+    <div id="wp-bg-custom" style="display:none;margin-top:6px">
+      <input type="text" id="wp-bg-txt" placeholder="Describe background..."/>
+    </div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-lbl">Images per Product</div>
+    <div class="img-count-row">
+      <button class="img-count-btn active" data-wn="1" onclick="selWCount(this)">1</button>
+      <button class="img-count-btn" data-wn="2" onclick="selWCount(this)">2</button>
+      <button class="img-count-btn" data-wn="3" onclick="selWCount(this)">3</button>
+    </div>
+  </div>
 </div>
 
-<!-- Modals -->
+<div class="main-area">
+  <div style="font-size:22px;font-weight:700;margin-bottom:4px">Website Product Photos <span class="badge badge-purple">New</span></div>
+  <div style="font-size:13px;color:var(--t2);margin-bottom:1.5rem">Generate professional product-only photos with white background — no model, pure product focus</div>
+
+  <div class="card">
+    <div class="card-hd">Upload Products</div>
+    <div class="card-sub">Drop your product photos. They'll be transformed into professional e-commerce shots.</div>
+    <div class="dropzone" id="dz-wp" onclick="document.getElementById('fi-wp').click()">
+      <input type="file" id="fi-wp" multiple accept="image/*"/>
+      <div class="dz-icon"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
+      <div class="dz-title">Drop product photos here</div>
+      <div class="dz-sub">JPG · PNG · WEBP</div>
+    </div>
+    <div class="thumb-grid" id="thumb-wp"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Reference Image (optional)</div>
+    <div class="card-sub">Upload a reference photo to guide the output style or composition</div>
+    <div class="dropzone" id="dz-wpref" onclick="document.getElementById('fi-wpref').click()">
+      <input type="file" id="fi-wpref" multiple accept="image/*"/>
+      <div class="dz-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+      <div class="dz-title">Drop reference images</div>
+      <div class="dz-sub">Optional style or composition guide</div>
+    </div>
+    <div class="thumb-grid" id="thumb-wpref"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">Scene Description (optional)</div>
+    <div class="card-sub">Describe any additional details for the product shot. Leave empty for standard white-background photo.</div>
+    <textarea id="wp-prompt" rows="3" placeholder="E.g: Show the bag from a 45-degree angle, flat lay style, minimalist composition, soft shadows"></textarea>
+  </div>
+
+  <div class="cost-bar" id="wp-cost-bar">
+    <div><div class="cost-amt" id="wp-cost-amt">$0.00</div><div class="cost-info" id="wp-cost-info">0 images</div></div>
+  </div>
+
+  <button class="btn btn-purple btn-xl btn-full" id="wp-gen-btn" onclick="startWebGeneration()">Generate Product Photos</button>
+
+  <div class="prog-wrap" id="wp-prog" style="display:none;margin-top:1.25rem">
+    <div class="prog-hd"><div class="prog-title">Generating product photos...</div><div class="prog-pct" id="wp-pct">0%</div></div>
+    <div class="prog-bar"><div class="prog-fill" id="wp-fill" style="width:0%"></div></div>
+    <div class="prog-stats"><span id="wp-done">0 done</span><span id="wp-total">of 0</span></div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin:1rem 0;gap:8px" id="wp-toolbar" style="display:none">
+    <button class="btn btn-outline btn-sm" id="wp-zip-btn" onclick="downloadZip('website')" disabled>↓ Download ZIP</button>
+  </div>
+
+  <div class="results-grid" id="wp-results" style="margin-top:1.25rem"></div>
+</div>
+</div><!-- /page-website -->
+
+<!-- ── Modals ── -->
 <div class="modal-bg" id="modal-edit-item">
   <div class="modal">
-    <div class="modal-title">Edit Image</div>
-    <div class="modal-sub">Modify the prompt and regenerate this product</div>
-    <input type="hidden" id="edit-batch-id"/>
-    <input type="hidden" id="edit-item-id"/>
-    <div class="form-group">
-      <label class="form-label">Prompt</label>
-      <textarea id="edit-prompt" rows="4" placeholder="Describe the scene..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Resolution</label>
-      <select class="style-select" id="edit-res" style="margin:0">
-        <option value="1K">1K</option>
-        <option value="2K">2K</option>
+    <div class="modal-title">Edit & Regenerate</div>
+    <div class="modal-sub" id="edit-item-name">Editing product</div>
+    <input type="hidden" id="ei-batch"/><input type="hidden" id="ei-item"/>
+    <div class="form-row"><label class="form-lbl">Prompt</label><textarea id="ei-prompt" rows="4"></textarea></div>
+    <div class="form-row"><label class="form-lbl">Background</label>
+      <select id="ei-bg">
+        <option value="ai">AI decides</option><option value="white">White</option><option value="grey">Grey</option>
+        <option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option>
+        <option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option>
       </select>
+    </div>
+    <div class="form-row"><label class="form-lbl">Resolution</label>
+      <select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-edit-item')">Cancel</button>
-      <button class="btn btn-primary" onclick="regenerateItem()">Regenerate</button>
+      <button class="btn btn-primary" onclick="doRegenItem()">Regenerate</button>
     </div>
   </div>
 </div>
@@ -460,14 +602,17 @@ textarea::placeholder{color:var(--text3)}
 <div class="modal-bg" id="modal-batch-edit">
   <div class="modal">
     <div class="modal-title">Edit All Prompts</div>
-    <div class="modal-sub">Apply a new prompt to the entire batch and regenerate</div>
-    <div class="form-group">
-      <label class="form-label">New prompt for all products</label>
-      <textarea id="batch-edit-prompt" rows="4"></textarea>
+    <div class="modal-sub">Apply new settings to the entire batch and regenerate all images</div>
+    <div class="form-row"><label class="form-lbl">New prompt</label><textarea id="be-prompt" rows="4"></textarea></div>
+    <div class="form-row"><label class="form-lbl">Background</label>
+      <select id="be-bg">
+        <option value="ai">AI decides</option><option value="white">White</option><option value="grey">Grey</option>
+        <option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option>
+      </select>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-batch-edit')">Cancel</button>
-      <button class="btn btn-primary" onclick="editBatch()">Regenerate All</button>
+      <button class="btn btn-primary" onclick="doEditBatch()">Regenerate All</button>
     </div>
   </div>
 </div>
@@ -476,457 +621,627 @@ textarea::placeholder{color:var(--text3)}
   <div class="modal">
     <div class="modal-title">Save Style</div>
     <div class="modal-sub">Save current settings as a reusable style</div>
-    <div class="form-group">
-      <label class="form-label">Style Name</label>
-      <input type="text" id="style-name-input" placeholder="E.g: My Luxury Look" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px"/>
+    <div class="form-row"><label class="form-lbl">Style name</label>
+      <input type="text" id="ss-name" placeholder="E.g: Luxury Summer Look"/>
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeModal('modal-save-style')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveStyle()">Save</button>
+      <button class="btn btn-primary" onclick="doSaveStyle()">Save</button>
     </div>
   </div>
 </div>
 
-<div class="toast-wrap" id="toasts"></div>
+<div class="toasts" id="toasts"></div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════════════
 let falKey = '';
 let selectedCat = '';
+let selectedBg = 'ai';
+let bgMode = 'same';
+let bgCustomText = '';
+let bgRotateList = ['white studio background', 'outdoor natural background'];
+let imagesPerProduct = 1;
 let promptMode = 'global';
+let currentStep = 1;
 let currentBatchId = null;
-let pollInterval = null;
+let webBatchId = null;
+let pollTimer = null;
+let webPollTimer = null;
 let totalSpent = 0;
-const files = [];
+let wpImagesPerProduct = 1;
+let wpBg = 'white';
 
-// ── Init ──────────────────────────────────────────────────────────────
-document.getElementById('fk').addEventListener('focus', function(){ if(this.value.startsWith('•')) this.value=''; });
-document.getElementById('fk').addEventListener('keydown', e=>{ if(e.key==='Enter') saveKey(); });
+const modelFiles = [];     // product images
+const refFiles   = [];     // global reference images
+const wpFiles    = [];     // website product images
+const wpRefFiles = [];     // website reference images
 
-function saveKey(){
+// ═══════════════════════════════════════════════════════════════════
+// Key management
+// ═══════════════════════════════════════════════════════════════════
+function saveKey() {
   const v = document.getElementById('fk').value.trim();
-  if(v && !v.startsWith('•')) falKey = v;
-  if(falKey) document.getElementById('fk').value = '••••••••••••';
+  if (v && !v.startsWith('•')) falKey = v;
+  if (falKey) document.getElementById('fk').value = '••••••••••••';
   const el = document.getElementById('kst');
-  el.textContent = falKey ? '✓ Key saved' : 'No key entered';
-  el.className = falKey ? 'key-status ok' : 'key-status';
+  el.textContent = falKey ? '✓ Key saved' : 'Enter your key';
+  el.className = falKey ? 'key-st ok' : 'key-st';
   updateReview();
 }
+function saveKey2() {
+  const v = document.getElementById('fk2').value.trim();
+  if (v && !v.startsWith('•')) falKey = v;
+  if (falKey) document.getElementById('fk2').value = '••••••••••••';
+  const el = document.getElementById('kst2');
+  el.textContent = falKey ? '✓ Key saved' : 'Enter your key';
+  el.className = falKey ? 'key-st ok' : 'key-st';
+  // sync
+  document.getElementById('fk').value = falKey ? '••••••••••••' : '';
+  document.getElementById('kst').textContent = falKey ? '✓ Key saved' : 'Enter your key';
+  document.getElementById('kst').className = falKey ? 'key-st ok' : 'key-st';
+}
+document.getElementById('fk').addEventListener('focus', function(){ if(this.value.startsWith('•')) this.value=''; });
+document.getElementById('fk2').addEventListener('focus', function(){ if(this.value.startsWith('•')) this.value=''; });
+document.getElementById('fk').addEventListener('keydown', e=>{ if(e.key==='Enter') saveKey(); });
+document.getElementById('fk2').addEventListener('keydown', e=>{ if(e.key==='Enter') saveKey2(); });
 
-function selectCat(btn){
+// ═══════════════════════════════════════════════════════════════════
+// Navigation
+// ═══════════════════════════════════════════════════════════════════
+function switchPage(p) {
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-' + (p==='website'?'website':'model')).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>{
+    t.classList.toggle('active', (p==='model'&&i===0)||(p==='website'&&i===1));
+  });
+}
+
+function goStep(n) {
+  currentStep = n;
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('ms'+i).style.display = i===n?'block':'none';
+    const t = document.getElementById('stab-'+i);
+    if(t){ t.classList.toggle('active',i===n); if(i<n) t.classList.add('done'); else t.classList.remove('done'); }
+  });
+  if(n===2 && promptMode==='individual') renderPerProd();
+  if(n===3) updateReview();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Sidebar controls
+// ═══════════════════════════════════════════════════════════════════
+function selCat(btn) {
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   selectedCat = btn.dataset.cat;
   updateReview();
 }
 
-function setMode(mode){
-  promptMode = mode;
-  document.getElementById('mode-global').classList.toggle('active', mode==='global');
-  document.getElementById('mode-individual').classList.toggle('active', mode==='individual');
-  document.getElementById('global-prompt-wrap').style.display = mode==='global' ? 'block' : 'none';
-  document.getElementById('individual-prompt-wrap').style.display = mode==='individual' ? 'block' : 'none';
-  if(mode==='individual') renderPerProductPrompts();
+function selBg(el) {
+  document.querySelectorAll('.bg-tag').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  selectedBg = el.dataset.bg;
+  document.getElementById('bg-custom-wrap').style.display = selectedBg==='custom'?'block':'none';
 }
 
-function renderPerProductPrompts(){
-  const wrap = document.getElementById('per-product-prompts');
-  wrap.innerHTML = '';
-  files.forEach((f,i)=>{
-    const r = new FileReader();
-    r.onload = e=>{
-      const row = document.createElement('div');
-      row.className = 'per-product-row';
-      row.innerHTML = `<img src="${e.target.result}" class="per-product-thumb" alt=""/><textarea id="pp-${i}" rows="2" placeholder="Prompt for ${f.name.replace(/\.[^.]+$/,'')}..."></textarea>`;
-      wrap.appendChild(row);
-    };
-    r.readAsDataURL(f);
-  });
-}
-
-// ── Steps ─────────────────────────────────────────────────────────────
-function goStep(n){
-  [1,2,3,4].forEach(i=>{
-    document.getElementById(`step-${i}`).style.display = i===n ? 'block' : 'none';
-    const tab = document.getElementById(['','tab-upload','tab-prompt','tab-generate','tab-results'][i]);
-    if(tab) tab.classList.toggle('active', i===n);
-  });
-  if(n===3) updateReview();
-  if(n===4 && !currentBatchId) document.getElementById('step-4').style.display='block';
-}
-
-// ── Upload ────────────────────────────────────────────────────────────
-function renderThumbs(){
-  const g = document.getElementById('thumb-grid');
-  g.innerHTML = '';
-  files.forEach((f,i)=>{
-    const r = new FileReader();
-    r.onload = e=>{
-      const d = document.createElement('div');
-      d.className = 'thumb-item';
-      d.innerHTML = `<img src="${e.target.result}"/><button class="thumb-del" onclick="rmFile(${i})">×</button><div class="thumb-name">${f.name.replace(/\.[^.]+$/,'')}</div>`;
-      g.appendChild(d);
-    };
-    r.readAsDataURL(f);
-  });
-  document.getElementById('btn-next-1').disabled = files.length===0;
+function selImgCount(btn) {
+  document.querySelectorAll('.img-count-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  imagesPerProduct = parseInt(btn.dataset.n);
   updateCost();
 }
 
-function rmFile(i){ files.splice(i,1); renderThumbs(); }
-function addFiles(list){
-  for(const f of list){ if(files.length>=100) break; if(f.type.startsWith('image/')) files.push(f); }
-  renderThumbs();
-}
-document.getElementById('fi').addEventListener('change', e=>addFiles(Array.from(e.target.files)));
-const dz = document.getElementById('dz');
-dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
-dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
-dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); addFiles(Array.from(e.dataTransfer.files)); });
-
-// ── Cost ──────────────────────────────────────────────────────────────
-function updateCost(){
-  const res = document.getElementById('res-sel').value;
-  const rate = res==='2K'?0.12:0.08;
-  const count = files.length;
-  document.getElementById('cost-amount').textContent = `$${(count*rate).toFixed(2)}`;
-  document.getElementById('cost-detail').textContent = `${count} image${count!==1?'s':''} × $${rate.toFixed(2)}`;
-  updateReview();
+function selWCount(btn) {
+  document.querySelectorAll('[data-wn]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  wpImagesPerProduct = parseInt(btn.dataset.wn);
+  updateWebCost();
 }
 
-function updateReview(){
-  const count = files.length;
-  const res = document.getElementById('res-sel').value;
-  const rate = res==='2K'?0.12:0.08;
-  document.getElementById('cost-amount').textContent = `$${(count*rate).toFixed(2)}`;
-  document.getElementById('cost-detail').textContent = `${count} image${count!==1?'s':''} × $${rate.toFixed(2)}`;
-  document.getElementById('review-count').textContent = `${count} product${count!==1?'s':''}`;
-  document.getElementById('review-settings').textContent = `${selectedCat||'no category'} · ${res} · bg: ${document.getElementById('bg-sel').value} · ${document.getElementById('style-sel').value||'no style'}`;
-
-  const warnings = [];
-  if(!falKey) warnings.push('<div style="color:var(--red);font-size:12px;margin-bottom:6px">⚠ fal.ai key not saved</div>');
-  if(!selectedCat) warnings.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:6px">⚠ No product category selected</div>');
-  if(!count) warnings.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:6px">⚠ No products uploaded</div>');
-  const gp = document.getElementById('global-prompt').value.trim();
-  if(!gp && promptMode==='global') warnings.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:6px">⚠ No prompt written</div>');
-  document.getElementById('review-warnings').innerHTML = warnings.join('');
-
-  const genBtn = document.getElementById('gen-btn');
-  genBtn.disabled = !falKey || !selectedCat || !count || (!gp && promptMode==='global');
-  genBtn.textContent = `Generate ${count} Image${count!==1?'s':''}`;
+function selWBg(el) {
+  document.querySelectorAll('[data-wbg]').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  wpBg = el.dataset.wbg;
+  document.getElementById('wp-bg-custom').style.display = wpBg==='custom'?'block':'none';
 }
 
-// ── File to base64 ─────────────────────────────────────────────────────
-function toB64(file){
-  return new Promise((res,rej)=>{
+function onBgModeChange() {
+  bgMode = document.getElementById('bg-mode').value;
+  document.getElementById('bg-preset-wrap').style.display = bgMode==='different'?'none':'block';
+  document.getElementById('bg-rotate-wrap').style.display = bgMode==='different'?'block':'none';
+}
+
+function addBgPrompt(val='') {
+  const list = document.getElementById('bg-prompts-list');
+  const row = document.createElement('div');
+  row.className = 'bg-prompt-row';
+  row.innerHTML = `<input type="text" placeholder="E.g: luxury marble interior" value="${val}"/><button class="bg-remove" onclick="this.parentElement.remove()">×</button>`;
+  list.appendChild(row);
+}
+
+function getBgRotateList() {
+  return Array.from(document.querySelectorAll('.bg-prompt-row input')).map(i=>i.value.trim()).filter(Boolean);
+}
+
+// Init rotate list
+['white studio', 'outdoor natural light', 'luxury interior'].forEach(addBgPrompt);
+
+function setMode(m) {
+  promptMode = m;
+  document.getElementById('mode-global').classList.toggle('active',m==='global');
+  document.getElementById('mode-individual').classList.toggle('active',m==='individual');
+  document.getElementById('global-wrap').style.display = m==='global'?'block':'none';
+  document.getElementById('individual-wrap').style.display = m==='individual'?'block':'none';
+  if(m==='individual') renderPerProd();
+}
+
+function renderPerProd() {
+  const list = document.getElementById('per-prod-list');
+  list.innerHTML = '';
+  modelFiles.forEach((f,i) => {
     const r = new FileReader();
-    r.onload = ()=>res(r.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
+    r.onload = e => {
+      const row = document.createElement('div');
+      row.className = 'thumb-per-prod';
+      row.style.marginBottom = '8px';
+      row.innerHTML = `<img src="${e.target.result}" alt=""/><textarea id="pp-${i}" rows="2" placeholder="Prompt for ${f.name.replace(/\.[^.]+$/,'')}..."></textarea>`;
+      list.appendChild(row);
+    };
+    r.readAsDataURL(f);
   });
 }
 
-// ── Generation ────────────────────────────────────────────────────────
-async function startGeneration(){
-  if(!falKey||!selectedCat||!files.length) return;
-  const globalPrompt = document.getElementById('global-prompt').value.trim();
-  const styleKey = document.getElementById('style-sel').value;
-  const gender = document.getElementById('model-sel').value;
-  const bgOption = document.getElementById('bg-sel').value;
-  const realismOption = document.getElementById('realism-sel').value;
-  const resolution = document.getElementById('res-sel').value;
-  const w = document.getElementById('img-w').value;
-  const h = document.getElementById('img-h').value;
+document.getElementById('global-prompt').addEventListener('input', updateReview);
+document.getElementById('res-sel').addEventListener('change', ()=>{ updateCost(); updateReview(); });
+
+// ═══════════════════════════════════════════════════════════════════
+// File handling
+// ═══════════════════════════════════════════════════════════════════
+function setupDrop(dzId, fiId, arr, thumbId, maxFiles=100) {
+  const dz = document.getElementById(dzId);
+  const fi = document.getElementById(fiId);
+  fi.addEventListener('change', e=>{ addFiles(arr, Array.from(e.target.files), thumbId, maxFiles); fi.value=''; });
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); addFiles(arr, Array.from(e.dataTransfer.files), thumbId, maxFiles); });
+}
+
+function addFiles(arr, list, thumbId, max) {
+  for(const f of list){ if(arr.length>=max) break; if(f.type.startsWith('image/')) arr.push(f); }
+  renderThumbs(arr, thumbId);
+  if(arr===modelFiles){ document.getElementById('btn-next1').disabled=arr.length===0; updateCost(); updateReview(); }
+  if(arr===wpFiles) updateWebCost();
+}
+
+function rmFile(arr, i, thumbId) {
+  arr.splice(i,1);
+  renderThumbs(arr, thumbId);
+  if(arr===modelFiles){ document.getElementById('btn-next1').disabled=arr.length===0; updateCost(); updateReview(); }
+  if(arr===wpFiles) updateWebCost();
+}
+
+function renderThumbs(arr, thumbId) {
+  const el = document.getElementById(thumbId);
+  el.innerHTML = '';
+  arr.forEach((f,i)=>{
+    const r = new FileReader();
+    r.onload = e=>{
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      d.innerHTML = `<img src="${e.target.result}"/><button class="tdel" onclick="rmFile(${JSON.stringify(arr===modelFiles?'model':arr===refFiles?'ref':arr===wpFiles?'wp':'wpref')},${i},'${thumbId}')">×</button><div class="tname">${f.name.replace(/\.[^.]+$/,'')}</div>`;
+      el.appendChild(d);
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+// Global rmFile dispatcher
+window.rmFile = function(arrName, i, thumbId) {
+  const map = {model:modelFiles,ref:refFiles,wp:wpFiles,wpref:wpRefFiles};
+  const arr = map[arrName];
+  if(arr) { arr.splice(i,1); renderThumbs(arr,thumbId); }
+  if(arrName==='model'){ document.getElementById('btn-next1').disabled=modelFiles.length===0; updateCost(); updateReview(); }
+  if(arrName==='wp') updateWebCost();
+};
+
+setupDrop('dz-main','fi-main',modelFiles,'thumb-main',100);
+setupDrop('dz-ref','fi-ref',refFiles,'thumb-ref',5);
+setupDrop('dz-wp','fi-wp',wpFiles,'thumb-wp',100);
+setupDrop('dz-wpref','fi-wpref',wpRefFiles,'thumb-wpref',5);
+
+// ═══════════════════════════════════════════════════════════════════
+// Cost
+// ═══════════════════════════════════════════════════════════════════
+function updateCost() {
+  const res = document.getElementById('res-sel').value;
+  const rate = res==='2K'?0.12:0.08;
+  const total = modelFiles.length * imagesPerProduct;
+  document.getElementById('cost-amt').textContent = `$${(total*rate).toFixed(2)}`;
+  document.getElementById('cost-info').textContent = `${total} image${total!==1?'s':''} × $${rate}`;
+}
+
+function updateWebCost() {
+  const res = document.getElementById('wp-res').value;
+  const rate = res==='2K'?0.12:0.08;
+  const total = wpFiles.length * wpImagesPerProduct;
+  document.getElementById('wp-cost-amt').textContent = `$${(total*rate).toFixed(2)}`;
+  document.getElementById('wp-cost-info').textContent = `${total} image${total!==1?'s':''} × $${rate}`;
+}
+
+function updateReview() {
+  const n = modelFiles.length, gp = document.getElementById('global-prompt').value.trim();
+  const res = document.getElementById('res-sel').value, rate = res==='2K'?0.12:0.08;
+  const total = n * imagesPerProduct;
+  document.getElementById('cost-amt').textContent = `$${(total*rate).toFixed(2)}`;
+  document.getElementById('cost-info').textContent = `${total} images × $${rate}`;
+  document.getElementById('rev-count').textContent = `${n} product${n!==1?'s':''}`;
+  document.getElementById('rev-settings').textContent = `${selectedCat||'no category'} · ${res} · bg:${selectedBg} · ${imagesPerProduct} img/product`;
+  const warns = [];
+  if(!falKey) warns.push('<div style="color:var(--red);font-size:12px;margin-bottom:5px">⚠ fal.ai key not saved</div>');
+  if(!selectedCat) warns.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:5px">⚠ No category selected</div>');
+  if(!n) warns.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:5px">⚠ No products uploaded</div>');
+  if(!gp && promptMode==='global') warns.push('<div style="color:var(--yellow);font-size:12px;margin-bottom:5px">⚠ No prompt written</div>');
+  document.getElementById('rev-warnings').innerHTML = warns.join('');
+  document.getElementById('gen-btn').disabled = !falKey||!selectedCat||!n||(!gp&&promptMode==='global');
+  document.getElementById('gen-btn').textContent = `Generate ${total} Image${total!==1?'s':''}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// base64 helper
+// ═══════════════════════════════════════════════════════════════════
+function toB64(file) {
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Start model generation
+// ═══════════════════════════════════════════════════════════════════
+async function startGeneration() {
+  const gp = document.getElementById('global-prompt').value.trim();
+  if(!falKey||!selectedCat||!modelFiles.length||(!gp&&promptMode==='global')) return;
+
+  document.getElementById('gen-btn').disabled=true;
+  document.getElementById('gen-btn').textContent='Preparing...';
 
   // Build items
   const items = [];
-  for(let i=0;i<files.length;i++){
-    const f = files[i];
+  for(let i=0;i<modelFiles.length;i++) {
+    const f = modelFiles[i];
     const b64 = await toB64(f);
-    const perPrompt = promptMode==='individual' ? (document.getElementById(`pp-${i}`)?.value?.trim()||globalPrompt) : globalPrompt;
-    items.push({ id: `item-${i}`, name: f.name.replace(/\.[^.]+$/,''), base64: b64, mimeType: f.type||'image/jpeg', prompt: perPrompt });
+    const perPrompt = promptMode==='individual' ? (document.getElementById(`pp-${i}`)?.value?.trim()||gp) : gp;
+
+    // Collect ref images
+    const refs = [];
+    for(const rf of refFiles) { const rb64=await toB64(rf); refs.push({base64:rb64,mimeType:rf.type||'image/jpeg'}); }
+
+    items.push({
+      name: f.name.replace(/\.[^.]+$/,''),
+      base64: b64,
+      mimeType: f.type||'image/jpeg',
+      prompt: perPrompt,
+      refImages: refs,
+      imageCount: imagesPerProduct,
+    });
   }
 
-  document.getElementById('gen-btn').disabled = true;
-  document.getElementById('gen-btn').textContent = 'Submitting...';
+  const bgRotate = bgMode==='different' ? getBgRotateList() : null;
 
   try {
     const resp = await fetch('/api/batch/create', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ items, globalPrompt, promptMode, category: selectedCat, styleKey, resolution, width: parseInt(w)||768, height: parseInt(h)||1024, bgOption, realismOption, gender })
+      body: JSON.stringify({
+        type:'model',
+        items,
+        globalPrompt: gp,
+        promptMode,
+        category: selectedCat,
+        styleKey: document.getElementById('style-sel').value,
+        bgOption: selectedBg,
+        bgMode,
+        bgCustom: document.getElementById('bg-custom')?.value?.trim()||'',
+        globalBgPrompts: bgRotate,
+        gender: document.getElementById('model-sel').value,
+        realism: document.getElementById('realism-sel').value,
+        resolution: document.getElementById('res-sel').value,
+        imagesPerProduct,
+        width: parseInt(document.getElementById('img-w').value)||768,
+        height: parseInt(document.getElementById('img-h').value)||1024,
+      })
     });
     const data = await resp.json();
     if(data.error) throw new Error(data.error);
-
     currentBatchId = data.batchId;
     goStep(4);
-    initResultsGrid(items);
-    startPolling();
-    toast(`Batch submitted — ${data.total} images generating`);
-  } catch(e){
-    toast(e.message, 'error');
-    document.getElementById('gen-btn').disabled = false;
-    document.getElementById('gen-btn').textContent = `Generate ${files.length} Images`;
+    initResultsGrid(data.total, 'results-grid', 'model');
+    document.getElementById('prog-wrap').style.display='block';
+    startPolling('model');
+    toast(`Generation started — ${data.total} images queued`);
+  } catch(e) {
+    toast(e.message,'err');
+    document.getElementById('gen-btn').disabled=false;
+    updateReview();
   }
 }
 
-function initResultsGrid(items){
-  const grid = document.getElementById('results-grid');
-  grid.innerHTML = '';
-  document.getElementById('progress-wrap').style.display = 'block';
-  items.forEach(it=>{
-    const card = document.createElement('div');
-    card.className = 'result-card';
-    card.id = `rc-${it.id}`;
-    card.innerHTML = `
-      <div class="loading-card-body"><div class="spin"></div><div class="spin-label" id="rl-${it.id}">Queued...</div></div>
-      <div class="result-meta">
-        <div class="result-name">${it.name}</div>
-        <div class="result-status"><span class="status-dot dot-queued" id="rd-${it.id}"></span><span id="rs-${it.id}">Queued</span></div>
-      </div>`;
-    grid.appendChild(card);
+// ═══════════════════════════════════════════════════════════════════
+// Start website generation
+// ═══════════════════════════════════════════════════════════════════
+async function startWebGeneration() {
+  if(!falKey||!wpFiles.length){ toast('Save your key and upload products first','err'); return; }
+  document.getElementById('wp-gen-btn').disabled=true;
+  document.getElementById('wp-gen-btn').textContent='Preparing...';
+
+  const items=[];
+  for(const f of wpFiles) {
+    const b64=await toB64(f);
+    const refs=[];
+    for(const rf of wpRefFiles){ const rb=await toB64(rf); refs.push({base64:rb,mimeType:rf.type||'image/jpeg'}); }
+    items.push({ name:f.name.replace(/\.[^.]+$/,''), base64:b64, mimeType:f.type||'image/jpeg', refImages:refs, imageCount:wpImagesPerProduct });
+  }
+
+  const bgCustomVal = wpBg==='custom' ? document.getElementById('wp-bg-txt').value.trim() : '';
+
+  try {
+    const resp = await fetch('/api/batch/create',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+      body: JSON.stringify({
+        type:'website', items,
+        globalPrompt: document.getElementById('wp-prompt').value.trim()||'professional product photo',
+        promptMode:'global',
+        category:'other',
+        bgOption: wpBg,
+        bgCustom: bgCustomVal,
+        bgMode:'same',
+        resolution: document.getElementById('wp-res').value,
+        imagesPerProduct: wpImagesPerProduct,
+        width: parseInt(document.getElementById('wp-w').value)||1024,
+        height: parseInt(document.getElementById('wp-h').value)||1024,
+      })
+    });
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error);
+    webBatchId=data.batchId;
+    document.getElementById('wp-prog').style.display='block';
+    document.getElementById('wp-toolbar').style.display='flex';
+    initResultsGrid(data.total,'wp-results','website');
+    startPolling('website');
+    toast(`Product photos queued — ${data.total} images`);
+  } catch(e){
+    toast(e.message,'err');
+    document.getElementById('wp-gen-btn').disabled=false;
+    document.getElementById('wp-gen-btn').textContent='Generate Product Photos';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Results grid init
+// ═══════════════════════════════════════════════════════════════════
+function initResultsGrid(total, gridId, type) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML='';
+  // Placeholder cards — will be replaced by poll
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Polling
+// ═══════════════════════════════════════════════════════════════════
+function startPolling(type) {
+  if(type==='model') { if(pollTimer) clearInterval(pollTimer); pollTimer=setInterval(()=>pollBatch('model'),3500); pollBatch('model'); }
+  else { if(webPollTimer) clearInterval(webPollTimer); webPollTimer=setInterval(()=>pollBatch('website'),3500); pollBatch('website'); }
+}
+
+async function pollBatch(type) {
+  const batchId = type==='model' ? currentBatchId : webBatchId;
+  if(!batchId) return;
+  try {
+    const resp = await fetch(`/api/batch/${batchId}/status`);
+    const data = await resp.json();
+    if(data.error) return;
+
+    const total=data.total, done=data.completed||0;
+    const pct=total?Math.round(done/total*100):0;
+
+    if(type==='model'){
+      document.getElementById('prog-fill').style.width=pct+'%';
+      document.getElementById('prog-pct').textContent=pct+'%';
+      document.getElementById('prog-done').textContent=done+' done';
+      document.getElementById('prog-total').textContent='of '+total;
+      document.getElementById('res-count').textContent=`${done}/${total} complete`;
+      renderResults(data.items,'results-grid','model');
+      if(data.status==='done'){ clearInterval(pollTimer); document.getElementById('prog-wrap').style.display='none'; document.getElementById('zip-btn').disabled=false; toast('All images ready!','ok'); document.getElementById('gen-btn').disabled=false; updateReview(); }
+    } else {
+      document.getElementById('wp-fill').style.width=pct+'%';
+      document.getElementById('wp-pct').textContent=pct+'%';
+      document.getElementById('wp-done').textContent=done+' done';
+      document.getElementById('wp-total').textContent='of '+total;
+      renderResults(data.items,'wp-results','website');
+      if(data.status==='done'){ clearInterval(webPollTimer); document.getElementById('wp-prog').style.display='none'; document.getElementById('wp-zip-btn').disabled=false; toast('Product photos ready!','ok'); document.getElementById('wp-gen-btn').disabled=false; document.getElementById('wp-gen-btn').textContent='Generate Product Photos'; }
+    }
+  } catch(e){ /* network blip */ }
+}
+
+function renderResults(items, gridId, type) {
+  const grid = document.getElementById(gridId);
+  items.forEach(it => {
+    let card = document.getElementById('rc-'+it.id);
+    if(!card){ card=document.createElement('div'); card.className='rc'; card.id='rc-'+it.id; grid.appendChild(card); }
+
+    if(it.status==='done'&&it.resultUrl) {
+      // Update cost counter
+      const res = type==='model'?document.getElementById('res-sel').value:document.getElementById('wp-res').value;
+      const rate = res==='2K'?0.12:0.08;
+      if(!card.dataset.counted){ card.dataset.counted='1'; totalSpent+=rate; document.getElementById('credit-pill').textContent=`$${totalSpent.toFixed(2)} used`; }
+
+      card.innerHTML = `
+        <div class="rc-img-wrap">
+          <img src="${it.resultUrl}" alt="${it.name}" loading="lazy"/>
+          <div class="rc-overlay">
+            <button onclick="openEditModal('${it.id}','${it.name}','${it.resultUrl}')">✏ Edit</button>
+            <button onclick="upscaleItem('${it.id}')">↑ Upscale</button>
+            <a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg">↓ Save</a>
+          </div>
+        </div>
+        <div class="rc-meta">
+          <div class="rc-name">${it.name}</div>
+          <div class="rc-actions">
+            <button class="btn btn-outline btn-sm" onclick="openEditModal('${it.id}','${it.name}','${it.resultUrl}')">Edit</button>
+            <button class="btn btn-outline btn-sm" onclick="upscaleItem('${it.id}')">Upscale</button>
+            <a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg" class="btn btn-outline btn-sm">↓</a>
+          </div>
+        </div>`;
+    } else if(it.status==='error') {
+      card.innerHTML = `
+        <div class="rc-meta">
+          <div class="err-body">${it.error||'Failed'}<br><button class="err-retry" onclick="openEditModal('${it.id}','${it.name}','')">↺ Retry</button></div>
+          <div class="rc-name">${it.name}</div>
+        </div>`;
+    } else {
+      const dotClass = {queued:'dot-q',uploading:'dot-u',generating:'dot-g'}[it.status]||'dot-q';
+      const label = {queued:'Queued',uploading:'Uploading...',generating:'Generating...'}[it.status]||it.status;
+      card.innerHTML = `
+        <div class="lc-body"><div class="spin"></div><div class="spin-lbl">${label}</div></div>
+        <div class="rc-meta">
+          <div class="rc-name">${it.name}</div>
+          <div class="rc-status"><span class="dot ${dotClass}"></span>${label}</div>
+        </div>`;
+    }
   });
 }
 
-function startPolling(){
-  if(pollInterval) clearInterval(pollInterval);
-  pollInterval = setInterval(pollBatch, 4000);
-  pollBatch();
+// ═══════════════════════════════════════════════════════════════════
+// Edit modal
+// ═══════════════════════════════════════════════════════════════════
+function openEditModal(itemId, name, imgUrl) {
+  document.getElementById('ei-batch').value = currentBatchId||webBatchId||'';
+  document.getElementById('ei-item').value = itemId;
+  document.getElementById('edit-item-name').textContent = `Editing: ${name}`;
+  document.getElementById('ei-prompt').value = document.getElementById('global-prompt').value;
+  openModal('modal-edit-item');
 }
 
-async function pollBatch(){
-  if(!currentBatchId) return;
-  try {
-    const resp = await fetch(`/api/batch/${currentBatchId}/status`);
-    const data = await resp.json();
-    if(data.error){ clearInterval(pollInterval); return; }
-
-    const total = data.total;
-    const done = data.completed;
-    document.getElementById('prog-fill').style.width = `${Math.round(done/total*100)}%`;
-    document.getElementById('prog-pct').textContent = `${Math.round(done/total*100)}%`;
-    document.getElementById('prog-done').textContent = `${done} done`;
-    document.getElementById('prog-total').textContent = `of ${total}`;
-    document.getElementById('results-count').textContent = `${done}/${total} complete`;
-
-    data.items.forEach(it=>{
-      const dot = document.getElementById(`rd-${it.id}`);
-      const statusEl = document.getElementById(`rs-${it.id}`);
-      const label = document.getElementById(`rl-${it.id}`);
-      const card = document.getElementById(`rc-${it.id}`);
-      if(!card) return;
-
-      if(it.status==='done' && it.resultUrl){
-        dot.className = 'status-dot dot-done';
-        statusEl.textContent = 'Done';
-        card.innerHTML = `
-          <div class="result-img-wrap">
-            <img src="${it.resultUrl}" alt="${it.name}" loading="lazy"/>
-            <div class="result-overlay">
-              <button onclick="openEditModal('${it.id}','${it.name}')">Edit</button>
-              <button onclick="upscaleItem('${it.id}')">Upscale</button>
-              <a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg" style="flex:1;text-align:center;background:rgba(255,255,255,.9);color:#111827;font-size:11px;padding:5px 8px;border-radius:6px;font-weight:600;text-decoration:none">↓</a>
-            </div>
-          </div>
-          <div class="result-meta">
-            <div class="result-name">${it.name}</div>
-            <div class="result-actions">
-              <button class="btn btn-outline btn-sm" onclick="openEditModal('${it.id}','${it.name}')">Edit</button>
-              <button class="btn btn-outline btn-sm" onclick="upscaleItem('${it.id}')">Upscale</button>
-              <a href="${it.resultUrl}" download="${it.name}.jpg" target="_blank" class="btn btn-outline btn-sm">↓ Save</a>
-            </div>
-          </div>`;
-        // Track cost
-        const res = document.getElementById('res-sel').value;
-        totalSpent += res==='2K'?0.12:0.08;
-        document.getElementById('credit-badge').textContent = `$${totalSpent.toFixed(2)} used`;
-      } else if(it.status==='error'){
-        dot.className = 'status-dot dot-error';
-        if(statusEl) statusEl.textContent = 'Failed';
-        card.innerHTML = `
-          <div class="loading-card-body" style="background:#fef2f2">
-            <div style="font-size:11px;color:var(--red);text-align:center;padding:0 12px">${it.error||'Failed'}</div>
-          </div>
-          <div class="result-meta">
-            <div class="result-name">${it.name}</div>
-            <div class="result-actions">
-              <button class="btn btn-danger btn-sm" onclick="openEditModal('${it.id}','${it.name}')">Retry</button>
-            </div>
-          </div>`;
-      } else {
-        const dotClass = {queued:'dot-queued',uploading:'dot-uploading',generating:'dot-generating'}[it.status]||'dot-queued';
-        if(dot) dot.className = `status-dot ${dotClass}`;
-        if(statusEl) statusEl.textContent = it.status.charAt(0).toUpperCase()+it.status.slice(1);
-        if(label) label.textContent = it.status==='generating'?'Generating...':it.status==='uploading'?'Uploading...':'Queued...';
-      }
-    });
-
-    if(data.status==='done'){
-      clearInterval(pollInterval);
-      document.getElementById('progress-wrap').style.display = 'none';
-      document.getElementById('zip-btn').disabled = false;
-      toast(`All ${total} images generated!`, 'success');
-    }
-  } catch(e){ /* network blip, keep polling */ }
-}
-
-// ── Item edit modal ────────────────────────────────────────────────────
-function openEditModal(itemId, name){
-  document.getElementById('edit-item-id').value = itemId;
-  document.getElementById('edit-batch-id').value = currentBatchId;
-  document.getElementById('edit-prompt').value = document.getElementById('global-prompt').value;
-  document.getElementById('modal-edit-item').querySelector('.modal-sub').textContent = `Editing: ${name}`;
-  document.getElementById('modal-edit-item').classList.add('open');
-}
-
-async function regenerateItem(){
-  const batchId = document.getElementById('edit-batch-id').value;
-  const itemId = document.getElementById('edit-item-id').value;
-  const prompt = document.getElementById('edit-prompt').value.trim();
-  const res = document.getElementById('edit-res').value;
-
+async function doRegenItem() {
+  const batchId=document.getElementById('ei-batch').value;
+  const itemId=document.getElementById('ei-item').value;
+  const prompt=document.getElementById('ei-prompt').value.trim();
+  const bg=document.getElementById('ei-bg').value;
+  const res=document.getElementById('ei-res').value;
   closeModal('modal-edit-item');
-  const card = document.getElementById(`rc-${itemId}`);
-  if(card) card.innerHTML = `<div class="loading-card-body"><div class="spin"></div><div class="spin-label">Regenerating...</div></div><div class="result-meta"><div class="result-name">Regenerating...</div></div>`;
-
+  const card=document.getElementById('rc-'+itemId);
+  if(card){ card.innerHTML=`<div class="lc-body"><div class="spin"></div><div class="spin-lbl">Regenerating...</div></div><div class="rc-meta"><div class="rc-name">Regenerating...</div></div>`; }
   try {
-    const resp = await fetch(`/api/item/${batchId}/${itemId}/regenerate`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ prompt, category: selectedCat, styleKey: document.getElementById('style-sel').value, resolution: res })
-    });
-    const data = await resp.json();
+    const resp=await fetch(`/api/item/${batchId}/${itemId}/regenerate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,category:selectedCat,styleKey:document.getElementById('style-sel').value,bgOption:bg,resolution:res})});
+    const data=await resp.json();
     if(data.error) throw new Error(data.error);
-    if(!pollInterval) startPolling();
-    toast('Regenerating image...');
-  } catch(e){ toast(e.message,'error'); }
+    const type = batchId===currentBatchId?'model':'website';
+    if(!pollTimer&&type==='model') startPolling('model');
+    if(!webPollTimer&&type==='website') startPolling('website');
+    toast('Regenerating...');
+  } catch(e){ toast(e.message,'err'); }
 }
 
-// ── Batch edit modal ───────────────────────────────────────────────────
-function openBatchEditModal(){
-  document.getElementById('batch-edit-prompt').value = document.getElementById('global-prompt').value;
-  document.getElementById('modal-batch-edit').classList.add('open');
-}
-
-async function editBatch(){
-  const prompt = document.getElementById('batch-edit-prompt').value.trim();
-  if(!prompt) return toast('Enter a prompt','error');
+async function doEditBatch() {
+  const prompt=document.getElementById('be-prompt').value.trim();
+  if(!prompt){ toast('Enter a prompt','err'); return; }
   closeModal('modal-batch-edit');
-
   try {
-    const resp = await fetch(`/api/batch/${currentBatchId}/edit`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ globalPrompt: prompt, category: selectedCat, styleKey: document.getElementById('style-sel').value })
-    });
-    const data = await resp.json();
+    const resp=await fetch(`/api/batch/${currentBatchId}/edit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({globalPrompt:prompt,category:selectedCat,bgOption:document.getElementById('be-bg').value})});
+    const data=await resp.json();
     if(data.error) throw new Error(data.error);
-    document.getElementById('progress-wrap').style.display = 'block';
-    document.getElementById('zip-btn').disabled = true;
-    startPolling();
-    toast('Regenerating entire batch...');
-  } catch(e){ toast(e.message,'error'); }
+    document.getElementById('prog-wrap').style.display='block';
+    document.getElementById('zip-btn').disabled=true;
+    startPolling('model');
+    toast('Regenerating all...');
+  } catch(e){ toast(e.message,'err'); }
 }
 
-// ── Upscale ────────────────────────────────────────────────────────────
-async function upscaleItem(itemId){
+// ═══════════════════════════════════════════════════════════════════
+// Upscale
+// ═══════════════════════════════════════════════════════════════════
+async function upscaleItem(itemId) {
+  const batchId = currentBatchId||webBatchId;
   toast('Upscaling...');
   try {
-    const resp = await fetch(`/api/item/${currentBatchId}/${itemId}/upscale`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}
-    });
-    const data = await resp.json();
-    if(data.error) throw new Error(data.error);
-    // Update image in card
-    const card = document.getElementById(`rc-${itemId}`);
-    const img = card?.querySelector('img');
-    if(img && data.url){ img.src = data.url; toast('Upscaled!','success'); }
-  } catch(e){ toast(e.message,'error'); }
+    const r=await fetch(`/api/item/${batchId}/${itemId}/upscale`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}});
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    if(d.url) { const img=document.querySelector(`#rc-${itemId} img`); if(img) img.src=d.url; toast('Upscaled!','ok'); }
+  } catch(e){ toast(e.message,'err'); }
 }
 
-// ── ZIP download ───────────────────────────────────────────────────────
-function downloadZip(){
-  if(!currentBatchId) return;
-  window.location.href = `/api/batch/${currentBatchId}/zip`;
+// ═══════════════════════════════════════════════════════════════════
+// ZIP
+// ═══════════════════════════════════════════════════════════════════
+function downloadZip(type) {
+  const id = type==='website'?webBatchId:currentBatchId;
+  if(id) window.location.href=`/api/batch/${id}/zip`;
 }
 
-// ── Style library ──────────────────────────────────────────────────────
-async function loadStyles(){
+// ═══════════════════════════════════════════════════════════════════
+// Style library
+// ═══════════════════════════════════════════════════════════════════
+async function loadStyles() {
   if(!falKey) return;
   try {
-    const resp = await fetch('/api/styles',{headers:{'Authorization':`Key ${falKey}`}});
-    const styles = await resp.json();
-    renderStyleLib(styles);
+    const r=await fetch('/api/styles',{headers:{'Authorization':`Key ${falKey}`}});
+    const styles=await r.json();
+    const list=document.getElementById('slib-list');
+    if(!styles.length){ list.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">No saved styles</div>'; return; }
+    list.innerHTML=styles.map(s=>`<div class="slib-item" onclick="applyStyle('${s.name}','${s.styleKey||''}','${s.category||''}','${s.bgOption||'ai'}')"><span>${s.name}</span><button class="slib-del" onclick="event.stopPropagation();delStyle('${s.name}')">×</button></div>`).join('');
   } catch{}
 }
 
-function renderStyleLib(styles){
-  const el = document.getElementById('style-lib-list');
-  if(!styles.length){ el.innerHTML='<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">No saved styles yet</div>'; return; }
-  el.innerHTML = styles.map(s=>`
-    <div class="style-lib-item" onclick="applyStyle('${s.name}','${s.styleKey||''}','${s.category||''}')">
-      <span>${s.name}</span>
-      <button class="style-lib-del" onclick="event.stopPropagation();deleteStyle('${s.name}')">×</button>
-    </div>`).join('');
+function applyStyle(name,styleKey,category,bgOption) {
+  if(styleKey) document.getElementById('style-sel').value=styleKey;
+  if(category){ selectedCat=category; document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===category)); }
+  if(bgOption){ selectedBg=bgOption; document.querySelectorAll('.bg-tag').forEach(t=>t.classList.toggle('active',t.dataset.bg===bgOption)); }
+  toast(`Style "${name}" applied`,'ok');
 }
 
-function applyStyle(name, styleKey, category){
-  if(styleKey) document.getElementById('style-sel').value = styleKey;
-  if(category){
-    selectedCat = category;
-    document.querySelectorAll('.cat-btn').forEach(b=>{ b.classList.toggle('active', b.dataset.cat===category); });
-  }
-  toast(`Style "${name}" applied`,'success');
-}
-
-async function deleteStyle(name){
+async function delStyle(name) {
   if(!falKey) return;
-  await fetch(`/api/styles/${encodeURIComponent(name)}`,{ method:'DELETE', headers:{'Authorization':`Key ${falKey}`}});
+  await fetch(`/api/styles/${encodeURIComponent(name)}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});
   loadStyles();
 }
 
-function openSaveStyleModal(){
-  if(!falKey){ toast('Save your fal.ai key first','error'); return; }
-  document.getElementById('style-name-input').value='';
-  document.getElementById('modal-save-style').classList.add('open');
-}
-
-async function saveStyle(){
-  const name = document.getElementById('style-name-input').value.trim();
-  if(!name){ toast('Enter a style name','error'); return; }
-  const prompt = document.getElementById('global-prompt').value.trim();
-  const styleKey = document.getElementById('style-sel').value;
+async function doSaveStyle() {
+  const name=document.getElementById('ss-name').value.trim();
+  if(!name){ toast('Enter a name','err'); return; }
+  if(!falKey){ toast('Save your key first','err'); return; }
   closeModal('modal-save-style');
   try {
-    await fetch('/api/styles/save',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ name, prompt, styleKey, category: selectedCat })
-    });
-    toast(`Style "${name}" saved`,'success');
+    await fetch('/api/styles/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,prompt:document.getElementById('global-prompt').value.trim(),styleKey:document.getElementById('style-sel').value,category:selectedCat,bgOption:selectedBg,gender:document.getElementById('model-sel').value,realism:document.getElementById('realism-sel').value})});
+    toast(`Style "${name}" saved`,'ok');
     loadStyles();
-  } catch(e){ toast(e.message,'error'); }
+  } catch(e){ toast(e.message,'err'); }
 }
 
-// ── Modals ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// Modals & Toast
+// ═══════════════════════════════════════════════════════════════════
+function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-bg').forEach(m=>{ m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }); });
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 
-// ── Toast ──────────────────────────────────────────────────────────────
-function toast(msg, type=''){
-  const wrap = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  wrap.appendChild(el);
-  setTimeout(()=>el.remove(), 3500);
+function toast(msg,type='') {
+  const w=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.textContent=msg;
+  w.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
 }
 
-// ── Initial state ──────────────────────────────────────────────────────
+function resetBatch() { currentBatchId=null; modelFiles.length=0; refFiles.length=0; renderThumbs(modelFiles,'thumb-main'); renderThumbs(refFiles,'thumb-ref'); document.getElementById('btn-next1').disabled=true; updateCost(); updateReview(); if(pollTimer) clearInterval(pollTimer); }
+
+// Init
 goStep(1);
-document.getElementById('res-sel').addEventListener('change', updateCost);
+updateCost();
+updateWebCost();
 </script>
 </body>
 </html>
