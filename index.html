@@ -265,6 +265,21 @@ textarea::placeholder{color:var(--text3)}
       <option value="female">Female Model</option>
       <option value="male">Male Model</option>
     </select>
+    <div class="sidebar-label" style="margin-top:12px;margin-bottom:6px">Background</div>
+    <select class="style-select" id="bg-sel" style="margin-bottom:6px">
+      <option value="same">Keep same background</option>
+      <option value="white">Pure white studio</option>
+      <option value="studio">Grey studio gradient</option>
+      <option value="outdoor">Natural outdoor</option>
+      <option value="street">Urban / Street</option>
+      <option value="luxury">Luxury interior</option>
+    </select>
+    <div class="sidebar-label" style="margin-bottom:6px">Model Realism</div>
+    <select class="style-select" id="realism-sel" style="margin-bottom:6px">
+      <option value="ultra">Ultra realistic (default)</option>
+      <option value="editorial">Editorial / Fashion</option>
+      <option value="cinematic">Cinematic film look</option>
+    </select>
     <select class="style-select" id="res-sel" onchange="updateCost()">
       <option value="1K">1K Resolution — $0.08/image</option>
       <option value="2K">2K Resolution — $0.12/image</option>
@@ -586,7 +601,7 @@ function updateReview(){
   document.getElementById('cost-amount').textContent = `$${(count*rate).toFixed(2)}`;
   document.getElementById('cost-detail').textContent = `${count} image${count!==1?'s':''} × $${rate.toFixed(2)}`;
   document.getElementById('review-count').textContent = `${count} product${count!==1?'s':''}`;
-  document.getElementById('review-settings').textContent = `${selectedCat||'no category'} · ${res} · ${document.getElementById('style-sel').value||'no style'}`;
+  document.getElementById('review-settings').textContent = `${selectedCat||'no category'} · ${res} · bg: ${document.getElementById('bg-sel').value} · ${document.getElementById('style-sel').value||'no style'}`;
 
   const warnings = [];
   if(!falKey) warnings.push('<div style="color:var(--red);font-size:12px;margin-bottom:6px">⚠ fal.ai key not saved</div>');
@@ -617,6 +632,8 @@ async function startGeneration(){
   const globalPrompt = document.getElementById('global-prompt').value.trim();
   const styleKey = document.getElementById('style-sel').value;
   const gender = document.getElementById('model-sel').value;
+  const bgOption = document.getElementById('bg-sel').value;
+  const realismOption = document.getElementById('realism-sel').value;
   const resolution = document.getElementById('res-sel').value;
   const w = document.getElementById('img-w').value;
   const h = document.getElementById('img-h').value;
@@ -637,7 +654,7 @@ async function startGeneration(){
     const resp = await fetch('/api/batch/create', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ items, globalPrompt, promptMode, category: selectedCat, styleKey, resolution, width: parseInt(w)||768, height: parseInt(h)||1024 })
+      body: JSON.stringify({ items, globalPrompt, promptMode, category: selectedCat, styleKey, resolution, width: parseInt(w)||768, height: parseInt(h)||1024, bgOption, realismOption, gender })
     });
     const data = await resp.json();
     if(data.error) throw new Error(data.error);

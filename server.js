@@ -124,13 +124,51 @@ async function uploadBase64ToFal(base64, mimeType, auth) {
   return file_url;
 }
 
-function buildPrompt(userPrompt, category, styleKey, variant) {
+const BACKGROUND_HINTS = {
+  same:    '',
+  white:   'pure white seamless studio background',
+  outdoor: 'natural outdoor environment, realistic location',
+  studio:  'professional photography studio, soft gradient grey background',
+  street:  'urban street city background, realistic location',
+  luxury:  'luxury interior, marble floors, high-end boutique ambiance',
+};
+
+const REALISM_PRESETS = {
+  ultra: [
+    'shot on Sony A7R V', '85mm f/1.4 lens', 'natural skin texture with realistic pores',
+    'not AI generated', 'hyperrealistic photo', 'ultra sharp focus', 'natural lighting',
+    'professional commercial photography', 'award winning fashion editorial photo',
+    '8K resolution detail', 'subtle film grain', 'true to life skin tone',
+    'micro details on fabric', 'photo taken by professional photographer',
+    'does not look like AI image', 'genuine photographic quality',
+  ].join(', '),
+  editorial: [
+    'high fashion editorial photography', 'Vogue magazine quality', 'studio strobe lighting',
+    'professional retouching', 'ultra sharp', 'commercial fashion photo',
+  ].join(', '),
+  cinematic: [
+    'cinematic film photography', 'anamorphic lens flare', 'shallow depth of field',
+    'film color grading', 'natural bokeh', 'cinematic mood lighting', '35mm film look',
+  ].join(', '),
+};
+
+const GENDER_HINTS = {
+  female: 'female model, woman',
+  male:   'male model, man',
+};
+
+function buildPrompt(userPrompt, category, styleKey, variant, bgOption, gender, realismOption) {
   const catHint = CATEGORY_HINTS[category] || CATEGORY_HINTS.other;
   const styleHint = STYLE_ENHANCEMENTS[styleKey] || '';
-  const poseHint = variant === 2 ? 'three-quarter angle, dynamic pose' : 'front-facing, relaxed natural stance';
-  const extras = 'photorealistic, professional fashion photography, high resolution, sharp focus';
-  return [userPrompt, catHint, styleHint, poseHint, extras].filter(Boolean).join(', ');
+  const bgHint = BACKGROUND_HINTS[bgOption] || '';
+  const genderHint = GENDER_HINTS[gender] || '';
+  const poseHint = variant === 2
+    ? 'three-quarter angle, dynamic confident pose'
+    : 'front-facing, relaxed natural stance, full body visible';
+  const realismHint = REALISM_PRESETS[realismOption] || REALISM_PRESETS.ultra;
+  return [userPrompt, genderHint, catHint, styleHint, bgHint, poseHint, realismHint].filter(Boolean).join(', ');
 }
+
 
 // ── Background job processor ──────────────────────────────────────────
 async function processItem(batchId, itemId, auth) {
@@ -141,14 +179,9 @@ async function processItem(batchId, itemId, auth) {
 
   try {
     item.status = 'uploading';
-
-    // Upload image
     const imageUrl = await uploadBase64ToFal(item.base64, item.mimeType, auth);
-    item.imageUrl = null;
-
     item.status = 'generating';
 
-    // Submit to Nano Banana 2 edit
     const submitData = await falPost('/fal-ai/nano-banana-2/edit', {
       prompt: item.prompt,
       image_urls: [imageUrl],
@@ -162,28 +195,39 @@ async function processItem(batchId, itemId, auth) {
     if (!submitData.request_id) {
       const errMsg = Array.isArray(submitData.detail)
         ? submitData.detail.map(d => d.msg).join(', ')
-        : (submitData.detail || submitData.error || 'No request_id returned');
+        : (submitData.detail || submitData.error || JSON.stringify(submitData).slice(0, 200));
       throw new Error(errMsg);
     }
     item.requestId = submitData.request_id;
 
-    // Poll with 5-minute max
-    const maxAttempts = 100;
+    const maxAttempts = 120;
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise(r => setTimeout(r, 4000));
-      const status = await falGet(`/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`, auth);
+      const statusResp = await falGet('/fal-ai/nano-banana-2/edit/requests/' + item.requestId + '/status?logs=0', auth);
 
-      if (status.status === 'COMPLETED') {
-        const result = await falGet(`/fal-ai/nano-banana-2/edit/requests/${item.requestId}`, auth);
-        if (!result.images?.[0]?.url) throw new Error('No image in result');
-        item.resultUrl = result.images[0].url;
+      if (statusResp.status === 'COMPLETED') {
+        let imgUrl = (statusResp.output && statusResp.output.images && statusResp.output.images[0] && statusResp.output.images[0].url)
+          || (statusResp.images && statusResp.images[0] && statusResp.images[0].url);
+
+        if (!imgUrl) {
+          const resultResp = await falGet('/fal-ai/nano-banana-2/edit/requests/' + item.requestId, auth);
+          imgUrl = (resultResp.output && resultResp.output.images && resultResp.output.images[0] && resultResp.output.images[0].url)
+            || (resultResp.images && resultResp.images[0] && resultResp.images[0].url)
+            || (resultResp.image && resultResp.image.url);
+        }
+
+        if (!imgUrl) throw new Error('Completed but no image URL returned');
+        item.resultUrl = imgUrl;
         item.status = 'done';
         batch.completedCount = (batch.completedCount || 0) + 1;
         return;
       }
-      if (status.status === 'FAILED') throw new Error('Generation failed on fal.ai');
+
+      if (statusResp.status === 'FAILED') {
+        throw new Error(statusResp.error || 'Generation failed on fal.ai');
+      }
     }
-    throw new Error('Timed out after 5 minutes');
+    throw new Error('Timed out after 8 minutes');
 
   } catch (err) {
     item.status = 'error';
@@ -192,6 +236,7 @@ async function processItem(batchId, itemId, auth) {
   }
 }
 
+
 // ── Routes ────────────────────────────────────────────────────────────
 
 // Create batch job
@@ -199,7 +244,7 @@ app.post('/api/batch/create', async (req, res) => {
   const auth = req.headers['authorization'];
   if (!auth) return res.status(401).json({ error: 'Missing fal.ai key' });
 
-  const { items, globalPrompt, promptMode, category, styleKey, resolution, width, height } = req.body;
+  const { items, globalPrompt, promptMode, category, styleKey, resolution, width, height, bgOption, modelOption, gender, realismOption } = req.body;
   // items: [{id, name, base64, mimeType, prompt?}]
   if (!items?.length) return res.status(400).json({ error: 'No items provided' });
   if (items.length > 100) return res.status(400).json({ error: 'Max 100 products per batch' });
@@ -220,8 +265,15 @@ app.post('/api/batch/create', async (req, res) => {
         promptMode === 'individual' && it.prompt ? it.prompt : globalPrompt,
         category,
         styleKey,
-        1
+        1,
+        bgOption || 'same',
+        gender || 'female',
+        realismOption || 'ultra'
       ),
+      bgOption: bgOption || 'same',
+      modelOption: modelOption || 'different',
+      gender: gender || 'female',
+      realismOption: realismOption || 'ultra',
       aspectRatio,
       resolution: resolution || '1K',
       status: 'queued',
@@ -269,7 +321,7 @@ app.post('/api/item/:batchId/:itemId/regenerate', async (req, res) => {
   if (!item) return res.status(404).json({ error: 'Item not found' });
 
   const { prompt, category, styleKey, resolution, aspectRatio } = req.body;
-  if (prompt) item.prompt = buildPrompt(prompt, category || 'other', styleKey || '', 1);
+  if (prompt) item.prompt = buildPrompt(prompt, category || 'other', styleKey || '', 1, item.bgOption || 'same', item.gender || 'female', item.realismOption || 'ultra');
   if (resolution) item.resolution = resolution;
   if (aspectRatio) item.aspectRatio = aspectRatio;
 
@@ -294,7 +346,7 @@ app.post('/api/batch/:batchId/edit', async (req, res) => {
   batch.completedCount = 0;
   batch.status = 'processing';
   batch.items.forEach(item => {
-    item.prompt = buildPrompt(globalPrompt, category || 'other', styleKey || '', 1);
+    item.prompt = buildPrompt(globalPrompt, category || 'other', styleKey || '', 1, bgOption || 'same', item.gender || 'female', item.realismOption || 'ultra');
     if (resolution) item.resolution = resolution;
     item.status = 'queued';
     item.resultUrl = null;
