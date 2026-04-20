@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const app  = express();
 const PORT = process.env.PORT || 3456;
-app.use(express.json({ limit: '150mb' }));
+app.use(express.json({ limit: '200mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const jobs   = {};
@@ -28,7 +28,8 @@ const falGet  = (p,a)   => falRequest('GET', `https://queue.fal.run${p}`,a,null)
 
 async function uploadToFal(base64, mimeType, auth) {
   const init = await falRequest('POST','https://rest.alpha.fal.ai/storage/upload/initiate',auth,{
-    file_name:`img_${Date.now()}.jpg`, content_type:mimeType||'image/jpeg'
+    file_name:`img_${Date.now()}_${Math.random().toString(36).slice(2,7)}.jpg`,
+    content_type: mimeType||'image/jpeg'
   });
   if(!init.upload_url) throw new Error('fal upload initiate failed: '+JSON.stringify(init).slice(0,200));
   const buf = Buffer.from(base64,'base64');
@@ -37,59 +38,52 @@ async function uploadToFal(base64, mimeType, auth) {
   return init.file_url;
 }
 
-// Aspect ratio → NB2 valid string
-const NB2_RATIOS = {
-  '1:1':'1:1','4:5':'4:5','3:4':'3:4','2:3':'2:3','9:16':'9:16',
-  '4:3':'4:3','5:4':'5:4','3:2':'3:2','16:9':'16:9','21:9':'21:9',
-};
+const NB2_RATIOS = {'1:1':'1:1','4:5':'4:5','3:4':'3:4','2:3':'2:3','9:16':'9:16','4:3':'4:3','5:4':'5:4','3:2':'3:2','16:9':'16:9','21:9':'21:9'};
 function toNBRatio(ar) { return NB2_RATIOS[ar]||'3:4'; }
 
-// ── Prompt engineering ────────────────────────────────────────────────
+// ── Prompt engineering ─────────────────────────────────────────────────
 const CAT_HINTS = {
-  sunglasses:'person wearing sunglasses, face visible',
+  sunglasses:'person wearing the sunglasses, face clearly visible',
   bags:'person holding or wearing the bag elegantly',
   shirts:'person wearing the shirt',
-  dresses:'person wearing the dress, full body',
-  shoes:'person wearing the shoes, full body including feet',
-  watches:'person wearing the watch on wrist',
+  dresses:'person wearing the dress, full body visible',
+  shoes:'person wearing the shoes, full body including feet visible',
+  watches:'person wearing the watch on wrist, wrist detail visible',
   jackets:'person wearing the jacket, full body',
   pants:'person wearing the pants, full body',
-  jewelry:'person wearing the jewelry, close detail',
+  jewelry:'person wearing the jewelry, close detail visible',
   hats:'person wearing the hat',
   other:'person wearing or holding the product',
 };
-
 const STYLE_HINTS = {
   editorial:'high fashion editorial, Vogue magazine, dramatic studio lighting, high contrast',
   street:'street style, urban outdoor, candid, real environment',
-  luxury:'luxury fashion, elegant, soft dramatic lighting, high-end',
-  ecommerce:'clean ecommerce, white background, neutral lighting',
+  luxury:'luxury fashion, elegant, soft dramatic lighting, high-end aesthetic',
+  ecommerce:'clean ecommerce, neutral lighting, product-focused',
   lifestyle:'lifestyle photography, casual, natural golden hour, outdoor',
-  minimal:'minimalist, clean neutral background, soft light',
-  athletic:'athletic lifestyle, sport, dynamic action',
-  bohemian:'bohemian, earthy tones, natural textures, relaxed',
-  formal:'formal professional, corporate, polished',
-  vintage:'vintage, retro color grade, film photography',
-  streetwear:'streetwear, urban, graffiti, youthful energy',
-  haute:'haute couture, avant-garde, artistic fashion',
+  minimal:'minimalist, clean neutral background, soft diffused light',
+  athletic:'athletic lifestyle, sport, dynamic action photography',
+  bohemian:'bohemian, earthy tones, natural textures, relaxed vibe',
+  formal:'formal professional, corporate setting, polished',
+  vintage:'vintage aesthetic, retro color grade, film photography look',
+  streetwear:'streetwear, urban, graffiti backdrop, youthful energy',
+  haute:'haute couture, avant-garde, artistic fashion photography',
 };
-
 const BG_HINTS = {
   ai:'',
   white:'pure white seamless studio background',
   grey:'professional grey seamless studio background, soft gradient',
-  lightgrey:'very light grey seamless background, near white',
+  lightgrey:'very light grey seamless background, near-white',
   black:'dramatic black studio background',
-  outdoor:'natural outdoor environment, realistic location',
-  street:'urban street city sidewalk, realistic environment',
-  luxury:'luxury interior, marble floors, upscale boutique',
-  beach:'tropical beach, golden sand, ocean in distance',
+  outdoor:'natural outdoor environment, realistic location, natural light',
+  street:'urban street city sidewalk, realistic city environment',
+  luxury:'luxury interior, marble floors, upscale boutique ambiance',
+  beach:'tropical beach, golden sand, ocean in background',
   forest:'lush green forest, dappled natural light',
-  studio:'photography studio, soft box lighting setup',
-  minimal_bg:'minimal gradient background, soft colors',
+  studio:'professional photography studio, soft box lighting setup',
+  minimal_bg:'minimal gradient background, soft subtle colors',
   custom:'',
 };
-
 const SHOT_PROMPTS = {
   front:       'front-facing pose, full body visible, facing camera directly, relaxed natural stance',
   back:        'back view, model facing away from camera, full body rear shot, elegant back pose',
@@ -102,56 +96,42 @@ const SHOT_PROMPTS = {
   hands:       'hands and wrist detail shot, close-up of hands holding or wearing the item',
   flat_lay:    'flat lay product photo, product laid flat on clean surface, overhead aerial view, no model',
   mannequin:   'product on invisible ghost mannequin, clothing floating, no visible model',
-  alone_white: 'product alone on pure white background, no model, professional product shot, clean commercial',
+  alone_white: 'product alone on pure white background, no model, professional product shot',
   alone_grey:  'product alone on grey background, no model, professional product photography',
   alone_natural:'product alone on natural wooden surface, lifestyle product shot, no model',
   lookbook:    'lookbook style, fashion editorial, lifestyle setting, storytelling composition',
   street_life: 'real street background, candid urban lifestyle, city life, authentic environment',
 };
-
 const REALISM_HINTS = {
-  ultra:[
-    'shot on Hasselblad H6D-100c','110mm f/2.2 lens','natural skin texture with realistic pores',
-    'micro fabric detail visible','does NOT look AI generated','hyperrealistic photograph',
-    'indistinguishable from real photo','ultra sharp focus','professional commercial photographer',
-    'award-winning fashion photography','subtle natural film grain','true-to-life skin tones',
-    'realistic subsurface skin scattering','photographic realism',
-  ].join(', '),
-  editorial:[
-    'high fashion editorial','Vogue quality retouching','professional strobe studio lighting',
-    'ultra sharp','commercial grade','world-class photographer',
-  ].join(', '),
-  cinematic:[
-    'cinematic film look','anamorphic bokeh','shallow depth of field f/1.4',
-    'Kodak film color grade','natural lens flare','ARRI Alexa cinema quality',
-  ].join(', '),
-  raw:[
-    'raw unretouched photo','documentary photography','natural ambient light',
-    'candid authentic look','film reportage style','Leica street photography',
-  ].join(', '),
+  ultra:['shot on Hasselblad H6D-100c','110mm f/2.2 lens','natural skin texture with realistic pores','micro fabric detail visible','does NOT look AI generated','hyperrealistic photograph','indistinguishable from real photo','ultra sharp focus','professional commercial photographer','award-winning fashion photography','subtle natural film grain','true-to-life skin tones','realistic subsurface skin scattering','photographic realism'].join(', '),
+  editorial:['high fashion editorial','Vogue quality retouching','professional strobe studio lighting','ultra sharp','commercial grade','world-class photographer'].join(', '),
+  cinematic:['cinematic film look','anamorphic bokeh','shallow depth of field f/1.4','Kodak film color grade','natural lens flare','ARRI Alexa cinema quality'].join(', '),
+  raw:['raw unretouched photo','documentary photography','natural ambient light','candid authentic look','film reportage style','Leica street photography'].join(', '),
 };
+const GENDER_HINTS = { female:'beautiful female model, woman', male:'handsome male model, man', neutral:'androgynous model' };
 
-const GENDER_HINTS = { female:'beautiful female model, woman', male:'handsome male model, man', neutral:'androgynous model, non-binary' };
-
+// modelDesc = freeform model description to lock consistency
+// modelDesc example: "tall woman, olive skin, long straight black hair, barefoot"
 function buildModelPrompt(userPrompt, shot, opts={}) {
-  const { category='other', styleKey='', bgOption='ai', bgCustom='', gender='female', realism='ultra' } = opts;
-  const shotHint  = SHOT_PROMPTS[shot] || SHOT_PROMPTS.front;
-  const catHint   = CAT_HINTS[category] || CAT_HINTS.other;
-  const styleHint = STYLE_HINTS[styleKey] || '';
-  const bgHint    = bgOption==='custom' ? bgCustom : (BG_HINTS[bgOption]||'');
-  const genHint   = GENDER_HINTS[gender] || GENDER_HINTS.female;
-  const realHint  = REALISM_HINTS[realism] || REALISM_HINTS.ultra;
-  return [userPrompt, genHint, catHint, shotHint, styleHint, bgHint, realHint].filter(Boolean).join(', ');
+  const { category='other', styleKey='', bgOption='ai', bgCustom='', gender='female', realism='ultra', modelDesc='' } = opts;
+  const parts = [
+    userPrompt,
+    modelDesc || (GENDER_HINTS[gender]||GENDER_HINTS.female),
+    CAT_HINTS[category]||CAT_HINTS.other,
+    SHOT_PROMPTS[shot]||SHOT_PROMPTS.front,
+    STYLE_HINTS[styleKey]||'',
+    bgOption==='custom' ? bgCustom : (BG_HINTS[bgOption]||''),
+    REALISM_HINTS[realism]||REALISM_HINTS.ultra,
+  ];
+  return parts.filter(Boolean).join(', ');
 }
 
 function buildProductPhotoPrompt(userPrompt, shot, opts={}) {
   const { bgOption='white', bgCustom='' } = opts;
-  const shotHint = SHOT_PROMPTS[shot] || SHOT_PROMPTS.front;
-  const bgHint = bgOption==='custom' ? bgCustom : (BG_HINTS[bgOption]||BG_HINTS.white);
   return [
     userPrompt||'professional product photo',
-    shotHint,
-    bgHint,
+    SHOT_PROMPTS[shot]||SHOT_PROMPTS.alone_white,
+    bgOption==='custom' ? bgCustom : (BG_HINTS[bgOption]||BG_HINTS.white),
     'no model, product only',
     'shot on Phase One XT camera, 120mm macro lens',
     'perfect studio lighting with soft boxes',
@@ -160,7 +140,7 @@ function buildProductPhotoPrompt(userPrompt, shot, opts={}) {
   ].filter(Boolean).join(', ');
 }
 
-// ── Job processor ─────────────────────────────────────────────────────
+// ── Job processor ──────────────────────────────────────────────────────
 async function processItem(batchId, itemId, auth) {
   const batch = jobs[batchId];
   if(!batch) return;
@@ -168,15 +148,37 @@ async function processItem(batchId, itemId, auth) {
   if(!item) return;
   try {
     item.status='uploading';
-    const imageUrl = await uploadToFal(item.base64, item.mimeType, auth);
-    const refUrls  = [];
-    if(item.refImages?.length) {
-      for(const ref of item.refImages) refUrls.push(await uploadToFal(ref.base64,ref.mimeType,auth));
+
+    // Upload ALL product images for this product group
+    const productUrls = [];
+    for(const img of item.productImages) {
+      productUrls.push(await uploadToFal(img.base64, img.mimeType, auth));
     }
+
+    // Upload model reference if present
+    const modelRefUrls = [];
+    if(item.modelRefImages?.length) {
+      for(const ref of item.modelRefImages) {
+        modelRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
+      }
+    }
+
+    // Upload style reference images
+    const styleRefUrls = [];
+    if(item.styleRefImages?.length) {
+      for(const ref of item.styleRefImages) {
+        styleRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
+      }
+    }
+
+    // Order: product images first, then model refs, then style refs
+    // This gives the AI full product context + model lock + style guide
+    const allImageUrls = [...productUrls, ...modelRefUrls, ...styleRefUrls];
+
     item.status='generating';
     const submitData = await falPost('/fal-ai/nano-banana-2/edit', {
       prompt: item.prompt,
-      image_urls: [imageUrl,...refUrls],
+      image_urls: allImageUrls,
       num_images: 1,
       aspect_ratio: toNBRatio(item.aspectRatio||'3:4'),
       output_format: 'jpeg',
@@ -194,20 +196,14 @@ async function processItem(batchId, itemId, auth) {
     item.statusUrl   = submitData.status_url;
     item.responseUrl = submitData.response_url;
 
-    // Poll
     for(let i=0;i<150;i++) {
       await new Promise(r=>setTimeout(r,4000));
-      const statusPath = item.statusUrl
-        ? item.statusUrl.replace('https://queue.fal.run','')
-        : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
-      const st = await falGet(statusPath, auth);
+      const sp = item.statusUrl ? item.statusUrl.replace('https://queue.fal.run','') : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
+      const st = await falGet(sp, auth);
       if(st.status==='COMPLETED') {
-        const resultPath = item.responseUrl
-          ? item.responseUrl.replace('https://queue.fal.run','')
-          : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
-        const res = await falGet(resultPath, auth);
-        const url = res?.images?.[0]?.url || res?.output?.images?.[0]?.url
-          || res?.image?.url || res?.output?.image?.url || res?.data?.images?.[0]?.url;
+        const rp = item.responseUrl ? item.responseUrl.replace('https://queue.fal.run','') : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
+        const res = await falGet(rp, auth);
+        const url = res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url||res?.output?.image?.url||res?.data?.images?.[0]?.url;
         if(!url) throw new Error('COMPLETED but no image URL: '+JSON.stringify(res).slice(0,200));
         item.resultUrl=url; item.status='done';
         batch.completedCount=(batch.completedCount||0)+1;
@@ -226,77 +222,72 @@ async function processItem(batchId, itemId, auth) {
 function runBatch(batchId, auth, concurrency=3) {
   const queue = [...jobs[batchId].items.filter(i=>i.status==='queued')];
   const runNext = async()=>{ const item=queue.shift(); if(!item)return; await processItem(batchId,item.id,auth); await runNext(); };
-  const workers = Array.from({length:Math.min(concurrency,queue.length)},runNext);
-  Promise.all(workers).then(()=>{ if(jobs[batchId]) jobs[batchId].status='done'; });
+  Promise.all(Array.from({length:Math.min(concurrency,queue.length||1)},runNext))
+    .then(()=>{ if(jobs[batchId]) jobs[batchId].status='done'; });
 }
 
-// ── Routes ────────────────────────────────────────────────────────────
+// ── Routes ─────────────────────────────────────────────────────────────
 app.post('/api/batch/create', async(req,res)=>{
   const auth=req.headers['authorization'];
   if(!auth) return res.status(401).json({error:'Missing key'});
-  const { type='model', items, globalPrompt, promptMode,
-    category, styleKey, bgOption, bgMode, bgCustom, globalBgPrompts,
+
+  const {
+    type='model',
+    products,          // NEW: array of product groups [{name, images:[{base64,mimeType}], prompt}]
+    globalPrompt, promptMode,
+    category, styleKey, bgOption, bgCustom, bgMode,
     gender, realism, resolution, aspectRatio,
-    shots, // array of shot config objects [{type, bg, bgCustom, label}]
+    modelDesc,         // NEW: model lock description string
+    modelRefImages,    // NEW: [{base64,mimeType}] — model reference photos
+    styleRefImages,    // NEW: [{base64,mimeType}] — style reference photos
+    shots,             // shot planner array
   } = req.body;
 
-  if(!items?.length) return res.status(400).json({error:'No items'});
-  if(items.length>100) return res.status(400).json({error:'Max 100 products'});
+  if(!products?.length) return res.status(400).json({error:'No products'});
+  if(products.length>100) return res.status(400).json({error:'Max 100 products'});
 
   const batchId = uuidv4();
   const builtItems = [];
 
-  for(const it of items) {
-    const perPrompt = promptMode==='individual'&&it.prompt ? it.prompt : globalPrompt;
+  // Pre-build shared refs (model lock + style refs) — same for every item
+  const sharedModelRefs = modelRefImages||[];
+  const sharedStyleRefs = styleRefImages||[];
 
-    if(shots&&shots.length) {
-      // Shot planner mode — one item per shot per product
-      for(const shot of shots) {
-        const itemBg = shot.bg||bgOption||'ai';
-        const itemBgCustom = shot.bgCustom||bgCustom||'';
-        const prompt = type==='website'
-          ? buildProductPhotoPrompt(perPrompt||shot.customPrompt, shot.shotType||'front', {bgOption:itemBg,bgCustom:itemBgCustom})
-          : buildModelPrompt(perPrompt||(shot.customPrompt||''), shot.shotType||'front', {category,styleKey:shot.styleKey||styleKey,bgOption:itemBg,bgCustom:itemBgCustom,gender,realism});
-        builtItems.push({
-          id:uuidv4(),
-          name:`${it.name||'product'} — ${shot.label||shot.shotType}`,
-          originalName:it.name||'product',
-          shotType:shot.shotType,
-          shotLabel:shot.label||shot.shotType,
-          base64:it.base64,
-          mimeType:it.mimeType||'image/jpeg',
-          refImages:it.refImages||[],
-          prompt,
-          aspectRatio:shot.aspectRatio||aspectRatio||'3:4',
-          resolution:shot.resolution||resolution||'1K',
-          status:'queued',
-          requestId:null,
-          resultUrl:null,
-          error:null,
-        });
-      }
-    } else {
-      // Legacy mode — single shot per product
-      const bg = bgOption||'ai';
+  for(const prod of products) {
+    const perPrompt = (promptMode==='individual'&&prod.prompt) ? prod.prompt : globalPrompt;
+
+    const shotList = (shots&&shots.length) ? shots : [{shotType:'front', label:'Front', bg:bgOption||'ai', bgCustom:bgCustom||'', aspectRatio:aspectRatio||'3:4', styleKey:'', customPrompt:''}];
+
+    for(const shot of shotList) {
+      const itemBg = shot.bg||bgOption||'ai';
+      const itemBgC = shot.bgCustom||bgCustom||'';
+      const shotPromptExtra = shot.customPrompt ? ', '+shot.customPrompt : '';
+
       const prompt = type==='website'
-        ? buildProductPhotoPrompt(perPrompt,'front',{bgOption:bg,bgCustom:bgCustom||''})
-        : buildModelPrompt(perPrompt,'front',{category,styleKey,bgOption:bg,bgCustom:bgCustom||'',gender,realism});
+        ? buildProductPhotoPrompt((perPrompt||'')+shotPromptExtra, shot.shotType||'front', {bgOption:itemBg, bgCustom:itemBgC})
+        : buildModelPrompt((perPrompt||'')+shotPromptExtra, shot.shotType||'front', {
+            category, styleKey:shot.styleKey||styleKey,
+            bgOption:itemBg, bgCustom:itemBgC,
+            gender, realism, modelDesc:modelDesc||''
+          });
+
       builtItems.push({
-        id:uuidv4(),
-        name:it.name||'product',
-        originalName:it.name||'product',
-        base64:it.base64,
-        mimeType:it.mimeType||'image/jpeg',
-        refImages:it.refImages||[],
+        id: uuidv4(),
+        name: shots?.length ? `${prod.name} — ${shot.label||shot.shotType}` : prod.name,
+        productName: prod.name,
+        shotLabel: shot.label||shot.shotType,
+        productImages: prod.images,          // all angles of this product
+        modelRefImages: sharedModelRefs,     // model lock refs
+        styleRefImages: sharedStyleRefs,     // style refs
         prompt,
-        aspectRatio:aspectRatio||'3:4',
-        resolution:resolution||'1K',
-        status:'queued',requestId:null,resultUrl:null,error:null,
+        aspectRatio: shot.aspectRatio||aspectRatio||'3:4',
+        resolution: shot.resolution||resolution||'1K',
+        status:'queued', requestId:null, resultUrl:null, error:null,
       });
     }
   }
 
-  jobs[batchId]={ type, status:'processing', created:Date.now(), completedCount:0, items:builtItems };
+  jobs[batchId] = { type, status:'processing', created:Date.now(), completedCount:0, items:builtItems };
   res.json({ batchId, total:builtItems.length });
   runBatch(batchId, auth, 3);
 });
@@ -304,41 +295,44 @@ app.post('/api/batch/create', async(req,res)=>{
 app.get('/api/batch/:id/status',(req,res)=>{
   const b=jobs[req.params.id];
   if(!b) return res.status(404).json({error:'Not found'});
-  res.json({ status:b.status, type:b.type, total:b.items.length, completed:b.completedCount||0,
-    items:b.items.map(({id,name,originalName,shotType,shotLabel,status,resultUrl,error})=>({id,name,originalName,shotType,shotLabel,status,resultUrl,error})) });
+  res.json({
+    status:b.status, type:b.type, total:b.items.length, completed:b.completedCount||0,
+    items:b.items.map(({id,name,productName,shotLabel,status,resultUrl,error,aspectRatio})=>
+      ({id,name,productName,shotLabel,status,resultUrl,error,aspectRatio}))
+  });
 });
 
 app.post('/api/item/:bid/:iid/regenerate',async(req,res)=>{
   const auth=req.headers['authorization'];
   if(!auth) return res.status(401).json({error:'Missing key'});
-  const b=jobs[req.params.bid]; if(!b) return res.status(404).json({error:'Batch not found'});
-  const item=b.items.find(i=>i.id===req.params.iid); if(!item) return res.status(404).json({error:'Item not found'});
-  const {prompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,aspectRatio,shotType}=req.body;
+  const b=jobs[req.params.bid]; if(!b) return res.status(404).json({error:'Not found'});
+  const item=b.items.find(i=>i.id===req.params.iid); if(!item) return res.status(404).json({error:'Not found'});
+  const {prompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,aspectRatio,shotType,modelDesc}=req.body;
   if(prompt) item.prompt = b.type==='website'
-    ? buildProductPhotoPrompt(prompt,shotType||item.shotType||'front',{bgOption:bgOption||item.bgOption||'white',bgCustom:bgCustom||''})
-    : buildModelPrompt(prompt,shotType||item.shotType||'front',{category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra'});
+    ? buildProductPhotoPrompt(prompt, shotType||'front', {bgOption:bgOption||'white',bgCustom:bgCustom||''})
+    : buildModelPrompt(prompt, shotType||'front', {category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra',modelDesc:modelDesc||''});
   if(resolution) item.resolution=resolution;
   if(aspectRatio) item.aspectRatio=aspectRatio;
   item.status='queued'; item.resultUrl=null; item.error=null;
   res.json({ok:true});
-  processItem(req.params.bid,item.id,auth);
+  processItem(req.params.bid, item.id, auth);
 });
 
 app.post('/api/batch/:id/edit',async(req,res)=>{
   const auth=req.headers['authorization'];
   if(!auth) return res.status(401).json({error:'Missing key'});
   const b=jobs[req.params.id]; if(!b) return res.status(404).json({error:'Not found'});
-  const {globalPrompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution}=req.body;
+  const {globalPrompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,modelDesc}=req.body;
   b.completedCount=0; b.status='processing';
   b.items.forEach(item=>{
     if(globalPrompt) item.prompt = b.type==='website'
       ? buildProductPhotoPrompt(globalPrompt,item.shotType||'front',{bgOption:bgOption||'white',bgCustom:bgCustom||''})
-      : buildModelPrompt(globalPrompt,item.shotType||'front',{category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra'});
+      : buildModelPrompt(globalPrompt,item.shotType||'front',{category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra',modelDesc:modelDesc||''});
     if(resolution) item.resolution=resolution;
     item.status='queued'; item.resultUrl=null; item.error=null;
   });
   res.json({ok:true});
-  runBatch(req.params.id,auth,3);
+  runBatch(req.params.id, auth, 3);
 });
 
 app.post('/api/item/:bid/:iid/upscale',async(req,res)=>{
@@ -360,7 +354,7 @@ app.post('/api/item/:bid/:iid/upscale',async(req,res)=>{
       if(s.status==='FAILED') throw new Error('Upscale failed');
     }
     throw new Error('Upscale timed out');
-  } catch(e){res.status(500).json({error:e.message});}
+  }catch(e){res.status(500).json({error:e.message});}
 });
 
 app.get('/api/batch/:id/zip',async(req,res)=>{
@@ -370,7 +364,7 @@ app.get('/api/batch/:id/zip',async(req,res)=>{
   res.setHeader('Content-Disposition',`attachment; filename="fashion-ai-${req.params.id.slice(0,8)}.zip"`);
   const archive=archiver('zip',{zlib:{level:6}}); archive.pipe(res);
   for(const item of done){
-    try{ const r=await fetch(item.resultUrl); archive.append(await r.buffer(),{name:`${item.name.replace(/[^a-z0-9_-]/gi,'_')}.jpg`}); }catch{}
+    try{const r=await fetch(item.resultUrl);archive.append(await r.buffer(),{name:`${item.name.replace(/[^a-z0-9_\-]/gi,'_')}.jpg`});}catch{}
   }
   await archive.finalize();
 });
