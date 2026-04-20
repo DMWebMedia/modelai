@@ -945,30 +945,29 @@ function confirmGrp(){
 
 function renderGroups(ctx){
   const listId={m:'m-groups',w:'w-groups',p:'p-groups'}[ctx];
-  const emptyId={m:'m-nogrp',w:'w-nogrp',p:'p-nogrp'}[ctx];
   const cntId={m:'m-gcnt',w:'w-gcnt',p:'p-gcnt'}[ctx];
   const list=document.getElementById(listId);
   if(!list)return;
-  const empty=document.getElementById(emptyId);
-  if(!groups[ctx].length){list.innerHTML='';list.appendChild(empty);empty.style.display='block';return;}
-  empty.style.display='none';
-  document.getElementById(cntId).textContent=groups[ctx].length+' products';
-  const wrap=document.createElement('div');wrap.className='groups-wrap';
-  groups[ctx].forEach((g,gi)=>{
-    const gc=document.createElement('div');gc.className='gc';
+  if(!groups[ctx].length){
+    list.innerHTML='<div class="no-groups">No products yet — select images above and click "Group as Product"</div>';
+    return;
+  }
+  const cntEl=document.getElementById(cntId);
+  if(cntEl)cntEl.textContent=groups[ctx].length+' products';
+  list.innerHTML=groups[ctx].map((g,gi)=>{
     const imgs=g.images.map((im,ii)=>`<div class="gi"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gidel" onclick="delGrpImg('${ctx}',${gi},${ii})">×</button></div>`).join('');
-    gc.innerHTML=`<div class="gc-hd">
-      <div class="gc-num">${gi+1}</div>
-      <input class="gc-name" value="${g.name}" onchange="groups['${ctx}'][${gi}].name=this.value"/>
-      <button class="gc-del" onclick="delGrp('${ctx}',${gi})">✕</button>
-    </div>
-    <div class="gc-body">
-      <div class="gc-imgs">${imgs}</div>
-      <div class="gc-info">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
+    return `<div class="gc">
+      <div class="gc-hd">
+        <div class="gc-num">${gi+1}</div>
+        <input class="gc-name" value="${g.name.replace(/"/g,'&quot;')}" onchange="groups['${ctx}'][${gi}].name=this.value"/>
+        <button class="gc-del" onclick="delGrp('${ctx}',${gi})">✕</button>
+      </div>
+      <div class="gc-body">
+        <div class="gc-imgs">${imgs}</div>
+        <div class="gc-info">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
+      </div>
     </div>`;
-    wrap.appendChild(gc);
-  });
-  list.innerHTML='';list.appendChild(wrap);
+  }).join('');
   afterGrpChange(ctx);
 }
 
