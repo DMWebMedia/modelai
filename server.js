@@ -14,7 +14,7 @@ const jobs   = {};
 const STYLES = {};
 setInterval(() => { const c=Date.now()-3*60*60*1000; for(const id of Object.keys(jobs)){if(jobs[id].created<c)delete jobs[id];} }, 30*60*1000);
 
-// ── fal.ai helpers ────────────────────────────────────────────────────
+// ── fal.ai helpers ─────────────────────────────────────────────────────
 async function falRequest(method, url, auth, body) {
   const opts = { method, headers:{ Authorization:auth, 'Content-Type':'application/json' } };
   if(body) opts.body = JSON.stringify(body);
@@ -38,10 +38,17 @@ async function uploadToFal(base64, mimeType, auth) {
   return init.file_url;
 }
 
+// Upload a remote URL to fal storage (used for model-lock: first shot result → subsequent shots)
+async function uploadUrlToFal(remoteUrl, auth) {
+  // fal already hosts its own output URLs — we can use them directly as image_urls
+  // no re-upload needed, just return the URL as-is
+  return remoteUrl;
+}
+
 const NB2_RATIOS = {'1:1':'1:1','4:5':'4:5','3:4':'3:4','2:3':'2:3','9:16':'9:16','4:3':'4:3','5:4':'5:4','3:2':'3:2','16:9':'16:9','21:9':'21:9'};
 function toNBRatio(ar) { return NB2_RATIOS[ar]||'3:4'; }
 
-// ── Prompt engineering ─────────────────────────────────────────────────
+// ── Prompt engineering ──────────────────────────────────────────────────
 const CAT_HINTS = {
   sunglasses:'person wearing the sunglasses, face clearly visible',
   bags:'person holding or wearing the bag elegantly',
@@ -70,8 +77,7 @@ const STYLE_HINTS = {
   haute:'haute couture, avant-garde, artistic fashion photography',
 };
 const BG_HINTS = {
-  ai:'',
-  white:'pure white seamless studio background',
+  ai:'', white:'pure white seamless studio background',
   grey:'professional grey seamless studio background, soft gradient',
   lightgrey:'very light grey seamless background, near-white',
   black:'dramatic black studio background',
@@ -85,22 +91,22 @@ const BG_HINTS = {
   custom:'',
 };
 const SHOT_PROMPTS = {
-  front:       'front-facing pose, full body visible, facing camera directly, relaxed natural stance',
-  back:        'back view, model facing away from camera, full body rear shot, elegant back pose',
-  side:        'side profile view, model facing sideways, full body side shot',
-  detail:      'close-up detail shot, extreme close-up of the product, fabric texture visible, macro detail',
-  face:        'portrait shot, head and shoulders, face and upper body, close-up portrait',
-  sitting:     'model sitting down, seated pose, relaxed sitting position',
-  walking:     'walking pose, mid-stride dynamic walk, motion and energy',
-  dynamic:     'dynamic action pose, movement, energy, fashion editorial dynamic',
-  hands:       'hands and wrist detail shot, close-up of hands holding or wearing the item',
-  flat_lay:    'flat lay product photo, product laid flat on clean surface, overhead aerial view, no model',
-  mannequin:   'product on invisible ghost mannequin, clothing floating, no visible model',
-  alone_white: 'product alone on pure white background, no model, professional product shot',
-  alone_grey:  'product alone on grey background, no model, professional product photography',
+  front:        'front-facing pose, full body visible, facing camera directly, relaxed natural stance',
+  back:         'back view, model facing away from camera, full body rear shot, elegant back pose',
+  side:         'side profile view, model facing sideways, full body side shot',
+  detail:       'close-up detail shot, extreme close-up of the product, fabric texture visible, macro detail',
+  face:         'portrait shot, head and shoulders, face and upper body, close-up portrait',
+  sitting:      'model sitting down, seated pose, relaxed sitting position',
+  walking:      'walking pose, mid-stride dynamic walk, motion and energy',
+  dynamic:      'dynamic action pose, movement, energy, fashion editorial dynamic',
+  hands:        'hands and wrist detail shot, close-up of hands holding or wearing the item',
+  flat_lay:     'flat lay product photo, product laid flat on clean surface, overhead aerial view, no model',
+  mannequin:    'product on invisible ghost mannequin, clothing floating, no visible model',
+  alone_white:  'product alone on pure white background, no model, professional product shot',
+  alone_grey:   'product alone on grey background, no model, professional product photography',
   alone_natural:'product alone on natural wooden surface, lifestyle product shot, no model',
-  lookbook:    'lookbook style, fashion editorial, lifestyle setting, storytelling composition',
-  street_life: 'real street background, candid urban lifestyle, city life, authentic environment',
+  lookbook:     'lookbook style, fashion editorial, lifestyle setting, storytelling composition',
+  street_life:  'real street background, candid urban lifestyle, city life, authentic environment',
 };
 const REALISM_HINTS = {
   ultra:['shot on Hasselblad H6D-100c','110mm f/2.2 lens','natural skin texture with realistic pores','micro fabric detail visible','does NOT look AI generated','hyperrealistic photograph','indistinguishable from real photo','ultra sharp focus','professional commercial photographer','award-winning fashion photography','subtle natural film grain','true-to-life skin tones','realistic subsurface skin scattering','photographic realism'].join(', '),
@@ -110,13 +116,15 @@ const REALISM_HINTS = {
 };
 const GENDER_HINTS = { female:'beautiful female model, woman', male:'handsome male model, man', neutral:'androgynous model' };
 
-// modelDesc = freeform model description to lock consistency
-// modelDesc example: "tall woman, olive skin, long straight black hair, barefoot"
+// MODEL LOCK PROMPT — injected into shots 2+ when we have shot 1's output as anchor
+const MODEL_LOCK_PROMPT = 'EXACT SAME MODEL as the reference photo, identical person, same face same skin tone same hair color same hair length same body type, only the pose and angle changes, do not change the model appearance in any way';
+
 function buildModelPrompt(userPrompt, shot, opts={}) {
-  const { category='other', styleKey='', bgOption='ai', bgCustom='', gender='female', realism='ultra', modelDesc='' } = opts;
+  const { category='other', styleKey='', bgOption='ai', bgCustom='', gender='female', realism='ultra', modelDesc='', isLockedShot=false } = opts;
   const parts = [
     userPrompt,
-    modelDesc || (GENDER_HINTS[gender]||GENDER_HINTS.female),
+    // If this is a follow-up locked shot, use the lock prompt instead of model desc
+    isLockedShot ? MODEL_LOCK_PROMPT : (modelDesc || (GENDER_HINTS[gender]||GENDER_HINTS.female)),
     CAT_HINTS[category]||CAT_HINTS.other,
     SHOT_PROMPTS[shot]||SHOT_PROMPTS.front,
     STYLE_HINTS[styleKey]||'',
@@ -140,149 +148,228 @@ function buildProductPhotoPrompt(userPrompt, shot, opts={}) {
   ].filter(Boolean).join(', ');
 }
 
-// ── Job processor ──────────────────────────────────────────────────────
+// ── Core generation function ────────────────────────────────────────────
+// Returns the result URL, throws on failure
+async function generate(item, auth, extraImageUrls=[]) {
+  item.status = 'uploading';
+
+  // Upload all product images
+  const productUrls = [];
+  for(const img of item.productImages) {
+    productUrls.push(await uploadToFal(img.base64, img.mimeType, auth));
+  }
+
+  // Upload model ref images (manually uploaded, if any)
+  const modelRefUrls = [];
+  if(item.modelRefImages?.length) {
+    for(const ref of item.modelRefImages) {
+      modelRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
+    }
+  }
+
+  // Upload style ref images
+  const styleRefUrls = [];
+  if(item.styleRefImages?.length) {
+    for(const ref of item.styleRefImages) {
+      styleRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
+    }
+  }
+
+  // extraImageUrls = auto model-lock URLs (previous shot outputs for this product)
+  // Order: product images → model lock anchor → manual model refs → style refs
+  const allImageUrls = [...productUrls, ...extraImageUrls, ...modelRefUrls, ...styleRefUrls];
+
+  item.status = 'generating';
+  const submitData = await falPost('/fal-ai/nano-banana-2/edit', {
+    prompt: item.prompt,
+    image_urls: allImageUrls,
+    num_images: 1,
+    aspect_ratio: toNBRatio(item.aspectRatio||'3:4'),
+    output_format: 'jpeg',
+    safety_tolerance: '4',
+    resolution: item.resolution||'1K',
+  }, auth);
+
+  if(!submitData.request_id) {
+    const msg = Array.isArray(submitData.detail)
+      ? submitData.detail.map(d=>d.msg||d).join('; ')
+      : (submitData.detail||submitData.error||JSON.stringify(submitData).slice(0,300));
+    throw new Error('Submit failed: '+msg);
+  }
+  item.requestId   = submitData.request_id;
+  item.statusUrl   = submitData.status_url;
+  item.responseUrl = submitData.response_url;
+
+  for(let i=0;i<150;i++) {
+    await new Promise(r=>setTimeout(r,4000));
+    const sp = item.statusUrl
+      ? item.statusUrl.replace('https://queue.fal.run','')
+      : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
+    const st = await falGet(sp, auth);
+    if(st.status==='COMPLETED') {
+      const rp = item.responseUrl
+        ? item.responseUrl.replace('https://queue.fal.run','')
+        : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
+      const res = await falGet(rp, auth);
+      const url = res?.images?.[0]?.url||res?.output?.images?.[0]?.url
+        ||res?.image?.url||res?.output?.image?.url||res?.data?.images?.[0]?.url;
+      if(!url) throw new Error('COMPLETED but no image URL: '+JSON.stringify(res).slice(0,200));
+      return url;
+    }
+    if(st.status==='FAILED') throw new Error(st.error||st.detail||'fal.ai generation failed');
+  }
+  throw new Error('Timed out after 10 minutes');
+}
+
+// ── Job processor ───────────────────────────────────────────────────────
 async function processItem(batchId, itemId, auth) {
   const batch = jobs[batchId];
   if(!batch) return;
   const item = batch.items.find(i=>i.id===itemId);
   if(!item) return;
+
   try {
-    item.status='uploading';
+    // ── AUTO MODEL LOCK ─────────────────────────────────────────────────
+    // If this item is shot #2+ for a product AND model lock is enabled,
+    // wait for shot #1 of the same product to finish, then use its output
+    // as a visual anchor injected into our image_urls.
+    let extraImageUrls = [];
 
-    // Upload ALL product images for this product group
-    const productUrls = [];
-    for(const img of item.productImages) {
-      productUrls.push(await uploadToFal(img.base64, img.mimeType, auth));
-    }
+    if(item.autoLock && item.shotIndex > 0 && batch.type !== 'website') {
+      // Find the first shot of the same product
+      const firstShot = batch.items.find(i =>
+        i.productKey === item.productKey && i.shotIndex === 0
+      );
 
-    // Upload model reference if present
-    const modelRefUrls = [];
-    if(item.modelRefImages?.length) {
-      for(const ref of item.modelRefImages) {
-        modelRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
+      if(firstShot) {
+        // Wait for first shot to complete (poll every 3s, max 12 min)
+        item.status = 'waiting_for_anchor';
+        for(let w=0;w<240;w++) {
+          if(firstShot.status === 'done' && firstShot.resultUrl) break;
+          if(firstShot.status === 'error') break; // first shot failed, proceed without anchor
+          await new Promise(r=>setTimeout(r,3000));
+        }
+        // If first shot succeeded, use its output URL as the model anchor
+        if(firstShot.resultUrl) {
+          extraImageUrls = [firstShot.resultUrl];
+          // Also patch the prompt to include the model-lock instruction
+          if(!item.lockPromptApplied) {
+            // Inject model lock prompt — replace the gender hint with lock instruction
+            item.prompt = item.prompt.replace(
+              /beautiful female model, woman|handsome male model, man|androgynous model/,
+              MODEL_LOCK_PROMPT
+            );
+            // If model desc was used instead, prepend the lock instruction
+            if(!item.prompt.includes('EXACT SAME MODEL')) {
+              item.prompt = MODEL_LOCK_PROMPT + ', ' + item.prompt;
+            }
+            item.lockPromptApplied = true;
+          }
+        }
       }
     }
 
-    // Upload style reference images
-    const styleRefUrls = [];
-    if(item.styleRefImages?.length) {
-      for(const ref of item.styleRefImages) {
-        styleRefUrls.push(await uploadToFal(ref.base64, ref.mimeType, auth));
-      }
-    }
+    const url = await generate(item, auth, extraImageUrls);
+    item.resultUrl = url;
+    item.status = 'done';
+    batch.completedCount = (batch.completedCount||0) + 1;
 
-    // Order: product images first, then model refs, then style refs
-    // This gives the AI full product context + model lock + style guide
-    const allImageUrls = [...productUrls, ...modelRefUrls, ...styleRefUrls];
-
-    item.status='generating';
-    const submitData = await falPost('/fal-ai/nano-banana-2/edit', {
-      prompt: item.prompt,
-      image_urls: allImageUrls,
-      num_images: 1,
-      aspect_ratio: toNBRatio(item.aspectRatio||'3:4'),
-      output_format: 'jpeg',
-      safety_tolerance: '4',
-      resolution: item.resolution||'1K',
-    }, auth);
-
-    if(!submitData.request_id) {
-      const msg = Array.isArray(submitData.detail)
-        ? submitData.detail.map(d=>d.msg||d).join('; ')
-        : (submitData.detail||submitData.error||JSON.stringify(submitData).slice(0,300));
-      throw new Error('Submit failed: '+msg);
-    }
-    item.requestId   = submitData.request_id;
-    item.statusUrl   = submitData.status_url;
-    item.responseUrl = submitData.response_url;
-
-    for(let i=0;i<150;i++) {
-      await new Promise(r=>setTimeout(r,4000));
-      const sp = item.statusUrl ? item.statusUrl.replace('https://queue.fal.run','') : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
-      const st = await falGet(sp, auth);
-      if(st.status==='COMPLETED') {
-        const rp = item.responseUrl ? item.responseUrl.replace('https://queue.fal.run','') : `/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
-        const res = await falGet(rp, auth);
-        const url = res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url||res?.output?.image?.url||res?.data?.images?.[0]?.url;
-        if(!url) throw new Error('COMPLETED but no image URL: '+JSON.stringify(res).slice(0,200));
-        item.resultUrl=url; item.status='done';
-        batch.completedCount=(batch.completedCount||0)+1;
-        return;
-      }
-      if(st.status==='FAILED') throw new Error(st.error||st.detail||'fal.ai generation failed');
-    }
-    throw new Error('Timed out after 10 minutes');
   } catch(err) {
-    item.status='error'; item.error=err.message;
-    batch.completedCount=(batch.completedCount||0)+1;
-    console.error(`[${itemId}]`,err.message);
+    item.status = 'error';
+    item.error  = err.message;
+    batch.completedCount = (batch.completedCount||0) + 1;
+    console.error(`[${itemId}]`, err.message);
   }
 }
 
+// ── Batch runner ────────────────────────────────────────────────────────
+// Strategy:
+// - Shot index 0 items for each product run immediately (up to concurrency limit)
+// - Shot index 1+ items wait for their product's shot 0 to finish (handled inside processItem)
+// - We still run them concurrently — they just self-block on the wait internally
 function runBatch(batchId, auth, concurrency=3) {
   const queue = [...jobs[batchId].items.filter(i=>i.status==='queued')];
-  const runNext = async()=>{ const item=queue.shift(); if(!item)return; await processItem(batchId,item.id,auth); await runNext(); };
-  Promise.all(Array.from({length:Math.min(concurrency,queue.length||1)},runNext))
-    .then(()=>{ if(jobs[batchId]) jobs[batchId].status='done'; });
+  const runNext = async () => {
+    const item = queue.shift();
+    if(!item) return;
+    await processItem(batchId, item.id, auth);
+    await runNext();
+  };
+  Promise.all(Array.from({length: Math.min(concurrency, queue.length||1)}, runNext))
+    .then(() => { if(jobs[batchId]) jobs[batchId].status = 'done'; });
 }
 
-// ── Routes ─────────────────────────────────────────────────────────────
+// ── Routes ──────────────────────────────────────────────────────────────
 app.post('/api/batch/create', async(req,res)=>{
-  const auth=req.headers['authorization'];
+  const auth = req.headers['authorization'];
   if(!auth) return res.status(401).json({error:'Missing key'});
 
   const {
     type='model',
-    products,          // NEW: array of product groups [{name, images:[{base64,mimeType}], prompt}]
+    products,
     globalPrompt, promptMode,
     category, styleKey, bgOption, bgCustom, bgMode,
     gender, realism, resolution, aspectRatio,
-    modelDesc,         // NEW: model lock description string
-    modelRefImages,    // NEW: [{base64,mimeType}] — model reference photos
-    styleRefImages,    // NEW: [{base64,mimeType}] — style reference photos
-    shots,             // shot planner array
+    modelDesc,
+    modelRefImages,
+    styleRefImages,
+    shots,
+    autoLock = true,   // default ON — auto model-lock using shot 1 output
   } = req.body;
 
   if(!products?.length) return res.status(400).json({error:'No products'});
   if(products.length>100) return res.status(400).json({error:'Max 100 products'});
 
-  const batchId = uuidv4();
+  const batchId  = uuidv4();
   const builtItems = [];
-
-  // Pre-build shared refs (model lock + style refs) — same for every item
   const sharedModelRefs = modelRefImages||[];
   const sharedStyleRefs = styleRefImages||[];
 
-  for(const prod of products) {
+  for(let pi=0; pi<products.length; pi++) {
+    const prod = products[pi];
     const perPrompt = (promptMode==='individual'&&prod.prompt) ? prod.prompt : globalPrompt;
+    const productKey = `product_${pi}`; // unique key per product for linking shots
 
-    const shotList = (shots&&shots.length) ? shots : [{shotType:'front', label:'Front', bg:bgOption||'ai', bgCustom:bgCustom||'', aspectRatio:aspectRatio||'3:4', styleKey:'', customPrompt:''}];
+    const shotList = (shots&&shots.length)
+      ? shots
+      : [{shotType:'front', label:'Front', bg:bgOption||'ai', bgCustom:bgCustom||'', aspectRatio:aspectRatio||'3:4', styleKey:'', customPrompt:''}];
 
-    for(const shot of shotList) {
-      const itemBg = shot.bg||bgOption||'ai';
-      const itemBgC = shot.bgCustom||bgCustom||'';
-      const shotPromptExtra = shot.customPrompt ? ', '+shot.customPrompt : '';
+    for(let si=0; si<shotList.length; si++) {
+      const shot = shotList[si];
+      const itemBg   = shot.bg||bgOption||'ai';
+      const itemBgC  = shot.bgCustom||bgCustom||'';
+      const shotExtra = shot.customPrompt ? ', '+shot.customPrompt : '';
+
+      // For shot index > 0 on model pages with autoLock:
+      // flag isLockedShot=true so the prompt includes the lock instruction upfront
+      const isLockedShot = autoLock && si > 0 && type !== 'website';
 
       const prompt = type==='website'
-        ? buildProductPhotoPrompt((perPrompt||'')+shotPromptExtra, shot.shotType||'front', {bgOption:itemBg, bgCustom:itemBgC})
-        : buildModelPrompt((perPrompt||'')+shotPromptExtra, shot.shotType||'front', {
+        ? buildProductPhotoPrompt((perPrompt||'')+shotExtra, shot.shotType||'front', {bgOption:itemBg, bgCustom:itemBgC})
+        : buildModelPrompt((perPrompt||'')+shotExtra, shot.shotType||'front', {
             category, styleKey:shot.styleKey||styleKey,
             bgOption:itemBg, bgCustom:itemBgC,
-            gender, realism, modelDesc:modelDesc||''
+            gender, realism,
+            modelDesc: modelDesc||'',
+            isLockedShot,
           });
 
       builtItems.push({
-        id: uuidv4(),
-        name: shots?.length ? `${prod.name} — ${shot.label||shot.shotType}` : prod.name,
-        productName: prod.name,
-        shotLabel: shot.label||shot.shotType,
-        productImages: prod.images,          // all angles of this product
-        modelRefImages: sharedModelRefs,     // model lock refs
-        styleRefImages: sharedStyleRefs,     // style refs
+        id:           uuidv4(),
+        name:         shotList.length > 1 ? `${prod.name} — ${shot.label||shot.shotType}` : prod.name,
+        productName:  prod.name,
+        shotLabel:    shot.label||shot.shotType,
+        shotIndex:    si,          // 0 = anchor shot, 1+ = locked shots
+        productKey,               // links all shots of same product
+        autoLock:     autoLock && type !== 'website',
+        productImages:  prod.images,
+        modelRefImages: sharedModelRefs,
+        styleRefImages: sharedStyleRefs,
         prompt,
-        aspectRatio: shot.aspectRatio||aspectRatio||'3:4',
-        resolution: shot.resolution||resolution||'1K',
-        status:'queued', requestId:null, resultUrl:null, error:null,
+        aspectRatio:  shot.aspectRatio||aspectRatio||'3:4',
+        resolution:   shot.resolution||resolution||'1K',
+        status: 'queued', requestId:null, resultUrl:null, error:null,
+        lockPromptApplied: false,
       });
     }
   }
@@ -297,8 +384,8 @@ app.get('/api/batch/:id/status',(req,res)=>{
   if(!b) return res.status(404).json({error:'Not found'});
   res.json({
     status:b.status, type:b.type, total:b.items.length, completed:b.completedCount||0,
-    items:b.items.map(({id,name,productName,shotLabel,status,resultUrl,error,aspectRatio})=>
-      ({id,name,productName,shotLabel,status,resultUrl,error,aspectRatio}))
+    items:b.items.map(({id,name,productName,shotLabel,shotIndex,status,resultUrl,error,aspectRatio})=>
+      ({id,name,productName,shotLabel,shotIndex,status,resultUrl,error,aspectRatio}))
   });
 });
 
@@ -309,10 +396,12 @@ app.post('/api/item/:bid/:iid/regenerate',async(req,res)=>{
   const item=b.items.find(i=>i.id===req.params.iid); if(!item) return res.status(404).json({error:'Not found'});
   const {prompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,aspectRatio,shotType,modelDesc}=req.body;
   if(prompt) item.prompt = b.type==='website'
-    ? buildProductPhotoPrompt(prompt, shotType||'front', {bgOption:bgOption||'white',bgCustom:bgCustom||''})
-    : buildModelPrompt(prompt, shotType||'front', {category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra',modelDesc:modelDesc||''});
+    ? buildProductPhotoPrompt(prompt,shotType||'front',{bgOption:bgOption||'white',bgCustom:bgCustom||''})
+    : buildModelPrompt(prompt,shotType||'front',{category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra',modelDesc:modelDesc||''});
   if(resolution) item.resolution=resolution;
   if(aspectRatio) item.aspectRatio=aspectRatio;
+  // Reset lock state so it re-locks from scratch on regen
+  item.lockPromptApplied=false;
   item.status='queued'; item.resultUrl=null; item.error=null;
   res.json({ok:true});
   processItem(req.params.bid, item.id, auth);
@@ -329,6 +418,7 @@ app.post('/api/batch/:id/edit',async(req,res)=>{
       ? buildProductPhotoPrompt(globalPrompt,item.shotType||'front',{bgOption:bgOption||'white',bgCustom:bgCustom||''})
       : buildModelPrompt(globalPrompt,item.shotType||'front',{category:category||'other',styleKey:styleKey||'',bgOption:bgOption||'ai',bgCustom:bgCustom||'',gender:gender||'female',realism:realism||'ultra',modelDesc:modelDesc||''});
     if(resolution) item.resolution=resolution;
+    item.lockPromptApplied=false;
     item.status='queued'; item.resultUrl=null; item.error=null;
   });
   res.json({ok:true});
@@ -340,7 +430,7 @@ app.post('/api/item/:bid/:iid/upscale',async(req,res)=>{
   if(!auth) return res.status(401).json({error:'Missing key'});
   const item=jobs[req.params.bid]?.items.find(i=>i.id===req.params.iid);
   if(!item?.resultUrl) return res.status(400).json({error:'No image'});
-  try {
+  try{
     const sub=await falPost('/fal-ai/aura-sr',{image_url:item.resultUrl,upscaling_factor:4},auth);
     if(!sub.request_id) throw new Error('Upscale submit failed');
     for(let i=0;i<60;i++){
