@@ -111,21 +111,20 @@ const SHOT_PROMPTS = {
   street_life:  'real street background, candid urban lifestyle, city life, authentic environment',
 };
 const REALISM_HINTS = {
-  ultra:['shot on Hasselblad H6D-100c','110mm f/2.2 lens','natural skin texture with realistic pores','micro fabric detail visible','does NOT look AI generated','hyperrealistic photograph','indistinguishable from real photo','ultra sharp focus','professional commercial photographer','award-winning fashion photography','subtle natural film grain','true-to-life skin tones','realistic subsurface skin scattering','photographic realism'].join(', '),
-  editorial:['high fashion editorial','Vogue quality retouching','professional strobe studio lighting','ultra sharp','commercial grade','world-class photographer'].join(', '),
-  cinematic:['cinematic film look','anamorphic bokeh','shallow depth of field f/1.4','Kodak film color grade','natural lens flare','ARRI Alexa cinema quality'].join(', '),
-  raw:['raw unretouched photo','documentary photography','natural ambient light','candid authentic look','film reportage style','Leica street photography'].join(', '),
+  ultra:'hyperrealistic photograph, Hasselblad H6D-100c, ultra sharp, natural skin texture, photographic realism, professional fashion photography',
+  editorial:'high fashion editorial, Vogue quality, professional studio lighting, ultra sharp',
+  cinematic:'cinematic film look, shallow depth of field, Kodak color grade, natural bokeh',
+  raw:'raw unretouched documentary photo, natural ambient light, candid authentic',
 };
 const GENDER_HINTS = { female:'beautiful female model, woman', male:'handsome male model, man', neutral:'androgynous model' };
 
 // MODEL LOCK PROMPT — injected into shots 2+ when we have shot 1's output as anchor
-const MODEL_LOCK_PROMPT = 'EXACT SAME MODEL as the reference photo, identical person, same face same skin tone same hair color same hair length same body type, only the pose and angle changes, do not change the model appearance in any way';
+const MODEL_LOCK_PROMPT = 'same model as reference, identical face and hair, consistent appearance';
 
 function buildModelPrompt(userPrompt, shot, opts={}) {
   const { category='other', styleKey='', bgOption='ai', bgCustom='', gender='female', realism='ultra', modelDesc='', isLockedShot=false } = opts;
   const parts = [
     userPrompt,
-    // If this is a follow-up locked shot, use the lock prompt instead of model desc
     isLockedShot ? MODEL_LOCK_PROMPT : (modelDesc || (GENDER_HINTS[gender]||GENDER_HINTS.female)),
     CAT_HINTS[category]||CAT_HINTS.other,
     SHOT_PROMPTS[shot]||SHOT_PROMPTS.front,
@@ -133,7 +132,9 @@ function buildModelPrompt(userPrompt, shot, opts={}) {
     bgOption==='custom' ? bgCustom : (BG_HINTS[bgOption]||''),
     REALISM_HINTS[realism]||REALISM_HINTS.ultra,
   ];
-  return parts.filter(Boolean).join(', ');
+  // Cap total prompt at 400 chars to prevent fal.ai text-overlay bug
+  const joined = parts.filter(Boolean).join(', ');
+  return joined.length > 400 ? joined.slice(0, 397) + '...' : joined;
 }
 
 function buildProductPhotoPrompt(userPrompt, shot, opts={}) {
@@ -470,7 +471,12 @@ app.get('/api/batch/:id/zip',async(req,res)=>{
   res.setHeader('Content-Disposition',`attachment; filename="fashion-ai-${req.params.id.slice(0,8)}.zip"`);
   const archive=archiver('zip',{zlib:{level:6}}); archive.pipe(res);
   for(const item of done){
-    try{const r=await fetch(item.resultUrl);archive.append(await r.buffer(),{name:`${item.name.replace(/[^a-z0-9_\-]/gi,'_')}.jpg`});}catch{}
+    try{
+      if(!item.resultUrl) continue;
+      const r=await fetch(item.resultUrl);
+      const buf = Buffer.from(await r.arrayBuffer());
+      archive.append(buf,{name:`${item.name.replace(/[^a-z0-9_\-]/gi,'_')}.jpg`});
+    }catch(e){console.error('ZIP item error:',e.message);}
   }
   await archive.finalize();
 });
