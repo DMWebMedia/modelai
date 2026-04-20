@@ -227,7 +227,33 @@ textarea::placeholder{color:var(--t3)}
 .toast.ok{background:var(--grn)}.toast.err{background:var(--red)}
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
-/* Tip boxes */
+/* Saved Models Panel */
+.models-panel{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto}
+.model-card{border:1.5px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .14s;background:var(--w)}
+.model-card:hover{border-color:var(--blue);box-shadow:0 0 0 2px var(--bm)}
+.model-card.active-model{border-color:var(--blue);background:var(--bl);box-shadow:0 0 0 2px var(--bm)}
+.model-card-inner{display:flex;align-items:center;gap:8px;padding:6px 8px}
+.model-thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+.model-info{flex:1;min-width:0}
+.model-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-desc{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.model-del{background:none;border:none;cursor:pointer;opacity:.4;font-size:13px;line-height:1;padding:2px 4px;color:var(--tx);flex-shrink:0}
+.model-del:hover{opacity:1;color:var(--red)}
+.model-active-bar{background:var(--blue);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;text-align:center;letter-spacing:.03em}
+.model-clear-btn{width:100%;margin-top:4px;padding:5px;border:1px dashed rgba(37,99,235,.3);border-radius:var(--r);background:none;color:var(--blue);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:none}
+.model-clear-btn.visible{display:block}
+.model-clear-btn:hover{background:var(--bl)}
+/* Save model button on result cards */
+.save-model-btn{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-size:10px;font-weight:700;padding:4px 7px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.02em}
+.save-model-btn:hover{opacity:.9}
+/* Model picker in generate step */
+.model-picker-row{background:var(--pbg);border:1.5px solid #c4b5fd;border-radius:var(--r);padding:10px 12px;margin-bottom:.9rem}
+.model-picker-row.has-model{background:var(--gbg);border-color:#86efac}
+.mp-label{font-size:11px;font-weight:700;color:var(--pur);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.mp-label.has-model{color:var(--grn)}
+.mp-selected{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mp-selected img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.mp-selected-name{font-size:12px;font-weight:600;color:var(--grn)}
 .tip{background:var(--bl);border:1px solid var(--bm);border-radius:var(--r);padding:8px 11px;font-size:12px;color:var(--blue);margin-bottom:.9rem}
 .tip strong{font-weight:600}
 
@@ -296,6 +322,13 @@ textarea::placeholder{color:var(--t3)}
   <div class="sbs"><div class="sbl">Style Library</div>
     <div class="slib-list" id="slib"></div>
     <button class="sla" onclick="openM('ms-save')">+ Save current style</button>
+  </div>
+  <div class="sbs">
+    <div class="sbl">🔒 Saved Models</div>
+    <div class="models-panel" id="models-panel">
+      <div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate an image then click "Save Model"</div>
+    </div>
+    <button class="model-clear-btn" id="model-clear-btn" onclick="clearActiveModel()">✕ Remove model lock</button>
   </div>
 </div><!-- /sidebar -->
 
@@ -425,6 +458,17 @@ textarea::placeholder{color:var(--t3)}
       <div class="cbar">
         <div><div class="camt" id="m-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="m-cmeta">—</div></div>
         <div style="text-align:right"><div style="font-size:13px;font-weight:600" id="rev-n">—</div><div style="font-size:11px;color:var(--t2)" id="rev-m">—</div></div>
+      </div>
+      <!-- Active model lock display -->
+      <div class="model-picker-row" id="mp-row">
+        <div class="mp-label" id="mp-label">🔒 Model Lock</div>
+        <div id="mp-none" style="font-size:12px;color:var(--t2)">No saved model selected — AI picks a new model for shot 1, then auto-locks it for shots 2+</div>
+        <div id="mp-selected-wrap" style="display:none">
+          <div class="mp-selected">
+            <img id="mp-thumb" src="" alt=""/>
+            <div><div class="mp-selected-name" id="mp-name">—</div><div style="font-size:11px;color:var(--grn)">✓ This model will be used for every shot in the batch</div></div>
+          </div>
+        </div>
       </div>
       <div id="rev-w"></div>
       <button class="btn bpri bxl bfull" id="gen-btn" onclick="startModelGen()" disabled>Generate Images</button>
@@ -563,17 +607,49 @@ textarea::placeholder{color:var(--t3)}
       <button class="chip" data-v="other" style="grid-column:span 2">Other</button>
     </div>
   </div>
-  <div class="sbs"><div class="sbl">Settings</div>
-    <div class="fr"><select id="p-style"><option value="">AI Chooses</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option><option value="streetwear">Streetwear</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></select></div>
-    <div class="fr"><select id="p-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Neutral</option></select></div>
-    <div class="fr"><select id="p-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial</option><option value="cinematic">Cinematic</option><option value="raw">Raw</option></select></div>
+  <div class="sbs"><div class="sbl">Style</div>
+    <div class="fr"><select id="p-style"><option value="">AI Chooses</option><optgroup label="Fashion"><option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option><option value="luxury">Luxury</option><option value="formal">Formal</option><option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option><option value="bohemian">Bohemian</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></optgroup><optgroup label="Commercial"><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option></optgroup></select></div>
+    <div class="fr"><select id="p-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Gender Neutral</option></select></div>
+    <div class="fr"><select id="p-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select></div>
     <div class="fr"><select id="p-res" onchange="updCost('p')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div>
   </div>
+  <div class="sbs"><div class="sbl">Default Aspect Ratio</div>
+    <div class="argrid" id="ar-p">
+      <button class="arb" data-r="1:1">1:1</button><button class="arb on" data-r="3:4">3:4</button>
+      <button class="arb" data-r="4:5">4:5</button><button class="arb" data-r="2:3">2:3</button>
+      <button class="arb" data-r="9:16">9:16</button><button class="arb" data-r="4:3">4:3</button>
+      <button class="arb" data-r="3:2">3:2</button><button class="arb" data-r="16:9">16:9</button>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-top:4px">Each shot can override this individually</div>
+  </div>
+  <div class="sbs"><div class="sbl">Background</div>
+    <div class="fr"><select id="p-bgmode" onchange="onPBgMode()"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
+    <div id="p-bgpick">
+      <div class="bgpills" id="bgp-p">
+        <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
+        <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
+        <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
+        <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
+        <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
+        <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
+      </div>
+    </div>
+    <div id="p-bgcustom-wrap" style="display:none;margin-top:5px"><input class="sbi" id="p-bgcustom" type="text" placeholder="Describe background..."/></div>
+  </div>
   <div class="sbs"><div class="sbl">Global Prompt</div>
-    <textarea id="pprompt" rows="3" placeholder="E.g: Tall model, dark hair, confident pose..."></textarea>
+    <textarea id="pprompt" rows="3" placeholder="E.g: Standing in bright minimalist studio, soft light, full body shot..."></textarea>
   </div>
   <div class="sbs"><div class="sbl">Model Description</div>
     <textarea id="p-modeldesc" rows="3" placeholder="E.g: olive skin, long dark hair, barefoot, slim, Mediterranean look..."></textarea>
+    <div style="font-size:10px;color:var(--t3);margin-top:3px">Injected into every shot for consistency</div>
+  </div>
+  <!-- Saved Models for Planner -->
+  <div class="sbs">
+    <div class="sbl">🔒 Saved Models</div>
+    <div class="models-panel" id="p-models-panel">
+      <div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet</div>
+    </div>
+    <button class="model-clear-btn" id="p-model-clear-btn" onclick="clearPActiveModel()">✕ Remove model lock</button>
   </div>
   <div class="sbs">
     <div style="background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 12px">
@@ -582,14 +658,16 @@ textarea::placeholder{color:var(--t3)}
       <div style="font-size:11px;color:var(--t2)" id="p-cmeta">—</div>
     </div>
   </div>
-</div>
+</div><!-- /planner sidebar -->
+
 <div class="main">
   <div style="font-size:20px;font-weight:700;margin-bottom:3px">Shot Planner <span class="bdg bdg-o">Advanced</span></div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Group your products → plan exact shots (front/back/detail/flat lay etc.) → generate everything at once</div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Group products → plan every exact shot with full control per shot → generate all at once with auto model lock</div>
 
   <!-- Upload & Group -->
   <div class="card">
-    <div class="chd">Upload & Group Products</div>
+    <div class="chd">Upload & Group Products <span class="bdg">Up to 100</span></div>
+    <div class="csub">Upload all images, then group by product — multiple angles per product sent together</div>
     <div class="dz" id="dz-p" onclick="document.getElementById('fi-p').click()">
       <input type="file" id="fi-p" multiple accept="image/*"/>
       <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
@@ -613,14 +691,38 @@ textarea::placeholder{color:var(--t3)}
     </div>
   </div>
 
-  <!-- Model ref for planner -->
+  <!-- Model Lock for planner — same as model images -->
   <div class="card">
-    <div class="chd">Model Reference <span class="bdg bdg-p">Lock model</span></div>
+    <div class="chd">🔒 Model Reference <span class="bdg bdg-p">Optional — locks model across all shots</span></div>
+    <div class="csub">Upload a photo of the model you want — injected as visual anchor into every shot. Or use a Saved Model from the sidebar.</div>
     <div class="dz" id="dz-pmref" onclick="document.getElementById('fi-pmref').click()" style="padding:1.2rem">
       <input type="file" id="fi-pmref" multiple accept="image/*"/>
-      <div class="dzt" style="font-size:13px">Drop model photo(s)</div><div class="dzs">Visual model anchor</div>
+      <div class="dzt" style="font-size:13px">Drop model reference photo(s)</div>
+      <div class="dzs">1–3 photos · visual anchor for all shots</div>
     </div>
     <div class="mlock-thumbs" id="pmref-thumbs" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Style reference -->
+  <div class="card">
+    <div class="chd">Style Reference <span class="bdg bdg-g">Optional</span></div>
+    <div class="dz" id="dz-psref" onclick="document.getElementById('fi-psref').click()" style="padding:1rem">
+      <input type="file" id="fi-psref" multiple accept="image/*"/>
+      <div class="dzt" style="font-size:13px">Drop style reference images</div><div class="dzs">Max 3</div>
+    </div>
+    <div class="mlock-thumbs" id="psref-thumbs" style="margin-top:8px"></div>
+  </div>
+
+  <!-- Active saved model display -->
+  <div class="model-picker-row" id="p-mp-row" style="margin-bottom:1rem">
+    <div class="mp-label" id="p-mp-label">🔒 Model Lock</div>
+    <div id="p-mp-none" style="font-size:12px;color:var(--t2)">No saved model — AI auto-locks using shot 1 output for shots 2+. Or select a saved model from the sidebar.</div>
+    <div id="p-mp-selected-wrap" style="display:none">
+      <div class="mp-selected">
+        <img id="p-mp-thumb" src="" alt=""/>
+        <div><div class="mp-selected-name" id="p-mp-name">—</div><div style="font-size:11px;color:var(--grn)">✓ Used for every shot in this batch</div></div>
+      </div>
+    </div>
   </div>
 
   <!-- Shot Planner -->
@@ -657,8 +759,9 @@ textarea::placeholder{color:var(--t3)}
     <div class="pbar"><div class="pfil" id="pfil" style="width:0%"></div></div>
     <div class="pst"><span id="pdn">0</span><span id="ptot">of 0</span></div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
-    <button class="btn bout bsm" id="pzip" onclick="doZip('p')" disabled style="display:none">↓ ZIP</button>
+  <div style="display:flex;justify-content:space-between;margin-top:.9rem;align-items:center">
+    <div id="p-res-count" style="font-size:12px;color:var(--t2)"></div>
+    <button class="btn bout bsm" id="pzip" onclick="doZip('p')" disabled style="display:none">↓ ZIP all shots</button>
   </div>
   <div class="rgrid" id="rg-p" style="margin-top:1rem"></div>
 </div>
@@ -740,6 +843,29 @@ textarea::placeholder{color:var(--t3)}
   </div>
 </div>
 
+<div class="mbg" id="m-save-model">
+  <div class="modal">
+    <div class="mt">🔒 Save This Model</div>
+    <div class="ms">Give her a name and save her for future batches. She'll appear in your Model Library and can be selected before generating.</div>
+    <input type="hidden" id="sm-url"/>
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem">
+      <img id="sm-preview" src="" alt="" style="width:80px;height:100px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);flex-shrink:0;background:var(--bg)"/>
+      <div style="flex:1">
+        <div class="fr"><label class="fl">Model Name <span style="color:var(--red)">*</span></label>
+          <input class="sbi" type="text" id="sm-name" placeholder="E.g: Tall Brunette, Summer Model, Model A..." style="width:100%"/>
+        </div>
+        <div class="fr" style="margin-top:6px"><label class="fl">Notes (optional)</label>
+          <input class="sbi" type="text" id="sm-desc" placeholder="E.g: olive skin, long hair, barefoot..." style="width:100%"/>
+        </div>
+      </div>
+    </div>
+    <div class="macts">
+      <button class="btn bout" onclick="closeM('m-save-model')">Cancel</button>
+      <button class="btn bpri" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none" onclick="confirmSaveModel()">🔒 Save Model</button>
+    </div>
+  </div>
+</div>
+
 <div class="toasts" id="toasts"></div>
 
 <script>
@@ -775,8 +901,8 @@ const SG={
 let falKey='';
 let cats={model:'',plan:''};
 let ARs={m:'3:4',w:'1:1',p:'3:4'};
-let BGs={m:'white',w:'white'};
-let bgModes={m:'pick',w:'pick'};
+let BGs={m:'white',w:'white',p:'white'};
+let bgModes={m:'pick',w:'pick',p:'pick'};
 let wCount=1;
 let pm='g';
 let step=1;
@@ -795,8 +921,9 @@ let groups={m:[],w:[],p:[]};
 let pendingGroupCtx='m';
 // Model/style refs
 let modelRefs=[];   // {b64,mimeType} — model lock photos
-let styleRefs={m:[],w:[]};  // style reference photos
+let styleRefs={m:[],w:[],p:[]};  // style reference photos
 let pModelRefs=[];  // planner model refs
+let pStyleRefs=[];  // planner style refs — alias for styleRefs.p
 
 // ════════════ INIT ════════════
 (function init(){
@@ -843,11 +970,12 @@ function setupCatClicks(){
   });
 }
 function setupARClicks(){
-  ['ar-m','ar-w'].forEach(gid=>{
+  ['ar-m','ar-w','ar-p'].forEach(gid=>{
+    const el=document.getElementById(gid);if(!el)return;
     const ctx=gid.split('-')[1];
-    document.getElementById(gid).querySelectorAll('.arb').forEach(btn=>{
+    el.querySelectorAll('.arb').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        document.getElementById(gid).querySelectorAll('.arb').forEach(b=>b.classList.remove('on'));
+        el.querySelectorAll('.arb').forEach(b=>b.classList.remove('on'));
         btn.classList.add('on'); ARs[ctx]=btn.dataset.r;
       });
     });
@@ -864,6 +992,12 @@ function setupBgPillClicks(){
       document.getElementById('w-bgcustom-wrap').style.display=el.dataset.b==='custom'?'block':'none';
     });
   });
+  document.getElementById('bgp-p').querySelectorAll('.bgp').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.getElementById('bgp-p').querySelectorAll('.bgp').forEach(p=>p.classList.remove('on'));
+      el.classList.add('on'); BGs.p=el.dataset.b;
+    });
+  });
 }
 function onBgMode(ctx){
   const mode=document.getElementById(`${ctx}-bgmode`).value;
@@ -871,6 +1005,7 @@ function onBgMode(ctx){
   document.getElementById(`${ctx}-bgpick`).style.display=mode==='pick'?'block':'none';
   document.getElementById(`${ctx}-bgcustom-wrap`).style.display=mode==='custom'?'block':'none';
 }
+function onPBgMode(){onBgMode('p');}
 
 // ════════════ KEY ════════════
 function saveKey(n){
@@ -879,6 +1014,7 @@ function saveKey(n){
   if(falKey){['fk0','fk1','fk2'].forEach(id=>document.getElementById(id).value='••••••••••••');}
   ['kst0','kst1','kst2'].forEach(id=>{const e=document.getElementById(id);e.textContent=falKey?'✓ Key saved':'Enter your key';e.className=falKey?'kst ok':'kst';});
   updateRev();updCost('p');
+  if(falKey) { loadModels(); loadStyles(); }
 }
 
 // ════════════ NAV ════════════
@@ -914,13 +1050,13 @@ function setupAllDZ(){
   setupPoolDZ('dz-m','fi-m','m');
   setupPoolDZ('dz-w','fi-w','w');
   setupPoolDZ('dz-p','fi-p','p');
-  // Model refs
+  // Ref dropzones
   setupRefDZ('dz-mref','fi-mref','mref');
   setupRefDZ('dz-sref','fi-sref','sref');
   setupRefDZ('dz-wref','fi-wref','wref');
   setupRefDZ('dz-pmref','fi-pmref','pmref');
+  setupRefDZ('dz-psref','fi-psref','psref');
 }
-
 function setupPoolDZ(dzId,fiId,ctx){
   const dz=document.getElementById(dzId),fi=document.getElementById(fiId);
   fi.addEventListener('change',e=>{addToPool(ctx,Array.from(e.target.files));fi.value='';});
@@ -951,9 +1087,9 @@ async function addToPool(ctx,files){
 }
 
 async function addRefs(key,files){
-  const maxMap={mref:3,sref:3,wref:3,pmref:3};
-  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs};
-  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs'};
+  const maxMap={mref:3,sref:3,wref:3,pmref:3,psref:3};
+  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs,psref:styleRefs.p};
+  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs',psref:'psref-thumbs'};
   const arr=arrMap[key]; const max=maxMap[key]||3;
   for(const f of files.filter(f=>f.type.startsWith('image/'))){
     if(arr.length>=max)break;
@@ -971,8 +1107,8 @@ function renderRefThumbs(key,arr,thumbsId){
 }
 
 function delRef(key,i){
-  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs};
-  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs'};
+  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs,psref:styleRefs.p};
+  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs',psref:'psref-thumbs'};
   arrMap[key].splice(i,1);
   renderRefThumbs(key,arrMap[key],thumbMap[key]);
 }
@@ -1249,6 +1385,8 @@ async function startModelGen(){
         modelDesc,
         modelRefImages:modelRefs,
         styleRefImages:styleRefs.m,
+        savedModelUrl: activeModel?.imageUrl || null,
+        savedModelName: activeModel?.name || null,
       })});
     const d=await r.json();if(d.error)throw new Error(d.error);
     bids.m=d.batchId;goStep(5);document.getElementById('mprog').style.display='block';startPoll('m');toast(`${d.total} images queued`,'ok');
@@ -1291,13 +1429,21 @@ async function startPlanGen(){
     const gp=document.getElementById('pprompt').value.trim()||'professional fashion photo';
     const products=groups.p.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType}))}));
     const modelDesc=document.getElementById('p-modeldesc').value.trim();
+    const bgOpt=bgModes.p==='custom'?'custom':(bgModes.p==='ai'?'ai':BGs.p||'white');
+    const bgCust=bgModes.p==='custom'?document.getElementById('p-bgcustom').value.trim():'';
     const r=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
       body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:'global',
         category:cats.plan,styleKey:document.getElementById('p-style').value,
+        bgOption:bgOpt,bgCustom:bgCust,
         gender:document.getElementById('p-gender').value,
         realism:document.getElementById('p-realism').value,
         resolution:document.getElementById('p-res').value,
-        shots:SQ,modelDesc,modelRefImages:pModelRefs,
+        aspectRatio:ARs.p,
+        shots:SQ,modelDesc,
+        modelRefImages:pModelRefs,
+        styleRefImages:styleRefs.p,
+        savedModelUrl:pActiveModel?.imageUrl||null,
+        savedModelName:pActiveModel?.name||null,
       })});
     const d=await r.json();if(d.error)throw new Error(d.error);
     bids.p=d.batchId;document.getElementById('pprog').style.display='block';document.getElementById('pzip').style.display='inline-flex';startPoll('p');toast(`${d.total} shots queued`,'ok');
@@ -1346,7 +1492,7 @@ function renderRes(items,gridId,ctx){
           <img src="${it.resultUrl}" alt="${it.name}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
           <div class="rcov" style="position:absolute"><button onclick="openEI('${it.id}','${it.name}','${ctx}')">✏ Edit</button><button onclick="doUpscale('${it.id}','${ctx}')">↑ Upscale</button><a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg">↓ Save</a></div>
         </div>
-        <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcacts"><button class="btn bout bxs" onclick="openEI('${it.id}','${it.name}','${ctx}')">Edit</button><button class="btn bout bxs" onclick="doUpscale('${it.id}','${ctx}')">↑</button><a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg" class="btn bout bxs">↓</a></div></div>`;
+        <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcacts"><button class="btn bout bxs" onclick="openEI('${it.id}','${it.name}','${ctx}')">Edit</button><button class="btn bout bxs" onclick="doUpscale('${it.id}','${ctx}')">↑</button><a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg" class="btn bout bxs">↓</a>${ctx!=='w'?`<button class="save-model-btn" onclick="openSaveModel('${it.resultUrl}')">🔒 Save Model</button>`:''}    </div></div>`;
     }else if(it.status==='error'){
       card.innerHTML=`<div class="rcm"><div class="ebox">${it.error||'Failed'}<br><button onclick="openEI('${it.id}','${it.name}','${ctx}')" style="margin-top:5px;background:none;border:1px solid rgba(220,38,38,.35);color:var(--red);border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit">Retry</button></div><div class="rcn">${it.name}</div></div>`;
     }else{
@@ -1395,7 +1541,107 @@ async function doUpscale(iid,ctx){
 function doZip(ctx){const map={m:bids.m,w:bids.w,p:bids.p};const id=map[ctx];if(id)window.location.href=`/api/batch/${id}/zip`;}
 function resetM(){bids.m=null;groups.m=[];pools.m=[];poolSel.m.clear();modelRefs=[];styleRefs.m=[];['rg-m','mref-thumbs','sref-thumbs'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});renderGroups('m');renderPool('m');if(ptimers.m)clearInterval(ptimers.m);goStep(1);}
 
-// ════════════ STYLE LIBRARY ════════════
+// ════════════ SAVED MODELS ════════════
+let activeModel = null;   // model lock for Model Images page
+let pActiveModel = null;  // model lock for Shot Planner page
+
+function openSaveModel(imageUrl) {
+  document.getElementById('sm-url').value = imageUrl;
+  document.getElementById('sm-preview').src = imageUrl;
+  document.getElementById('sm-name').value = '';
+  document.getElementById('sm-desc').value = '';
+  openM('m-save-model');
+  setTimeout(()=>document.getElementById('sm-name').focus(), 80);
+}
+
+async function confirmSaveModel() {
+  const name = document.getElementById('sm-name').value.trim();
+  if(!name) { toast('Enter a name for this model','err'); return; }
+  if(!falKey) { toast('Save your key first','err'); return; }
+  const imageUrl = document.getElementById('sm-url').value;
+  const description = document.getElementById('sm-desc').value.trim();
+  try {
+    const r = await fetch('/api/models/save', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+      body: JSON.stringify({ name, imageUrl, description })
+    });
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+    closeM('m-save-model');
+    toast(`"${name}" saved to model library ✓`, 'ok');
+    loadModels();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadModels() {
+  if(!falKey) return;
+  try {
+    const r = await fetch('/api/models', { headers:{'Authorization':`Key ${falKey}`} });
+    const models = await r.json();
+    renderModelsPanel(models);
+  } catch {}
+}
+
+function renderModelsPanel(models) {
+  ['models-panel','p-models-panel'].forEach(panelId=>{
+    const panel=document.getElementById(panelId);if(!panel)return;
+    const isPlanner=panelId.startsWith('p-');
+    const cur=isPlanner?pActiveModel:activeModel;
+    if(!models.length){
+      panel.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → click "🔒 Save Model"</div>';
+      return;
+    }
+    panel.innerHTML=models.map(m=>{
+      const esc=m.name.replace(/'/g,"\'");
+      const edesc=(m.description||'').replace(/'/g,"\'");
+      const ctx=isPlanner?'p':'m';
+      return `<div class="model-card${cur?.id===m.id?' active-model':''}" onclick="selectModel('${m.id}','${esc}','${m.imageUrl}','${edesc}','${ctx}')">
+        ${cur?.id===m.id?'<div class="model-active-bar">✓ ACTIVE</div>':''}
+        <div class="model-card-inner">
+          <img class="model-thumb" src="${m.imageUrl}" alt="${esc}" onerror="this.style.display='none'"/>
+          <div class="model-info"><div class="model-name">${m.name}</div>${m.description?`<div class="model-desc">${m.description}</div>`:''}</div>
+          <button class="model-del" onclick="event.stopPropagation();deleteModel('${m.id}')" title="Delete">×</button>
+        </div></div>`;
+    }).join('');
+  });
+  const cb=document.getElementById('model-clear-btn');if(cb)cb.className=activeModel?'model-clear-btn visible':'model-clear-btn';
+  const pcb=document.getElementById('p-model-clear-btn');if(pcb)pcb.className=pActiveModel?'model-clear-btn visible':'model-clear-btn';
+}
+
+function selectModel(id,name,imageUrl,description,ctx='m'){
+  const isP=ctx==='p';
+  if(isP){pActiveModel=pActiveModel?.id===id?null:{id,name,imageUrl,description};updatePModelPickerUI();toast(pActiveModel?`🔒 "${pActiveModel.name}" locked`:'Lock removed',pActiveModel?'ok':'');}
+  else{activeModel=activeModel?.id===id?null:{id,name,imageUrl,description};updateModelPickerUI();toast(activeModel?`🔒 "${activeModel.name}" locked`:'Lock removed',activeModel?'ok':'');}
+  loadModels();
+}
+
+function clearActiveModel(){activeModel=null;loadModels();updateModelPickerUI();toast('Model lock removed');}
+function clearPActiveModel(){pActiveModel=null;loadModels();updatePModelPickerUI();toast('Model lock removed');}
+
+function updateModelPickerUI(){
+  const row=document.getElementById('mp-row');if(!row)return;
+  if(activeModel){row.className='model-picker-row has-model';document.getElementById('mp-label').className='mp-label has-model';document.getElementById('mp-label').textContent='✓ Locked: '+activeModel.name;document.getElementById('mp-none').style.display='none';document.getElementById('mp-selected-wrap').style.display='flex';document.getElementById('mp-thumb').src=activeModel.imageUrl;document.getElementById('mp-name').textContent=activeModel.name;}
+  else{row.className='model-picker-row';document.getElementById('mp-label').className='mp-label';document.getElementById('mp-label').textContent='🔒 Model Lock';document.getElementById('mp-none').style.display='block';document.getElementById('mp-selected-wrap').style.display='none';}
+}
+
+function updatePModelPickerUI(){
+  const row=document.getElementById('p-mp-row');if(!row)return;
+  if(pActiveModel){row.className='model-picker-row has-model';document.getElementById('p-mp-label').className='mp-label has-model';document.getElementById('p-mp-label').textContent='✓ Locked: '+pActiveModel.name;document.getElementById('p-mp-none').style.display='none';document.getElementById('p-mp-selected-wrap').style.display='flex';document.getElementById('p-mp-thumb').src=pActiveModel.imageUrl;document.getElementById('p-mp-name').textContent=pActiveModel.name;}
+  else{row.className='model-picker-row';document.getElementById('p-mp-label').className='mp-label';document.getElementById('p-mp-label').textContent='🔒 Model Lock';document.getElementById('p-mp-none').style.display='block';document.getElementById('p-mp-selected-wrap').style.display='none';}
+}
+
+async function deleteModel(id){
+  if(!falKey)return;
+  try{
+    await fetch(`/api/models/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});
+    if(activeModel?.id===id){activeModel=null;updateModelPickerUI();}
+    if(pActiveModel?.id===id){pActiveModel=null;updatePModelPickerUI();}
+    loadModels();toast('Model deleted');
+  }catch(e){toast(e.message,'err');}
+}
+
+document.getElementById('sm-name').addEventListener('keydown', e=>{ if(e.key==='Enter') confirmSaveModel(); });
 async function doSaveStyle(){
   const name=document.getElementById('ssn').value.trim();if(!name){toast('Enter name','err');return;}if(!falKey){toast('Save key first','err');return;}
   closeM('ms-save');

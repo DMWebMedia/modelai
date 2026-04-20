@@ -12,6 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const jobs   = {};
 const STYLES = {};
+const MODELS = {}; // saved models: uid → { name, imageUrl, thumb, desc, created }
 setInterval(() => { const c=Date.now()-3*60*60*1000; for(const id of Object.keys(jobs)){if(jobs[id].created<c)delete jobs[id];} }, 30*60*1000);
 
 // ── fal.ai helpers ─────────────────────────────────────────────────────
@@ -229,13 +230,24 @@ async function processItem(batchId, itemId, auth) {
   if(!item) return;
 
   try {
-    // ── AUTO MODEL LOCK ─────────────────────────────────────────────────
-    // If this item is shot #2+ for a product AND model lock is enabled,
-    // wait for shot #1 of the same product to finish, then use its output
-    // as a visual anchor injected into our image_urls.
+    // ── MODEL LOCK PRIORITY ─────────────────────────────────────────────
+    // Priority order:
+    // 1. savedModelUrl (user picked a saved model) → used for ALL shots including shot 0
+    // 2. autoLock chain (shot 1+ waits for shot 0 output) → used when no saved model
+    // 3. No lock → each shot generates independently
     let extraImageUrls = [];
 
-    if(item.autoLock && item.shotIndex > 0 && batch.type !== 'website') {
+    if(item.savedModelUrl && batch.type !== 'website') {
+      // Saved model: inject for every shot, including the first one
+      extraImageUrls = [item.savedModelUrl];
+      if(!item.lockPromptApplied) {
+        if(!item.prompt.includes('EXACT SAME MODEL')) {
+          item.prompt = MODEL_LOCK_PROMPT + ', ' + item.prompt;
+        }
+        item.lockPromptApplied = true;
+      }
+
+    } else if(item.autoLock && item.shotIndex > 0 && batch.type !== 'website') {
       // Find the first shot of the same product
       const firstShot = batch.items.find(i =>
         i.productKey === item.productKey && i.shotIndex === 0
@@ -315,6 +327,8 @@ app.post('/api/batch/create', async(req,res)=>{
     styleRefImages,
     shots,
     autoLock = true,   // default ON — auto model-lock using shot 1 output
+    savedModelUrl,     // URL of a previously saved model image — used as anchor for ALL shots
+    savedModelName,    // just for labelling
   } = req.body;
 
   if(!products?.length) return res.status(400).json({error:'No products'});
@@ -362,6 +376,7 @@ app.post('/api/batch/create', async(req,res)=>{
         shotIndex:    si,          // 0 = anchor shot, 1+ = locked shots
         productKey,               // links all shots of same product
         autoLock:     autoLock && type !== 'website',
+        savedModelUrl: savedModelUrl||null,  // pre-saved model anchor (overrides auto-lock chain)
         productImages:  prod.images,
         modelRefImages: sharedModelRefs,
         styleRefImages: sharedStyleRefs,
@@ -457,6 +472,47 @@ app.get('/api/batch/:id/zip',async(req,res)=>{
     try{const r=await fetch(item.resultUrl);archive.append(await r.buffer(),{name:`${item.name.replace(/[^a-z0-9_\-]/gi,'_')}.jpg`});}catch{}
   }
   await archive.finalize();
+});
+
+// ── Saved Models API ───────────────────────────────────────────────────
+// Save a model: store her result image URL + thumbnail + optional description
+app.post('/api/models/save', (req,res)=>{
+  const a=req.headers['authorization'];
+  if(!a) return res.status(401).json({error:'Missing key'});
+  const u=uid(a);
+  const { name, imageUrl, description='' } = req.body;
+  if(!name) return res.status(400).json({error:'Name required'});
+  if(!imageUrl) return res.status(400).json({error:'imageUrl required'});
+  if(!MODELS[u]) MODELS[u]={};
+  const id = 'model_'+Date.now();
+  MODELS[u][id] = { id, name, imageUrl, description, created:Date.now() };
+  res.json({ok:true, id});
+});
+
+app.get('/api/models', (req,res)=>{
+  const a=req.headers['authorization'];
+  if(!a) return res.status(401).json({error:'Missing key'});
+  res.json(Object.values(MODELS[uid(a)]||{}).sort((a,b)=>b.created-a.created));
+});
+
+app.delete('/api/models/:id', (req,res)=>{
+  const a=req.headers['authorization'];
+  if(!a) return res.status(401).json({error:'Missing key'});
+  const u=uid(a);
+  if(MODELS[u]) delete MODELS[u][req.params.id];
+  res.json({ok:true});
+});
+
+app.patch('/api/models/:id', (req,res)=>{
+  const a=req.headers['authorization'];
+  if(!a) return res.status(401).json({error:'Missing key'});
+  const u=uid(a);
+  if(MODELS[u]?.[req.params.id]) {
+    const { name, description } = req.body;
+    if(name) MODELS[u][req.params.id].name = name;
+    if(description !== undefined) MODELS[u][req.params.id].description = description;
+  }
+  res.json({ok:true});
 });
 
 function uid(a){let h=0;for(let i=0;i<a.length;i++){h=(Math.imul(31,h)+a.charCodeAt(i))|0;}return Math.abs(h).toString(16);}
