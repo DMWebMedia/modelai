@@ -7,160 +7,147 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f4f8;--w:#fff;--blue:#2563eb;--bd:#1d4ed8;--bl:#eff6ff;--bm:#dbeafe;
+  --bg:#f0f4f8;--w:#fff;--bl:#2563eb;--bld:#1d4ed8;--bll:#eff6ff;--blm:#dbeafe;
   --tx:#111827;--t2:#6b7280;--t3:#9ca3af;--br:#e5e7eb;--br2:#d1d5db;
   --red:#dc2626;--rbg:#fef2f2;--grn:#16a34a;--gbg:#f0fdf4;
   --ylw:#d97706;--ybg:#fffbeb;--pur:#7c3aed;--pbg:#f5f3ff;--org:#ea580c;--obg:#fff7ed;
-  --sh:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 12px rgba(0,0,0,.1);--sh3:0 8px 24px rgba(0,0,0,.13);
+  --sh:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 12px rgba(0,0,0,.1);
   --r:8px;--rl:12px;--rxl:16px;
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5}
-
-/* Topbar */
 .topbar{background:var(--w);border-bottom:1px solid var(--br);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
-.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;color:var(--blue);text-decoration:none}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;color:var(--bl);text-decoration:none}
 .lm{width:28px;height:28px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:7px;display:flex;align-items:center;justify-content:center}
 .lm svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .ntabs{display:flex;gap:2px;background:var(--bg);border-radius:9px;padding:3px;border:1px solid var(--br)}
-.ntab{padding:5px 13px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--t2);font-family:'Inter',sans-serif;transition:all .14s;white-space:nowrap}
-.ntab.on{background:var(--w);color:var(--blue);box-shadow:var(--sh)}
-.cpill{background:var(--bl);color:var(--blue);font-size:12px;font-weight:600;padding:4px 11px;border-radius:100px;border:1px solid var(--bm)}
-
-/* Layout */
+.ntab{padding:5px 13px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--t2);font-family:'Inter',sans-serif;transition:all .14s}
+.ntab.on{background:var(--w);color:var(--bl);box-shadow:var(--sh)}
+.cpill{background:var(--bll);color:var(--bl);font-size:12px;font-weight:600;padding:4px 11px;border-radius:100px;border:1px solid var(--blm)}
 .page{display:none}.page.on{display:flex;min-height:calc(100vh - 56px)}
-.sb{width:260px;flex-shrink:0;background:var(--w);border-right:1px solid var(--br);padding:1rem;overflow-y:auto;height:calc(100vh - 56px);position:sticky;top:56px}
+.sb{width:262px;flex-shrink:0;background:var(--w);border-right:1px solid var(--br);padding:1rem;overflow-y:auto;height:calc(100vh - 56px);position:sticky;top:56px}
 .main{flex:1;padding:1.5rem;overflow-y:auto;min-width:0}
-
-/* Sidebar */
 .sbs{margin-bottom:1.3rem}
 .sbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
 .kr{display:flex;gap:5px}
-.kr input,.sbi{flex:1;min-width:0;font-size:12px;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-family:'Inter',sans-serif;color:var(--tx);background:var(--w);width:100%}
-.kr input:focus,.sbi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.ksv{padding:7px 11px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0}
+.kr input{flex:1;min-width:0;font-size:12px;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
+.kr input:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.ksv{padding:7px 11px;background:var(--bl);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0}
 .kst{font-size:11px;margin-top:4px;color:var(--t3)}.kst.ok{color:var(--grn)}
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 .chip{padding:6px 4px;border:1px solid var(--br);border-radius:var(--r);background:var(--w);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;transition:all .12s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip:hover{border-color:var(--blue);color:var(--blue);background:var(--bl)}
-.chip.on{border-color:var(--blue);background:var(--blue);color:#fff}
+.chip:hover{border-color:var(--bl);color:var(--bl);background:var(--bll)}
+.chip.on{border-color:var(--bl);background:var(--bl);color:#fff}
 select{width:100%;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
-select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+select:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.sbi{width:100%;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
+.sbi:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .fr{margin-bottom:7px}.fl{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px;display:block}
-.argrid{display:flex;flex-wrap:wrap;gap:5px}
+.argrid{display:flex;flex-wrap:wrap;gap:4px}
 .arb{padding:5px 9px;border:1px solid var(--br2);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
-.arb:hover,.arb.on{border-color:var(--blue);color:var(--blue)}
-.arb.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.arb:hover,.arb.on{border-color:var(--bl);color:var(--bl)}
+.arb.on{background:var(--bl);color:#fff}
 .bgpills{display:flex;flex-wrap:wrap;gap:4px}
 .bgp{padding:4px 9px;border:1px solid var(--br2);border-radius:100px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--t2);background:var(--w);transition:all .12s}
-.bgp:hover,.bgp.on{border-color:var(--blue);color:var(--blue)}
-.bgp.on{background:var(--blue);color:#fff}
+.bgp:hover,.bgp.on{border-color:var(--bl);color:var(--bl)}
+.bgp.on{background:var(--bl);color:#fff}
+textarea{width:100%;border:1px solid var(--br2);border-radius:var(--r);padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--tx);resize:vertical;line-height:1.55;background:var(--w)}
+textarea:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea::placeholder{color:var(--t3)}
+/* Saved Models */
+.mlib{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto}
+.mcard{border:1.5px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .14s;background:var(--w)}
+.mcard:hover{border-color:var(--bl)}
+.mcard.on{border-color:var(--bl);background:var(--bll)}
+.mcard-bar{background:var(--bl);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center}
+.mcard-inner{display:flex;align-items:center;gap:8px;padding:6px 8px}
+.mthumb{width:36px;height:44px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--bg)}
+.minfo{flex:1;min-width:0}
+.mname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mdesc{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mdel{background:none;border:none;cursor:pointer;opacity:.4;font-size:13px;line-height:1;padding:2px 4px;color:var(--tx);flex-shrink:0}
+.mdel:hover{opacity:1;color:var(--red)}
+.mclr{width:100%;margin-top:4px;padding:5px;border:1px dashed rgba(37,99,235,.3);border-radius:var(--r);background:none;color:var(--bl);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:none}
+.mclr.vis{display:block}
+.mclr:hover{background:var(--bll)}
+/* Style lib */
 .slib-list{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto}
 .sli{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;font-size:11px;transition:all .12s}
-.sli:hover{border-color:var(--blue);background:var(--bl)}
+.sli:hover{border-color:var(--bl);background:var(--bll)}
 .sld{background:none;border:none;cursor:pointer;opacity:.45;font-size:14px;line-height:1;padding:0 3px}
 .sld:hover{opacity:1}
 .sla{width:100%;margin-top:5px;padding:6px;border:1px dashed var(--br2);border-radius:var(--r);background:none;color:var(--t2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
-.sla:hover{border-color:var(--blue);color:var(--blue)}
-
-/* Model Lock Box */
-.mlock{background:linear-gradient(135deg,#f5f3ff,#eff6ff);border:1px solid #c4b5fd;border-radius:var(--rl);padding:1rem;margin-bottom:1.3rem}
-.mlock-title{font-size:12px;font-weight:700;color:var(--pur);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.mlock-title span{font-size:16px}
-.mlock textarea{font-size:11px;border-color:#c4b5fd;background:rgba(255,255,255,.8);min-height:60px}
-.mlock textarea:focus{border-color:var(--pur);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
-.mlock-ref{margin-top:8px}
-.mlock-ref-label{font-size:11px;color:var(--pur);font-weight:500;margin-bottom:4px}
-.mlock-dz{border:1.5px dashed #c4b5fd;border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;background:rgba(255,255,255,.5);font-size:11px;color:var(--pur);transition:all .14s}
-.mlock-dz:hover{background:rgba(255,255,255,.9);border-color:var(--pur)}
-.mlock-thumbs{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
-.mlock-thumb{position:relative;width:44px;height:44px;border-radius:6px;overflow:hidden;border:1px solid #c4b5fd}
-.mlock-thumb img{width:100%;height:100%;object-fit:cover}
-.mlock-thumb button{position:absolute;top:1px;right:1px;width:14px;height:14px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
-.mlock-thumb:hover button{display:flex}
-
-/* Main cards */
+.sla:hover{border-color:var(--bl);color:var(--bl)}
+/* Cards */
 .card{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1.1rem;margin-bottom:1.1rem;box-shadow:var(--sh)}
 .chd{font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
 .csub{font-size:12px;color:var(--t2);margin-bottom:.9rem}
-.bdg{display:inline-flex;align-items:center;background:var(--bl);color:var(--blue);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
+.bdg{display:inline-flex;align-items:center;background:var(--bll);color:var(--bl);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
 .bdg-g{background:var(--gbg);color:var(--grn)}.bdg-p{background:var(--pbg);color:var(--pur)}.bdg-o{background:var(--obg);color:var(--org)}
-
-/* Drop zone */
+/* Dropzone */
 .dz{border:2px dashed var(--br2);border-radius:var(--rl);padding:1.8rem 1rem;text-align:center;cursor:pointer;background:var(--bg);transition:all .18s}
-.dz:hover,.dz.ov{border-color:var(--blue);background:var(--bl)}
+.dz:hover,.dz.ov{border-color:var(--bl);background:var(--bll)}
 .dz input[type=file]{display:none}
-.dzi{width:40px;height:40px;background:var(--bl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
-.dzi svg{width:18px;height:18px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dzi{width:40px;height:40px;background:var(--bll);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.dzi svg{width:18px;height:18px;stroke:var(--bl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dzt{font-size:13px;font-weight:600;margin-bottom:2px}.dzs{font-size:11px;color:var(--t2)}
-
-/* ═══ PRODUCT POOL (unassigned images) ═══ */
-.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:7px;margin-top:.9rem}
-.pool-img{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg);border:2px solid var(--br);cursor:pointer;transition:all .14s;aspect-ratio:1;user-select:none}
-.pool-img img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.pool-img .pck{position:absolute;inset:0;background:rgba(37,99,235,.35);display:none;align-items:center;justify-content:center}
-.pool-img.sel{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
-.pool-img.sel .pck{display:flex}
-.pck svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.pool-img .pdel{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2}
-.pool-img:hover .pdel{display:flex}
+/* Pool */
+.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:7px;margin-top:.9rem}
+.pi{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg);border:2px solid var(--br);cursor:pointer;aspect-ratio:1;transition:border-color .12s}
+.pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.pi .pck{position:absolute;inset:0;background:rgba(37,99,235,.4);display:none;align-items:center;justify-content:center}
+.pi.sel{border-color:var(--bl);box-shadow:0 0 0 2px var(--bl)}
+.pi.sel .pck{display:flex}
+.pck-ic{width:22px;height:22px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.pck-ic svg{width:12px;height:12px;stroke:var(--bl);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pi .pdel{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2}
+.pi:hover .pdel{display:flex}
 .pname{position:absolute;bottom:0;left:0;right:0;padding:8px 2px 2px;background:linear-gradient(transparent,rgba(0,0,0,.7));font-size:8px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-.pool-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--br)}
-.pool-sel-count{font-size:12px;color:var(--t2);flex:1}
-.pool-sel-count strong{color:var(--blue)}
-
-/* ═══ PRODUCT GROUPS ═══ */
-.groups{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
-.group-card{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh)}
-.group-header{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--br);background:var(--bg)}
-.group-num{width:24px;height:24px;background:var(--blue);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.group-name-input{flex:1;border:1px solid var(--br2);border-radius:6px;padding:5px 9px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
-.group-name-input:focus{outline:none;border-color:var(--blue)}
-.group-del{width:26px;height:26px;border:1px solid rgba(220,38,38,.3);border-radius:6px;background:var(--w);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .12s}
-.group-del:hover{background:var(--rbg)}
-.group-body{padding:10px 12px}
-.group-imgs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.group-img{position:relative;width:52px;height:52px;border-radius:6px;overflow:hidden;border:1px solid var(--br)}
-.group-img img{width:100%;height:100%;object-fit:cover}
-.group-img .gidel{position:absolute;top:1px;right:1px;width:16px;height:16px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
-.group-img:hover .gidel{display:flex}
-.group-prompt{font-size:12px;resize:vertical;min-height:44px;color:var(--t2)}
-.group-prompt:focus{border-color:var(--blue)}
+.ptoolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--br)}
+.pselinfo{font-size:12px;color:var(--t2);flex:1}
+.pselinfo strong{color:var(--bl)}
+/* Groups */
+.groups-wrap{display:flex;flex-direction:column;gap:8px}
+.gc{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden}
+.gc-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--br)}
+.gc-num{width:22px;height:22px;background:var(--bl);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gc-name{flex:1;border:1px solid var(--br2);border-radius:6px;padding:5px 9px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
+.gc-name:focus{outline:none;border-color:var(--bl)}
+.gc-del{width:26px;height:26px;border:1px solid rgba(220,38,38,.3);border-radius:6px;background:var(--w);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .12s}
+.gc-del:hover{background:var(--rbg)}
+.gc-body{padding:9px 12px}
+.gc-imgs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+.gi{position:relative;width:48px;height:48px;border-radius:6px;overflow:hidden;border:1px solid var(--br)}
+.gi img{width:100%;height:100%;object-fit:cover}
+.gi .gidel{position:absolute;top:1px;right:1px;width:15px;height:15px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.gi:hover .gidel{display:flex}
+.gc-info{font-size:11px;color:var(--t2)}
 .no-groups{text-align:center;padding:2rem;color:var(--t3);font-size:13px;border:2px dashed var(--br);border-radius:var(--rl)}
-
-/* Cost bar */
-.cbar{background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.camt{font-size:20px;font-weight:700;color:var(--ylw)}
-
-/* Buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all .12s;line-height:1;white-space:nowrap}
-.bpri{background:var(--blue);color:#fff;border-color:var(--blue)}.bpri:hover:not(:disabled){background:var(--bd)}.bpri:disabled{background:var(--t3);border-color:var(--t3);cursor:not-allowed}
-.bout{background:var(--w);color:var(--tx);border-color:var(--br2)}.bout:hover{border-color:var(--blue);color:var(--blue)}
-.bpur{background:var(--pur);color:#fff;border-color:var(--pur)}.bpur:hover{background:#6d28d9}
-.bsm{padding:5px 10px;font-size:12px}.bxs{padding:3px 8px;font-size:11px}.bfull{width:100%}.bxl{padding:13px;font-size:15px}
-.ibt{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--t2);flex-shrink:0;transition:all .12s}
-.ibt:hover{border-color:var(--blue);color:var(--blue)}.ibt.danger:hover{border-color:var(--red);color:var(--red)}
-
 /* Steps */
 .stbar{display:flex;gap:2px;background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:3px;margin-bottom:1.3rem}
 .stab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--t2);border:none;background:none;font-family:'Inter',sans-serif;transition:all .12s}
-.stab.on{background:var(--blue);color:#fff;box-shadow:var(--sh)}
+.stab.on{background:var(--bl);color:#fff;box-shadow:var(--sh)}
 .stab.done{color:var(--grn)}
-
 /* Mode toggle */
 .mtog{display:flex;gap:4px;margin-bottom:.9rem}
 .mbtn{flex:1;padding:7px;border:1px solid var(--br2);border-radius:var(--r);background:var(--w);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;text-align:center}
-.mbtn.on{border-color:var(--blue);background:var(--bl);color:var(--blue)}
-textarea{width:100%;border:1px solid var(--br2);border-radius:var(--r);padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--tx);resize:vertical;line-height:1.55;background:var(--w)}
-textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-textarea::placeholder{color:var(--t3)}
-
+.mbtn.on{border-color:var(--bl);background:var(--bll);color:var(--bl)}
+/* Cost bar */
+.cbar{background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.camt{font-size:20px;font-weight:700;color:var(--ylw)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all .12s;line-height:1;white-space:nowrap}
+.bpri{background:var(--bl);color:#fff;border-color:var(--bl)}.bpri:hover:not(:disabled){background:var(--bld)}.bpri:disabled{background:var(--t3);border-color:var(--t3);cursor:not-allowed}
+.bout{background:var(--w);color:var(--tx);border-color:var(--br2)}.bout:hover{border-color:var(--bl);color:var(--bl)}
+.bpur{background:var(--pur);color:#fff;border-color:var(--pur)}.bpur:hover{background:#6d28d9}
+.bsm{padding:5px 10px;font-size:12px}.bxs{padding:3px 8px;font-size:11px}.bfull{width:100%}.bxl{padding:13px;font-size:15px}
+.ibt{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--t2);flex-shrink:0;transition:all .12s}
+.ibt:hover{border-color:var(--bl);color:var(--bl)}.ibt.danger:hover{border-color:var(--red);color:var(--red)}
 /* Progress */
 .pwrap{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1rem;margin-bottom:1rem}
 .phd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .pbar{background:var(--bg);border-radius:100px;height:8px;overflow:hidden;margin-bottom:5px}
-.pfil{height:100%;background:linear-gradient(90deg,var(--blue),var(--pur));border-radius:100px;transition:width .5s ease}
+.pfil{height:100%;background:linear-gradient(90deg,var(--bl),var(--pur));border-radius:100px;transition:width .5s ease}
 .pst{display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
-
 /* Results */
 .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px}
 .rc{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
@@ -171,40 +158,44 @@ textarea::placeholder{color:var(--t3)}
 .rcimg:hover .rcov{background:rgba(0,0,0,.52)}
 .rcov button,.rcov a{flex:1;opacity:0;transform:translateY(3px);transition:all .18s;background:rgba(255,255,255,.93);color:var(--tx);font-size:11px;font-weight:600;padding:5px 3px;border-radius:6px;border:none;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;text-decoration:none}
 .rcimg:hover .rcov button,.rcimg:hover .rcov a{opacity:1;transform:translateY(0)}
-.rcm{padding:8px 10px 10px}.rcn{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}.rcshot{font-size:10px;color:var(--t2);margin-bottom:5px}.rcacts{display:flex;gap:4px;flex-wrap:wrap}
+.rcm{padding:8px 10px 10px}
+.rcn{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.rcshot{font-size:10px;color:var(--t2);margin-bottom:5px}
+.rcacts{display:flex;gap:4px;flex-wrap:wrap}
+.smb{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-size:10px;font-weight:700;padding:4px 7px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif}
+.smb:hover{opacity:.9}
 .rcst{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)}
 .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.dq{background:var(--t3)}.du,.dg{background:var(--blue);animation:pulse 1s infinite}.dd{background:var(--grn)}.de{background:var(--red)}
+.dq{background:var(--t3)}.du,.dg,.dw{background:var(--bl);animation:pulse 1s infinite}.dd{background:var(--grn)}.de{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .lc{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:var(--bg)}
-.spin{width:22px;height:22px;border:2.5px solid var(--br2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+.spin{width:22px;height:22px;border:2.5px solid var(--br2);border-top-color:var(--bl);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .slbl{font-size:10px;color:var(--t3);text-align:center;line-height:1.4;padding:0 8px}
 .ebox{padding:10px;background:var(--rbg);margin:8px;border-radius:var(--r);font-size:11px;color:var(--red);line-height:1.5}
-
 /* Shot planner */
 .spl{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;margin-bottom:1.1rem;box-shadow:var(--sh)}
 .sph{padding:.9rem 1.1rem;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between}
 .sph h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
 .spb{padding:1.1rem}
-.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:7px;margin-bottom:1rem}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;margin-bottom:1rem}
 .stc{border:1.5px solid var(--br);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .14s;background:var(--w);position:relative}
-.stc:hover,.stc.on{border-color:var(--blue);background:var(--bl)}
-.stci{font-size:18px;margin-bottom:3px;display:block}
+.stc:hover,.stc.on{border-color:var(--bl);background:var(--bll)}
+.stci{font-size:17px;margin-bottom:2px;display:block}
 .stcn{font-size:11px;font-weight:600;color:var(--tx);display:block;margin-bottom:1px}
 .stcd{font-size:10px;color:var(--t2);line-height:1.3}
-.stck{position:absolute;top:5px;right:5px;width:16px;height:16px;background:var(--blue);border-radius:50%;display:none;align-items:center;justify-content:center}
+.stck{position:absolute;top:5px;right:5px;width:16px;height:16px;background:var(--bl);border-radius:50%;display:none;align-items:center;justify-content:center}
 .stc.on .stck{display:flex}
 .stck svg{width:8px;height:8px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .qgbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
 .qgb{padding:5px 11px;border:1px solid var(--br2);border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
-.qgb:hover{border-color:var(--blue);color:var(--blue);background:var(--bl)}
-.sq{display:flex;flex-direction:column;gap:7px;margin-bottom:1rem}
+.qgb:hover{border-color:var(--bl);color:var(--bl);background:var(--bll)}
+.sq{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
 .si{border:1px solid var(--br);border-radius:var(--r);background:var(--w);overflow:hidden}
 .sihd{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;cursor:pointer;gap:7px}
-.sihd:hover{background:var(--bg)}.si.open .sihd{background:var(--bl)}
+.sihd:hover{background:var(--bg)}.si.open .sihd{background:var(--bll)}
 .sil{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.sinb{width:20px;height:20px;background:var(--blue);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sinb{width:20px;height:20px;background:var(--bl);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sii{font-size:16px;flex-shrink:0}.siinfo{min-width:0}
 .sinn{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sinm{font-size:10px;color:var(--t2)}
@@ -213,87 +204,50 @@ textarea::placeholder{color:var(--t3)}
 .si.open .sibody{display:block}
 .r2{display:flex;gap:10px}.r2>*{flex:1}
 .hd{border:none;border-top:1px solid var(--br);margin:.9rem 0}
-
 /* Modals */
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .mbg.open{display:flex}
-.modal{background:var(--w);border-radius:var(--rxl);padding:1.3rem;width:90%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh3)}
+.modal{background:var(--w);border-radius:var(--rxl);padding:1.3rem;width:90%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.13)}
 .mt{font-size:16px;font-weight:700;margin-bottom:3px}.ms{font-size:12px;color:var(--t2);margin-bottom:1rem}
 .macts{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
-
-/* Toast */
-.toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column;gap:6px}
-.toast{background:#1f2937;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease}
+.toast{background:#1f2937;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease;position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:none}
 .toast.ok{background:var(--grn)}.toast.err{background:var(--red)}
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-
-/* Saved Models Panel */
-.models-panel{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto}
-.model-card{border:1.5px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .14s;background:var(--w)}
-.model-card:hover{border-color:var(--blue);box-shadow:0 0 0 2px var(--bm)}
-.model-card.active-model{border-color:var(--blue);background:var(--bl);box-shadow:0 0 0 2px var(--bm)}
-.model-card-inner{display:flex;align-items:center;gap:8px;padding:6px 8px}
-.model-thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--bg)}
-.model-info{flex:1;min-width:0}
-.model-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.model-desc{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.model-del{background:none;border:none;cursor:pointer;opacity:.4;font-size:13px;line-height:1;padding:2px 4px;color:var(--tx);flex-shrink:0}
-.model-del:hover{opacity:1;color:var(--red)}
-.model-active-bar{background:var(--blue);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;text-align:center;letter-spacing:.03em}
-.model-clear-btn{width:100%;margin-top:4px;padding:5px;border:1px dashed rgba(37,99,235,.3);border-radius:var(--r);background:none;color:var(--blue);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:none}
-.model-clear-btn.visible{display:block}
-.model-clear-btn:hover{background:var(--bl)}
-/* Save model button on result cards */
-.save-model-btn{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-size:10px;font-weight:700;padding:4px 7px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.02em}
-.save-model-btn:hover{opacity:.9}
-/* Model picker in generate step */
-.model-picker-row{background:var(--pbg);border:1.5px solid #c4b5fd;border-radius:var(--r);padding:10px 12px;margin-bottom:.9rem}
-.model-picker-row.has-model{background:var(--gbg);border-color:#86efac}
-.mp-label{font-size:11px;font-weight:700;color:var(--pur);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.mp-label.has-model{color:var(--grn)}
-.mp-selected{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.mp-selected img{width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0}
-.mp-selected-name{font-size:12px;font-weight:600;color:var(--grn)}
-.tip{background:var(--bl);border:1px solid var(--bm);border-radius:var(--r);padding:8px 11px;font-size:12px;color:var(--blue);margin-bottom:.9rem}
-.tip strong{font-weight:600}
-
+.toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column-reverse;gap:6px}
+.ti{background:#1f2937;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease}
+.ti.ok{background:var(--grn)}.ti.err{background:var(--red)}
 @media(max-width:768px){.page.on{flex-direction:column}.sb{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--br)}.rgrid{grid-template-columns:repeat(2,1fr)}.stgrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <a class="logo" href="#">
-    <div class="lm"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.7z"/></svg></div>
-    Fashion AI Studio
-  </a>
+  <a class="logo" href="#"><div class="lm"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.7z"/></svg></div>Fashion AI Studio</a>
   <div class="ntabs">
     <button class="ntab on" onclick="switchPage('model')">Model Images</button>
     <button class="ntab" onclick="switchPage('website')">Website Photos</button>
     <button class="ntab" onclick="switchPage('planner')">Shot Planner</button>
   </div>
-  <div><div class="cpill" id="cpill">$0.00 used</div></div>
+  <div class="cpill" id="cpill">$0.00 used</div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════ MODEL IMAGES -->
+<!-- ═══ MODEL IMAGES ═══ -->
 <div class="page on" id="pg-model">
 <div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai API Key</div>
-    <div class="kr"><input type="password" id="fk0" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(0)">Save</button></div>
-    <div class="kst" id="kst0">Enter your key</div>
-  </div>
-  <div class="sbs"><div class="sbl">Category <span style="color:var(--red)">*</span></div>
-    <div class="cgrid" id="cats-model">
+  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk0" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(0)">Save</button></div><div class="kst" id="kst0">Enter your key</div></div>
+  <div class="sbs"><div class="sbl">Category *</div>
+    <div class="cgrid" id="cat-m">
       <button class="chip" data-v="shirts">Shirts</button><button class="chip" data-v="dresses">Dresses</button>
       <button class="chip" data-v="sunglasses">Sunglasses</button><button class="chip" data-v="bags">Bags</button>
       <button class="chip" data-v="shoes">Shoes</button><button class="chip" data-v="jackets">Jackets</button>
       <button class="chip" data-v="watches">Watches</button><button class="chip" data-v="pants">Pants</button>
       <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
-      <button class="chip" data-v="other">Other</button><button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit (multi-item)</button>
+      <button class="chip" data-v="other">Other</button>
+      <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
     </div>
   </div>
   <div class="sbs"><div class="sbl">Style & Quality</div>
     <div class="fr"><select id="m-style"><option value="">AI Chooses</option><optgroup label="Fashion"><option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option><option value="luxury">Luxury</option><option value="formal">Formal</option><option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option><option value="bohemian">Bohemian</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></optgroup><optgroup label="Commercial"><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option></optgroup></select></div>
+    <div class="fr"><select id="m-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Gender Neutral</option></select></div>
     <div class="fr"><select id="m-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select></div>
     <div class="fr"><select id="m-res" onchange="updCost('m')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div>
   </div>
@@ -307,179 +261,113 @@ textarea::placeholder{color:var(--t3)}
   </div>
   <div class="sbs"><div class="sbl">Background</div>
     <div class="fr"><select id="m-bgmode" onchange="onBgMode('m')"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
-    <div id="m-bgpick">
-      <div class="bgpills" id="bgp-m">
-        <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
-        <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
-        <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
-        <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
-        <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
-        <span class="bgp" data-b="minimal_bg">Minimal</span>
-      </div>
-    </div>
-    <div id="m-bgcustom-wrap" style="display:none;margin-top:5px"><input class="sbi" id="m-bgcustom" type="text" placeholder="Describe background..."/></div>
+    <div id="m-bgpick"><div class="bgpills" id="bgp-m">
+      <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
+      <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
+      <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
+      <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
+      <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
+      <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
+    </div></div>
+    <div id="m-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="m-bgc" type="text" placeholder="Describe background..."/></div>
+  </div>
+  <div class="sbs"><div class="sbl">🔒 Saved Models</div>
+    <div class="mlib" id="mlib-m"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → click "Save Model"</div></div>
+    <button class="mclr" id="mclr-m" onclick="clearModel('m')">✕ Remove model lock</button>
   </div>
   <div class="sbs"><div class="sbl">Style Library</div>
     <div class="slib-list" id="slib"></div>
-    <button class="sla" onclick="openM('ms-save')">+ Save current style</button>
+    <button class="sla" onclick="openM('ms-style')">+ Save current style</button>
   </div>
-  <div class="sbs">
-    <div class="sbl">🔒 Saved Models</div>
-    <div class="models-panel" id="models-panel">
-      <div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate an image then click "Save Model"</div>
-    </div>
-    <button class="model-clear-btn" id="model-clear-btn" onclick="clearActiveModel()">✕ Remove model lock</button>
-  </div>
-</div><!-- /sidebar -->
-
+</div>
 <div class="main">
   <div style="font-size:20px;font-weight:700;margin-bottom:3px">Model Images</div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Upload products → group them → lock a model → generate consistent fashion photos</div>
-
+  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Upload → group by product → generate consistent model photos with auto model lock</div>
   <div class="stbar">
     <button class="stab on" id="st1" onclick="goStep(1)">1 · Upload & Group</button>
-    <button class="stab" id="st2" onclick="goStep(2)">2 · Model Lock</button>
-    <button class="stab" id="st3" onclick="goStep(3)">3 · Prompts</button>
-    <button class="stab" id="st4" onclick="goStep(4)">4 · Generate</button>
-    <button class="stab" id="st5" onclick="goStep(5)">5 · Results</button>
+    <button class="stab" id="st2" onclick="goStep(2)">2 · Prompts</button>
+    <button class="stab" id="st3" onclick="goStep(3)">3 · Review</button>
+    <button class="stab" id="st4" onclick="goStep(4)">4 · Results</button>
   </div>
 
-  <!-- Step 1: Upload & Group -->
-  <div id="step1">
+  <!-- Step 1 -->
+  <div id="ms1">
     <div class="card">
-      <div class="chd">Upload All Images <span class="bdg">Up to 200 files</span></div>
-      <div class="csub">Upload all your product images at once, then group them below</div>
+      <div class="chd">Upload All Images <span class="bdg">Up to 200</span></div>
+      <div class="csub">Upload everything, then group images by product below. Each group = one product.</div>
       <div class="dz" id="dz-m" onclick="document.getElementById('fi-m').click()">
         <input type="file" id="fi-m" multiple accept="image/*"/>
         <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-        <div class="dzt">Drop all product images here</div>
-        <div class="dzs">JPG · PNG · WEBP — all angles, all products mixed is fine</div>
+        <div class="dzt">Drop all product images</div><div class="dzs">Any order — group them below</div>
       </div>
-      <!-- Pool of unassigned images -->
-      <div id="pool-wrap" style="display:none">
-        <div class="pool-toolbar">
-          <div class="pool-sel-count" id="pool-sel-info">Click images to select them</div>
-          <button class="btn bout bsm" onclick="selAll()">Select All</button>
-          <button class="btn bout bsm" onclick="clearSel()">Deselect</button>
-          <button class="btn bpri bsm" id="btn-group" onclick="groupSelected()" disabled>Group Selected as Product →</button>
+      <div id="m-pool-wrap" style="display:none">
+        <div class="ptoolbar">
+          <div class="pselinfo" id="m-psi">Click images to select</div>
+          <button class="btn bout bsm" onclick="selAll('m')">All</button>
+          <button class="btn bout bsm" onclick="clrSel('m')">None</button>
+          <button class="btn bpri bsm" id="m-gbtn" onclick="grpSel('m')" disabled>Group as Product →</button>
         </div>
-        <div class="pool" id="pool"></div>
+        <div class="pool" id="pool-m"></div>
       </div>
     </div>
-
     <div class="card">
-      <div class="chd">Product Groups <span class="bdg" id="groups-count">0 products</span></div>
-      <div class="csub">Each group = one product with multiple angles. All images in a group are sent together to the AI.</div>
-      <div class="tip">💡 <strong>How to group:</strong> Select images from the pool above → click "Group Selected as Product" → give each product a name. You can also drag images between groups or remove them.</div>
-      <div class="groups" id="groups-list">
-        <div class="no-groups" id="no-groups">No products grouped yet. Upload images and select them above.</div>
-      </div>
+      <div class="chd">Product Groups <span class="bdg" id="m-gcnt">0 products</span></div>
+      <div class="csub">All images in a group are sent together to AI — it sees the full product from every angle.</div>
+      <div id="m-groups"><div class="no-groups" id="m-nogrp">No products yet — select images above and click "Group as Product"</div></div>
     </div>
-
-    <!-- Style ref images -->
-    <div class="card">
-      <div class="chd">Style Reference Images <span class="bdg bdg-g">Optional</span></div>
-      <div class="csub">Upload images that represent the visual style, lighting, or composition you want</div>
-      <div class="dz" id="dz-sref" onclick="document.getElementById('fi-sref').click()">
-        <input type="file" id="fi-sref" multiple accept="image/*"/>
-        <div class="dzi"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
-        <div class="dzt">Drop style reference images</div><div class="dzs">Max 3</div>
-      </div>
-      <div class="mlock-thumbs" id="sref-thumbs"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
+      <div style="font-size:12px;color:var(--t2)">Style ref images (optional)</div>
+      <button class="btn bout bsm" onclick="document.getElementById('fi-sref').click()">+ Add style refs</button>
+      <input type="file" id="fi-sref" multiple accept="image/*" style="display:none"/>
     </div>
-
-    <div style="display:flex;justify-content:flex-end">
-      <button class="btn bpri" id="btn-step2" onclick="goStep(2)" disabled>Next: Lock Model →</button>
+    <div class="pool" id="pool-sref" style="margin-top:6px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+      <button class="btn bpri" id="m-next1" onclick="goStep(2)" disabled>Next: Prompts →</button>
     </div>
   </div>
 
-  <!-- Step 2: Model Lock -->
-  <div id="step2" style="display:none">
+  <!-- Step 2 -->
+  <div id="ms2" style="display:none">
     <div class="card">
-      <div class="chd">🔒 Model Lock</div>
-      <div class="csub">Lock a specific model so every image in the batch uses the exact same person. This solves mismatched hair, shoes, skin tone between shots.</div>
-
-      <div class="tip">💡 <strong>Tip:</strong> Be very specific — include skin tone, hair color & length, height, body type, and even what shoes they're wearing. The more detail, the more consistent.</div>
-
-      <div class="fr">
-        <label class="fl">Model Gender</label>
-        <select id="m-gender"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Gender Neutral</option></select>
-      </div>
-
-      <div class="fr" style="margin-top:10px">
-        <label class="fl">Model Description <span class="bdg bdg-g">Recommended</span></label>
-        <textarea id="m-modeldesc" rows="4" placeholder="E.g: tall slim woman, medium olive skin tone, long straight dark brown hair past shoulders, natural makeup, barefoot, early 30s, Mediterranean look, confident posture"></textarea>
-        <div style="font-size:11px;color:var(--t3);margin-top:4px">This description is injected into every single generation — keeping hair, skin, and style identical across all shots</div>
-      </div>
-
-      <div class="fr" style="margin-top:12px">
-        <label class="fl">Model Reference Photo <span class="bdg bdg-p">Best for consistency</span></label>
-        <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Upload a photo of the actual model you want to use. This photo gets sent with every generation as a visual anchor.</div>
-        <div class="dz" id="dz-mref" onclick="document.getElementById('fi-mref').click()" style="padding:1.2rem">
-          <input type="file" id="fi-mref" multiple accept="image/*"/>
-          <div class="dzt" style="font-size:13px">Drop model photo(s)</div>
-          <div class="dzs">1–3 photos of the model for best lock</div>
-        </div>
-        <div class="mlock-thumbs" id="mref-thumbs" style="margin-top:8px"></div>
-      </div>
+      <div class="chd">Scene Prompt</div>
+      <div class="csub">Describe the setting, vibe, lighting. Model description goes in the sidebar.</div>
+      <div class="mtog"><button class="mbtn on" id="pm-g" onclick="setPM('g')">One for all</button><button class="mbtn" id="pm-i" onclick="setPM('i')">Per product</button></div>
+      <div id="gw"><textarea id="gprompt" rows="4" placeholder="E.g: Standing in a bright minimalist white studio, soft natural light, full body fashion editorial shot"></textarea></div>
+      <div id="iw" style="display:none"><div id="pplist"></div></div>
+    </div>
+    <div class="card">
+      <div class="chd">Model Description <span class="bdg bdg-g">Optional — improves consistency</span></div>
+      <textarea id="m-mdesc" rows="3" placeholder="E.g: tall slim woman, olive skin, long straight dark brown hair, barefoot, early 30s, Mediterranean look"></textarea>
+      <div style="font-size:10px;color:var(--t3);margin-top:4px">Injected into every shot. Shot 2+ also automatically uses Shot 1's output as a visual anchor.</div>
     </div>
     <div style="display:flex;justify-content:space-between">
       <button class="btn bout" onclick="goStep(1)">← Back</button>
-      <button class="btn bpri" onclick="goStep(3)">Next: Prompts →</button>
+      <button class="btn bpri" onclick="goStep(3)">Next: Review →</button>
     </div>
   </div>
 
-  <!-- Step 3: Prompts -->
-  <div id="step3" style="display:none">
-    <div class="card">
-      <div class="chd">Scene Prompts</div>
-      <div class="csub">Describe the scene, setting, and vibe. The model description you set is automatically included.</div>
-      <div class="mtog">
-        <button class="mbtn on" id="pm-g" onclick="setPM('g')">One prompt for all</button>
-        <button class="mbtn" id="pm-i" onclick="setPM('i')">Per-product prompts</button>
-      </div>
-      <div id="gw">
-        <textarea id="gprompt" rows="4" placeholder="E.g: Standing in a bright minimalist white studio, soft natural lighting from the left, clean fashion editorial, full body shot showing the complete outfit"></textarea>
-      </div>
-      <div id="iw" style="display:none">
-        <div id="pplist"></div>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <button class="btn bout" onclick="goStep(2)">← Back</button>
-      <button class="btn bpri" onclick="goStep(4)">Next: Review →</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Review -->
-  <div id="step4" style="display:none">
+  <!-- Step 3 -->
+  <div id="ms3" style="display:none">
     <div class="card">
       <div class="chd">Review & Generate</div>
       <div class="cbar">
         <div><div class="camt" id="m-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="m-cmeta">—</div></div>
         <div style="text-align:right"><div style="font-size:13px;font-weight:600" id="rev-n">—</div><div style="font-size:11px;color:var(--t2)" id="rev-m">—</div></div>
       </div>
-      <!-- Active model lock display -->
-      <div class="model-picker-row" id="mp-row">
-        <div class="mp-label" id="mp-label">🔒 Model Lock</div>
-        <div id="mp-none" style="font-size:12px;color:var(--t2)">No saved model selected — AI picks a new model for shot 1, then auto-locks it for shots 2+</div>
-        <div id="mp-selected-wrap" style="display:none">
-          <div class="mp-selected">
-            <img id="mp-thumb" src="" alt=""/>
-            <div><div class="mp-selected-name" id="mp-name">—</div><div style="font-size:11px;color:var(--grn)">✓ This model will be used for every shot in the batch</div></div>
-          </div>
-        </div>
+      <div id="m-lock-row" style="background:var(--gbg);border:1px solid #86efac;border-radius:var(--r);padding:8px 12px;margin-bottom:1rem;display:none">
+        <div style="font-size:12px;font-weight:600;color:var(--grn)">🔒 Model locked: <span id="m-lock-name"></span></div>
+        <div style="font-size:11px;color:var(--t2)">Her image will be sent as visual anchor for every shot</div>
       </div>
       <div id="rev-w"></div>
       <button class="btn bpri bxl bfull" id="gen-btn" onclick="startModelGen()" disabled>Generate Images</button>
     </div>
-    <div style="display:flex;justify-content:space-between"><button class="btn bout" onclick="goStep(3)">← Back</button></div>
+    <div style="display:flex;justify-content:space-between"><button class="btn bout" onclick="goStep(2)">← Back</button></div>
   </div>
 
-  <!-- Step 5: Results -->
-  <div id="step5" style="display:none">
+  <!-- Step 4 -->
+  <div id="ms4" style="display:none">
     <div class="pwrap" id="mprog" style="display:none">
-      <div class="phd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--blue)" id="mpct">0%</div></div>
+      <div class="phd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--bl)" id="mpct">0%</div></div>
       <div class="pbar"><div class="pfil" id="mfil" style="width:0%"></div></div>
       <div class="pst"><span id="mdn">0 done</span><span id="mtot">of 0</span></div>
     </div>
@@ -493,19 +381,14 @@ textarea::placeholder{color:var(--t3)}
     </div>
     <div class="rgrid" id="rg-m"><div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--t3)">Results appear here</div></div>
   </div>
-</div><!-- /main model -->
-</div><!-- /pg-model -->
+</div>
+</div>
 
-<!-- ═══════════════════════════════════════════════════ WEBSITE PHOTOS -->
+<!-- ═══ WEBSITE PHOTOS ═══ -->
 <div class="page" id="pg-website">
 <div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai Key</div>
-    <div class="kr"><input type="password" id="fk1" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(1)">Save</button></div>
-    <div class="kst" id="kst1">Enter your key</div>
-  </div>
-  <div class="sbs"><div class="sbl">Quality</div>
-    <div class="fr"><select id="w-res" onchange="updCost('w')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div>
-  </div>
+  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk1" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(1)">Save</button></div><div class="kst" id="kst1">Enter your key</div></div>
+  <div class="sbs"><div class="sbl">Quality</div><div class="fr"><select id="w-res" onchange="updCost('w')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div></div>
   <div class="sbs"><div class="sbl">Aspect Ratio</div>
     <div class="argrid" id="ar-w">
       <button class="arb on" data-r="1:1">1:1</button><button class="arb" data-r="3:4">3:4</button>
@@ -523,64 +406,44 @@ textarea::placeholder{color:var(--t3)}
   <div class="sbs"><div class="sbl">Background</div>
     <div class="bgpills" id="bgp-w">
       <span class="bgp on" data-b="white">Pure White</span><span class="bgp" data-b="lightgrey">Lt.Grey</span>
-      <span class="bgp" data-b="grey">Grey</span><span class="bgp" data-b="minimal_bg">Minimal</span>
-      <span class="bgp" data-b="custom">Custom</span>
+      <span class="bgp" data-b="grey">Grey</span><span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="custom">Custom</span>
     </div>
-    <div id="w-bgcustom-wrap" style="display:none;margin-top:5px"><input class="sbi" id="w-bgcustom" type="text" placeholder="Describe background..."/></div>
+    <div id="w-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="w-bgc" type="text" placeholder="Describe background..."/></div>
   </div>
 </div>
 <div class="main">
   <div style="font-size:20px;font-weight:700;margin-bottom:3px">Website Photos <span class="bdg bdg-p">E-Commerce</span></div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Professional product-only shots — group multiple angles per product, no model</div>
-
-  <!-- Upload & Group (same pattern as model) -->
+  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Product-only shots — group multiple angles per product, pure white background</div>
   <div class="card">
-    <div class="chd">Upload All Images</div>
-    <div class="csub">Upload all product images, then group them by product below</div>
+    <div class="chd">Upload & Group Products</div>
     <div class="dz" id="dz-w" onclick="document.getElementById('fi-w').click()">
       <input type="file" id="fi-w" multiple accept="image/*"/>
       <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-      <div class="dzt">Drop product images</div><div class="dzs">JPG · PNG · WEBP</div>
+      <div class="dzt">Drop product images</div><div class="dzs">Group by product below</div>
     </div>
     <div id="w-pool-wrap" style="display:none">
-      <div class="pool-toolbar">
-        <div class="pool-sel-count" id="w-pool-sel-info">Click images to select</div>
-        <button class="btn bout bsm" onclick="selAll('w')">Select All</button>
-        <button class="btn bout bsm" onclick="clearSel('w')">Deselect</button>
-        <button class="btn bpri bsm" id="w-btn-group" onclick="groupSelected('w')" disabled>Group as Product →</button>
+      <div class="ptoolbar">
+        <div class="pselinfo" id="w-psi">Click to select</div>
+        <button class="btn bout bsm" onclick="selAll('w')">All</button>
+        <button class="btn bout bsm" onclick="clrSel('w')">None</button>
+        <button class="btn bpri bsm" id="w-gbtn" onclick="grpSel('w')" disabled>Group →</button>
       </div>
-      <div class="pool" id="w-pool"></div>
+      <div class="pool" id="pool-w"></div>
     </div>
   </div>
-
   <div class="card">
-    <div class="chd">Product Groups <span class="bdg" id="w-groups-count">0 products</span></div>
-    <div class="csub">Group images by product — all angles sent together for better results</div>
-    <div class="groups" id="w-groups-list">
-      <div class="no-groups" id="w-no-groups">No products grouped yet</div>
-    </div>
+    <div class="chd">Product Groups <span class="bdg" id="w-gcnt">0 products</span></div>
+    <div id="w-groups"><div class="no-groups" id="w-nogrp">No products grouped yet</div></div>
   </div>
-
-  <div class="card">
-    <div class="chd">Style Reference <span class="bdg bdg-g">Optional</span></div>
-    <div class="dz" id="dz-wref" onclick="document.getElementById('fi-wref').click()" style="padding:1.2rem">
-      <input type="file" id="fi-wref" multiple accept="image/*"/>
-      <div class="dzt" style="font-size:13px">Drop style reference</div><div class="dzs">Max 3</div>
-    </div>
-    <div class="mlock-thumbs" id="wref-thumbs" style="margin-top:8px"></div>
-  </div>
-
   <div class="card">
     <div class="chd">Scene Details <span class="bdg">Optional</span></div>
     <textarea id="wprompt" rows="3" placeholder="E.g: Flat lay, 45-degree angle, soft shadows, minimalist composition..."></textarea>
   </div>
-
-  <div class="cbar"><div><div class="camt" id="w-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="w-cmeta">0 images</div></div></div>
+  <div class="cbar"><div><div class="camt" id="w-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="w-cmeta">—</div></div></div>
   <button class="btn bpur bxl bfull" id="wgen" onclick="startWebGen()">Generate Product Photos</button>
-
   <div class="pwrap" id="wprog" style="display:none;margin-top:1rem">
     <div class="phd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--pur)" id="wpct">0%</div></div>
-    <div class="pbar"><div class="pfil" id="wfil" style="background:linear-gradient(90deg,var(--pur),var(--blue));width:0%"></div></div>
+    <div class="pbar"><div class="pfil" id="wfil" style="background:linear-gradient(90deg,var(--pur),var(--bl));width:0%"></div></div>
     <div class="pst"><span id="wdn">0</span><span id="wtot">of 0</span></div>
   </div>
   <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
@@ -588,26 +451,24 @@ textarea::placeholder{color:var(--t3)}
   </div>
   <div class="rgrid" id="rg-w" style="margin-top:1rem"></div>
 </div>
-</div><!-- /pg-website -->
+</div>
 
-<!-- ═══════════════════════════════════════════════════ SHOT PLANNER -->
+<!-- ═══ SHOT PLANNER ═══ -->
 <div class="page" id="pg-planner">
 <div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai Key</div>
-    <div class="kr"><input type="password" id="fk2" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(2)">Save</button></div>
-    <div class="kst" id="kst2">Enter your key</div>
-  </div>
-  <div class="sbs"><div class="sbl">Category <span style="color:var(--red)">*</span></div>
-    <div class="cgrid" id="cats-plan">
+  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk2" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(2)">Save</button></div><div class="kst" id="kst2">Enter your key</div></div>
+  <div class="sbs"><div class="sbl">Category *</div>
+    <div class="cgrid" id="cat-p">
       <button class="chip" data-v="shirts">Shirts</button><button class="chip" data-v="dresses">Dresses</button>
       <button class="chip" data-v="sunglasses">Sunglasses</button><button class="chip" data-v="bags">Bags</button>
       <button class="chip" data-v="shoes">Shoes</button><button class="chip" data-v="jackets">Jackets</button>
       <button class="chip" data-v="watches">Watches</button><button class="chip" data-v="pants">Pants</button>
       <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
-      <button class="chip" data-v="other">Other</button><button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit (multi-item)</button>
+      <button class="chip" data-v="other">Other</button>
+      <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
     </div>
   </div>
-  <div class="sbs"><div class="sbl">Style</div>
+  <div class="sbs"><div class="sbl">Style & Quality</div>
     <div class="fr"><select id="p-style"><option value="">AI Chooses</option><optgroup label="Fashion"><option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option><option value="luxury">Luxury</option><option value="formal">Formal</option><option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option><option value="bohemian">Bohemian</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></optgroup><optgroup label="Commercial"><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option></optgroup></select></div>
     <div class="fr"><select id="p-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Gender Neutral</option></select></div>
     <div class="fr"><select id="p-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select></div>
@@ -620,36 +481,24 @@ textarea::placeholder{color:var(--t3)}
       <button class="arb" data-r="9:16">9:16</button><button class="arb" data-r="4:3">4:3</button>
       <button class="arb" data-r="3:2">3:2</button><button class="arb" data-r="16:9">16:9</button>
     </div>
-    <div style="font-size:10px;color:var(--t3);margin-top:4px">Each shot can override this individually</div>
   </div>
-  <div class="sbs"><div class="sbl">Background</div>
-    <div class="fr"><select id="p-bgmode" onchange="onPBgMode()"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
-    <div id="p-bgpick">
-      <div class="bgpills" id="bgp-p">
-        <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
-        <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
-        <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
-        <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
-        <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
-        <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
-      </div>
-    </div>
-    <div id="p-bgcustom-wrap" style="display:none;margin-top:5px"><input class="sbi" id="p-bgcustom" type="text" placeholder="Describe background..."/></div>
+  <div class="sbs"><div class="sbl">Default Background</div>
+    <div class="fr"><select id="p-bgmode" onchange="onBgMode('p')"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
+    <div id="p-bgpick"><div class="bgpills" id="bgp-p">
+      <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
+      <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
+      <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
+      <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
+      <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
+      <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
+    </div></div>
+    <div id="p-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="p-bgc" type="text" placeholder="Describe background..."/></div>
   </div>
-  <div class="sbs"><div class="sbl">Global Prompt</div>
-    <textarea id="pprompt" rows="3" placeholder="E.g: Standing in bright minimalist studio, soft light, full body shot..."></textarea>
-  </div>
-  <div class="sbs"><div class="sbl">Model Description</div>
-    <textarea id="p-modeldesc" rows="3" placeholder="E.g: olive skin, long dark hair, barefoot, slim, Mediterranean look..."></textarea>
-    <div style="font-size:10px;color:var(--t3);margin-top:3px">Injected into every shot for consistency</div>
-  </div>
-  <!-- Saved Models for Planner -->
-  <div class="sbs">
-    <div class="sbl">🔒 Saved Models</div>
-    <div class="models-panel" id="p-models-panel">
-      <div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet</div>
-    </div>
-    <button class="model-clear-btn" id="p-model-clear-btn" onclick="clearPActiveModel()">✕ Remove model lock</button>
+  <div class="sbs"><div class="sbl">Global Prompt</div><textarea id="pprompt" rows="3" placeholder="E.g: Tall model, dark hair, confident look..."></textarea></div>
+  <div class="sbs"><div class="sbl">Model Description</div><textarea id="p-mdesc" rows="3" placeholder="E.g: olive skin, long dark hair, barefoot, slim..."></textarea></div>
+  <div class="sbs"><div class="sbl">🔒 Saved Models</div>
+    <div class="mlib" id="mlib-p"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet</div></div>
+    <button class="mclr" id="mclr-p" onclick="clearModel('p')">✕ Remove model lock</button>
   </div>
   <div class="sbs">
     <div style="background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 12px">
@@ -658,92 +507,45 @@ textarea::placeholder{color:var(--t3)}
       <div style="font-size:11px;color:var(--t2)" id="p-cmeta">—</div>
     </div>
   </div>
-</div><!-- /planner sidebar -->
-
+</div>
 <div class="main">
   <div style="font-size:20px;font-weight:700;margin-bottom:3px">Shot Planner <span class="bdg bdg-o">Advanced</span></div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Group products → plan every exact shot with full control per shot → generate all at once with auto model lock</div>
-
-  <!-- Upload & Group -->
+  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Group products → plan every shot with full per-shot control → generate all at once with auto model lock</div>
   <div class="card">
-    <div class="chd">Upload & Group Products <span class="bdg">Up to 100</span></div>
-    <div class="csub">Upload all images, then group by product — multiple angles per product sent together</div>
+    <div class="chd">Upload & Group Products</div>
     <div class="dz" id="dz-p" onclick="document.getElementById('fi-p').click()">
       <input type="file" id="fi-p" multiple accept="image/*"/>
       <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-      <div class="dzt">Drop all product images</div><div class="dzs">Any number, any order</div>
+      <div class="dzt">Drop all product images</div><div class="dzs">Any order</div>
     </div>
     <div id="p-pool-wrap" style="display:none">
-      <div class="pool-toolbar">
-        <div class="pool-sel-count" id="p-pool-sel-info">Click to select</div>
+      <div class="ptoolbar">
+        <div class="pselinfo" id="p-psi">Click to select</div>
         <button class="btn bout bsm" onclick="selAll('p')">All</button>
-        <button class="btn bout bsm" onclick="clearSel('p')">None</button>
-        <button class="btn bpri bsm" id="p-btn-group" onclick="groupSelected('p')" disabled>Group as Product →</button>
+        <button class="btn bout bsm" onclick="clrSel('p')">None</button>
+        <button class="btn bpri bsm" id="p-gbtn" onclick="grpSel('p')" disabled>Group →</button>
       </div>
-      <div class="pool" id="p-pool"></div>
+      <div class="pool" id="pool-p"></div>
     </div>
   </div>
-
   <div class="card">
-    <div class="chd">Product Groups <span class="bdg" id="p-groups-count">0 products</span></div>
-    <div class="groups" id="p-groups-list">
-      <div class="no-groups" id="p-no-groups">No products grouped yet</div>
-    </div>
+    <div class="chd">Product Groups <span class="bdg" id="p-gcnt">0 products</span></div>
+    <div id="p-groups"><div class="no-groups" id="p-nogrp">No products grouped yet</div></div>
   </div>
-
-  <!-- Model Lock for planner — same as model images -->
-  <div class="card">
-    <div class="chd">🔒 Model Reference <span class="bdg bdg-p">Optional — locks model across all shots</span></div>
-    <div class="csub">Upload a photo of the model you want — injected as visual anchor into every shot. Or use a Saved Model from the sidebar.</div>
-    <div class="dz" id="dz-pmref" onclick="document.getElementById('fi-pmref').click()" style="padding:1.2rem">
-      <input type="file" id="fi-pmref" multiple accept="image/*"/>
-      <div class="dzt" style="font-size:13px">Drop model reference photo(s)</div>
-      <div class="dzs">1–3 photos · visual anchor for all shots</div>
-    </div>
-    <div class="mlock-thumbs" id="pmref-thumbs" style="margin-top:8px"></div>
-  </div>
-
-  <!-- Style reference -->
-  <div class="card">
-    <div class="chd">Style Reference <span class="bdg bdg-g">Optional</span></div>
-    <div class="dz" id="dz-psref" onclick="document.getElementById('fi-psref').click()" style="padding:1rem">
-      <input type="file" id="fi-psref" multiple accept="image/*"/>
-      <div class="dzt" style="font-size:13px">Drop style reference images</div><div class="dzs">Max 3</div>
-    </div>
-    <div class="mlock-thumbs" id="psref-thumbs" style="margin-top:8px"></div>
-  </div>
-
-  <!-- Active saved model display -->
-  <div class="model-picker-row" id="p-mp-row" style="margin-bottom:1rem">
-    <div class="mp-label" id="p-mp-label">🔒 Model Lock</div>
-    <div id="p-mp-none" style="font-size:12px;color:var(--t2)">No saved model — AI auto-locks using shot 1 output for shots 2+. Or select a saved model from the sidebar.</div>
-    <div id="p-mp-selected-wrap" style="display:none">
-      <div class="mp-selected">
-        <img id="p-mp-thumb" src="" alt=""/>
-        <div><div class="mp-selected-name" id="p-mp-name">—</div><div style="font-size:11px;color:var(--grn)">✓ Used for every shot in this batch</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Shot Planner -->
   <div class="spl">
-    <div class="sph">
-      <h3>Shot Plan <span class="bdg" id="sqbdg">0 shots</span></h3>
-      <div style="display:flex;gap:6px">
-        <button class="btn bout bsm" onclick="clearSQ()">Clear</button>
-        <button class="btn bpri bsm" onclick="openAddShot()">+ Add Shot</button>
-      </div>
+    <div class="sph"><h3>Shot Plan <span class="bdg" id="sqbdg">0 shots</span></h3>
+      <div style="display:flex;gap:6px"><button class="btn bout bsm" onclick="clearSQ()">Clear</button><button class="btn bpri bsm" onclick="openAddShot()">+ Add Shot</button></div>
     </div>
     <div class="spb">
       <div style="margin-bottom:1rem">
-        <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Quick Add Packs</div>
+        <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Quick Add</div>
         <div class="qgbtns">
-          <button class="qgb" onclick="addGroup('onmodel')">📸 On-Model Set</button>
-          <button class="qgb" onclick="addGroup('product')">🧺 Product Only</button>
-          <button class="qgb" onclick="addGroup('angles')">🔄 All Angles</button>
-          <button class="qgb" onclick="addGroup('ecommerce')">🛒 E-Commerce</button>
-          <button class="qgb" onclick="addGroup('lookbook')">📖 Lookbook</button>
-          <button class="qgb" onclick="addGroup('full')">⭐ Full Pack</button>
+          <button class="qgb" onclick="addShotGroup('onmodel')">📸 On-Model</button>
+          <button class="qgb" onclick="addShotGroup('product')">🧺 Product Only</button>
+          <button class="qgb" onclick="addShotGroup('angles')">🔄 All Angles</button>
+          <button class="qgb" onclick="addShotGroup('ecommerce')">🛒 E-Commerce</button>
+          <button class="qgb" onclick="addShotGroup('lookbook')">📖 Lookbook</button>
+          <button class="qgb" onclick="addShotGroup('full')">⭐ Full Pack</button>
         </div>
       </div>
       <div class="sq" id="sq"><div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px" id="sqempty">No shots yet — use Quick Add or + Add Shot</div></div>
@@ -753,140 +555,121 @@ textarea::placeholder{color:var(--t3)}
       </div>
     </div>
   </div>
-
   <div class="pwrap" id="pprog" style="display:none;margin-top:1rem">
-    <div class="phd"><div style="font-size:13px;font-weight:600">Generating shots...</div><div style="font-size:13px;font-weight:700;color:var(--blue)" id="ppct">0%</div></div>
+    <div class="phd"><div style="font-size:13px;font-weight:600">Generating shots...</div><div style="font-size:13px;font-weight:700;color:var(--bl)" id="ppct">0%</div></div>
     <div class="pbar"><div class="pfil" id="pfil" style="width:0%"></div></div>
     <div class="pst"><span id="pdn">0</span><span id="ptot">of 0</span></div>
   </div>
-  <div style="display:flex;justify-content:space-between;margin-top:.9rem;align-items:center">
-    <div id="p-res-count" style="font-size:12px;color:var(--t2)"></div>
-    <button class="btn bout bsm" id="pzip" onclick="doZip('p')" disabled style="display:none">↓ ZIP all shots</button>
+  <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
+    <button class="btn bout bsm" id="pzip" onclick="doZip('p')" disabled style="display:none">↓ ZIP</button>
   </div>
   <div class="rgrid" id="rg-p" style="margin-top:1rem"></div>
 </div>
-</div><!-- /pg-planner -->
+</div>
 
 <!-- ═══ MODALS ═══ -->
-<div class="mbg" id="m-add-shot">
-  <div class="modal"><div class="mt">Add Shot</div><div class="ms">Select type and configure</div>
-    <div class="stgrid" id="stpicker"></div>
-    <div class="hd"></div>
-    <div class="r2">
-      <div class="fr"><label class="fl">Background</label>
-        <select id="as-bg"><option value="ai">AI Decides</option><option value="white">White Studio</option><option value="grey">Grey Studio</option><option value="lightgrey">Light Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury Interior</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="minimal_bg">Minimal</option><option value="custom">Custom</option></select>
-        <div id="as-bgc" style="display:none;margin-top:5px"><input class="sbi" id="as-bgt" placeholder="Describe..."/></div>
-      </div>
-      <div class="fr"><label class="fl">Aspect Ratio</label>
-        <select id="as-ar"><option value="3:4">3:4 — Portrait</option><option value="1:1">1:1 — Square</option><option value="4:5">4:5 — Instagram</option><option value="2:3">2:3 — Tall</option><option value="9:16">9:16 — Story</option><option value="4:3">4:3 — Landscape</option><option value="3:2">3:2 — Wide</option><option value="16:9">16:9 — Cinematic</option></select>
-      </div>
-    </div>
-    <div class="fr"><label class="fl">Style Override</label>
-      <select id="as-style"><option value="">Use global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-commerce</option><option value="minimal">Minimal</option><option value="lifestyle">Lifestyle</option><option value="streetwear">Streetwear</option></select>
-    </div>
-    <div class="fr"><label class="fl">Extra prompt for this shot (optional)</label>
-      <textarea id="as-prompt" rows="2" placeholder="Add specific details for this shot only..."></textarea>
-    </div>
-    <div id="as-err" style="color:var(--red);font-size:12px;display:none;margin-top:4px">⚠ Select a shot type</div>
-    <div class="macts"><button class="btn bout" onclick="closeM('m-add-shot')">Cancel</button><button class="btn bpri" onclick="confirmShot()">Add Shot</button></div>
-  </div>
-</div>
+<div class="mbg" id="m-grp-name"><div class="modal">
+  <div class="mt">Name This Product</div><div class="ms" id="gn-sub">—</div>
+  <div class="fr"><label class="fl">Product name</label><input class="sbi" type="text" id="gn-inp" placeholder="E.g: Blue Denim Jacket..." style="width:100%"/></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-grp-name')">Cancel</button><button class="btn bpri" onclick="confirmGrp()">Create Group</button></div>
+</div></div>
 
-<div class="mbg" id="m-edit-shot">
-  <div class="modal"><div class="mt">Edit Shot</div><input type="hidden" id="esi"/>
-    <div class="r2">
-      <div class="fr"><label class="fl">Background</label>
-        <select id="es-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="custom">Custom</option></select>
-        <div id="es-bgc" style="display:none;margin-top:4px"><input class="sbi" id="es-bgt" placeholder="Describe..."/></div>
-      </div>
-      <div class="fr"><label class="fl">Aspect Ratio</label>
-        <select id="es-ar"><option value="3:4">3:4</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="2:3">2:3</option><option value="9:16">9:16</option><option value="4:3">4:3</option><option value="3:2">3:2</option><option value="16:9">16:9</option></select>
-      </div>
+<div class="mbg" id="m-add-shot"><div class="modal">
+  <div class="mt">Add Shot</div><div class="ms">Select type and configure</div>
+  <div class="stgrid" id="stpicker"></div>
+  <div class="hd"></div>
+  <div class="r2">
+    <div class="fr"><label class="fl">Background</label>
+      <select id="as-bg"><option value="ai">AI Decides</option><option value="white">White Studio</option><option value="grey">Grey Studio</option><option value="lightgrey">Light Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury Interior</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="minimal_bg">Minimal</option><option value="custom">Custom</option></select>
+      <div id="as-bgcw" style="display:none;margin-top:4px"><input class="sbi" id="as-bgc" placeholder="Describe..."/></div>
     </div>
-    <div class="fr"><label class="fl">Style</label><select id="es-style"><option value="">Global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-com</option><option value="minimal">Minimal</option></select></div>
-    <div class="fr"><label class="fl">Extra Prompt</label><textarea id="es-prompt" rows="2" placeholder="Extra details..."></textarea></div>
-    <div class="macts"><button class="btn bout" onclick="closeM('m-edit-shot')">Cancel</button><button class="btn bpri" onclick="saveEditShot()">Save</button></div>
-  </div>
-</div>
-
-<div class="mbg" id="m-edit-item">
-  <div class="modal"><div class="mt">Edit & Regenerate</div><div class="ms" id="ei-name">—</div>
-    <input type="hidden" id="ei-bid"/><input type="hidden" id="ei-iid"/>
-    <div class="fr"><label class="fl">Prompt</label><textarea id="ei-prompt" rows="4"></textarea></div>
-    <div class="r2">
-      <div class="fr"><label class="fl">Background</label><select id="ei-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option></select></div>
-      <div class="fr"><label class="fl">Quality</label><select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select></div>
-    </div>
-    <div class="macts"><button class="btn bout" onclick="closeM('m-edit-item')">Cancel</button><button class="btn bpri" onclick="doRegen()">Regenerate</button></div>
-  </div>
-</div>
-
-<div class="mbg" id="m-batch-edit">
-  <div class="modal"><div class="mt">Edit All & Regenerate</div><div class="ms">Apply new prompt to entire batch</div>
-    <div class="fr"><label class="fl">New Prompt</label><textarea id="be-prompt" rows="4"></textarea></div>
-    <div class="fr"><label class="fl">Background</label><select id="be-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option></select></div>
-    <div class="macts"><button class="btn bout" onclick="closeM('m-batch-edit')">Cancel</button><button class="btn bpri" onclick="doEditBatch()">Regen All</button></div>
-  </div>
-</div>
-
-<div class="mbg" id="ms-save">
-  <div class="modal"><div class="mt">Save Style</div>
-    <div class="fr"><label class="fl">Style Name</label><input class="sbi" type="text" id="ssn" placeholder="E.g: Luxury Summer Look" style="width:100%"/></div>
-    <div class="macts"><button class="btn bout" onclick="closeM('ms-save')">Cancel</button><button class="btn bpri" onclick="doSaveStyle()">Save</button></div>
-  </div>
-</div>
-
-<div class="mbg" id="m-group-name">
-  <div class="modal"><div class="mt">Name This Product</div><div class="ms" id="gn-count">—</div>
-    <div class="fr"><label class="fl">Product name</label><input class="sbi" type="text" id="gn-input" placeholder="E.g: Blue Denim Jacket, Summer Dress..." style="width:100%"/></div>
-    <div class="macts"><button class="btn bout" onclick="closeM('m-group-name')">Cancel</button><button class="btn bpri" onclick="confirmGroup()">Create Product Group</button></div>
-  </div>
-</div>
-
-<div class="mbg" id="m-save-model">
-  <div class="modal">
-    <div class="mt">🔒 Save This Model</div>
-    <div class="ms">Give her a name and save her for future batches. She'll appear in your Model Library and can be selected before generating.</div>
-    <input type="hidden" id="sm-url"/>
-    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem">
-      <img id="sm-preview" src="" alt="" style="width:80px;height:100px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);flex-shrink:0;background:var(--bg)"/>
-      <div style="flex:1">
-        <div class="fr"><label class="fl">Model Name <span style="color:var(--red)">*</span></label>
-          <input class="sbi" type="text" id="sm-name" placeholder="E.g: Tall Brunette, Summer Model, Model A..." style="width:100%"/>
-        </div>
-        <div class="fr" style="margin-top:6px"><label class="fl">Notes (optional)</label>
-          <input class="sbi" type="text" id="sm-desc" placeholder="E.g: olive skin, long hair, barefoot..." style="width:100%"/>
-        </div>
-      </div>
-    </div>
-    <div class="macts">
-      <button class="btn bout" onclick="closeM('m-save-model')">Cancel</button>
-      <button class="btn bpri" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none" onclick="confirmSaveModel()">🔒 Save Model</button>
+    <div class="fr"><label class="fl">Aspect Ratio</label>
+      <select id="as-ar"><option value="3:4">3:4 — Portrait</option><option value="1:1">1:1 — Square</option><option value="4:5">4:5 — Instagram</option><option value="2:3">2:3 — Tall</option><option value="9:16">9:16 — Story</option><option value="4:3">4:3 — Landscape</option><option value="3:2">3:2 — Wide</option><option value="16:9">16:9 — Cinematic</option></select>
     </div>
   </div>
-</div>
+  <div class="fr"><label class="fl">Style Override</label>
+    <select id="as-style"><option value="">Use global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-commerce</option><option value="minimal">Minimal</option><option value="lifestyle">Lifestyle</option><option value="streetwear">Streetwear</option><option value="athletic">Athletic</option></select>
+  </div>
+  <div class="fr"><label class="fl">Extra prompt for this shot (optional)</label><textarea id="as-prompt" rows="2" placeholder="Extra details for this shot only..."></textarea></div>
+  <div id="as-err" style="color:var(--red);font-size:12px;display:none;margin-top:4px">⚠ Select a shot type first</div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-add-shot')">Cancel</button><button class="btn bpri" onclick="confirmShot()">Add Shot</button></div>
+</div></div>
+
+<div class="mbg" id="m-edit-shot"><div class="modal">
+  <div class="mt">Edit Shot</div><input type="hidden" id="esi"/>
+  <div class="r2">
+    <div class="fr"><label class="fl">Background</label>
+      <select id="es-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="custom">Custom</option></select>
+      <div id="es-bgcw" style="display:none;margin-top:4px"><input class="sbi" id="es-bgc" placeholder="Describe..."/></div>
+    </div>
+    <div class="fr"><label class="fl">Aspect Ratio</label>
+      <select id="es-ar"><option value="3:4">3:4</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="2:3">2:3</option><option value="9:16">9:16</option><option value="4:3">4:3</option><option value="3:2">3:2</option><option value="16:9">16:9</option></select>
+    </div>
+  </div>
+  <div class="fr"><label class="fl">Style</label><select id="es-style"><option value="">Global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-com</option><option value="minimal">Minimal</option></select></div>
+  <div class="fr"><label class="fl">Extra Prompt</label><textarea id="es-prompt" rows="2" placeholder="Extra details..."></textarea></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-edit-shot')">Cancel</button><button class="btn bpri" onclick="saveEditShot()">Save</button></div>
+</div></div>
+
+<div class="mbg" id="m-edit-item"><div class="modal">
+  <div class="mt">Edit & Regenerate</div><div class="ms" id="ei-name">—</div>
+  <input type="hidden" id="ei-bid"/><input type="hidden" id="ei-iid"/>
+  <div class="fr"><label class="fl">Prompt</label><textarea id="ei-prompt" rows="4"></textarea></div>
+  <div class="r2">
+    <div class="fr"><label class="fl">Background</label><select id="ei-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option></select></div>
+    <div class="fr"><label class="fl">Quality</label><select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select></div>
+  </div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-edit-item')">Cancel</button><button class="btn bpri" onclick="doRegen()">Regenerate</button></div>
+</div></div>
+
+<div class="mbg" id="m-batch-edit"><div class="modal">
+  <div class="mt">Edit All & Regenerate</div><div class="ms">Apply new prompt to entire batch</div>
+  <div class="fr"><label class="fl">New Prompt</label><textarea id="be-prompt" rows="4"></textarea></div>
+  <div class="fr"><label class="fl">Background</label><select id="be-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option></select></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-batch-edit')">Cancel</button><button class="btn bpri" onclick="doEditBatch()">Regen All</button></div>
+</div></div>
+
+<div class="mbg" id="ms-style"><div class="modal">
+  <div class="mt">Save Style</div>
+  <div class="fr"><label class="fl">Style Name</label><input class="sbi" type="text" id="ssn" placeholder="E.g: Luxury Summer" style="width:100%"/></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('ms-style')">Cancel</button><button class="btn bpri" onclick="doSaveStyle()">Save</button></div>
+</div></div>
+
+<div class="mbg" id="ms-model"><div class="modal">
+  <div class="mt">🔒 Save This Model</div>
+  <div class="ms">Give her a name — she'll appear in your Model Library for future batches</div>
+  <input type="hidden" id="sm-url"/>
+  <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem">
+    <img id="sm-prev" src="" alt="" style="width:70px;height:88px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);flex-shrink:0;background:var(--bg)"/>
+    <div style="flex:1">
+      <div class="fr"><label class="fl">Name *</label><input class="sbi" type="text" id="sm-name" placeholder="E.g: Tall Brunette, Model A..." style="width:100%"/></div>
+      <div class="fr" style="margin-top:6px"><label class="fl">Notes (optional)</label><input class="sbi" type="text" id="sm-desc" placeholder="E.g: olive skin, long hair..." style="width:100%"/></div>
+    </div>
+  </div>
+  <div class="macts"><button class="btn bout" onclick="closeM('ms-model')">Cancel</button><button class="btn bpri" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none" onclick="confirmSaveModel()">Save Model</button></div>
+</div></div>
 
 <div class="toasts" id="toasts"></div>
 
 <script>
-// ════════════ SHOT TYPES ════════════
+// ════════ SHOT TYPES ════════
 const ST=[
   {id:'front',icon:'🧍',name:'Front View',desc:'Full body, facing camera'},
-  {id:'back',icon:'🔙',name:'Back View',desc:'Rear shot, facing away'},
+  {id:'back',icon:'🔙',name:'Back View',desc:'Full body rear shot'},
   {id:'side',icon:'↔️',name:'Side Profile',desc:'Side view, full body'},
-  {id:'detail',icon:'🔍',name:'Close-up Detail',desc:'Extreme close-up, texture'},
+  {id:'detail',icon:'🔍',name:'Close-up',desc:'Extreme product detail'},
   {id:'face',icon:'🤳',name:'Portrait',desc:'Head & shoulders'},
-  {id:'sitting',icon:'🪑',name:'Sitting',desc:'Model seated, relaxed'},
-  {id:'walking',icon:'🚶',name:'Walking',desc:'Mid-stride dynamic walk'},
-  {id:'dynamic',icon:'💃',name:'Dynamic Pose',desc:'Action, energy, movement'},
-  {id:'hands',icon:'✋',name:'Hands / Wrist',desc:'Close-up hands & product'},
-  {id:'flat_lay',icon:'🗃️',name:'Flat Lay',desc:'Overhead, on surface'},
-  {id:'mannequin',icon:'👗',name:'Ghost Mannequin',desc:'Floating, no model'},
-  {id:'alone_white',icon:'⬜',name:'White BG Only',desc:'Product on white'},
-  {id:'alone_grey',icon:'◻️',name:'Grey BG Only',desc:'Product on grey'},
-  {id:'alone_natural',icon:'🪵',name:'Natural Surface',desc:'Product on wood'},
+  {id:'sitting',icon:'🪑',name:'Sitting',desc:'Seated pose'},
+  {id:'walking',icon:'🚶',name:'Walking',desc:'Mid-stride dynamic'},
+  {id:'dynamic',icon:'💃',name:'Dynamic',desc:'Action, movement'},
+  {id:'hands',icon:'✋',name:'Hands',desc:'Wrist/hands close-up'},
+  {id:'flat_lay',icon:'🗃️',name:'Flat Lay',desc:'Overhead, no model'},
+  {id:'mannequin',icon:'👗',name:'Mannequin',desc:'Floating, no model'},
+  {id:'alone_white',icon:'⬜',name:'White BG',desc:'Product on white'},
+  {id:'alone_grey',icon:'◻️',name:'Grey BG',desc:'Product on grey'},
+  {id:'alone_natural',icon:'🪵',name:'Natural',desc:'Product on wood'},
   {id:'lookbook',icon:'📖',name:'Lookbook',desc:'Editorial storytelling'},
-  {id:'street_life',icon:'🌆',name:'Street Life',desc:'Real urban, candid city'},
+  {id:'street_life',icon:'🌆',name:'Street Life',desc:'Real urban, candid'},
 ];
 const SG={
   onmodel:['front','back','side','dynamic'],
@@ -897,54 +680,48 @@ const SG={
   full:['front','back','side','detail','flat_lay','alone_white','lookbook','dynamic'],
 };
 
-// ════════════ STATE ════════════
+// ════════ STATE ════════
 let falKey='';
-let cats={model:'',plan:''};
+let cats={m:'',p:''};
 let ARs={m:'3:4',w:'1:1',p:'3:4'};
 let BGs={m:'white',w:'white',p:'white'};
 let bgModes={m:'pick',w:'pick',p:'pick'};
-let wCount=1;
-let pm='g';
+let wCount=1, pm='g';
 let step=1;
 let bids={m:null,w:null,p:null};
 let ptimers={m:null,w:null,p:null};
 let spent=0;
-let SQ=[];
-let pickedST=null;
-// Product pools: {ctx: [{file, b64, name, id}]}
+let SQ=[], pickedST=null;
 let pools={m:[],w:[],p:[]};
-// Selected pool ids per ctx
 let poolSel={m:new Set(),w:new Set(),p:new Set()};
-// Product groups: {ctx: [{id, name, images:[{file,b64,name}]}]}
 let groups={m:[],w:[],p:[]};
-// Pending group ctx
-let pendingGroupCtx='m';
-// Model/style refs
-let modelRefs=[];   // {b64,mimeType} — model lock photos
-let styleRefs={m:[],w:[],p:[]};  // style reference photos
-let pModelRefs=[];  // planner model refs
-let pStyleRefs=[];  // planner style refs — alias for styleRefs.p
+let pendingCtx='m';
+let savedModels=[];
+let activeModel={m:null,p:null}; // {id,name,imageUrl}
+let srefFiles={m:[],w:[],p:[]};
 
-// ════════════ INIT ════════════
+// ════════ INIT ════════
 (function init(){
   buildSTPicker();
   setupAllDZ();
   setupCatClicks();
   setupARClicks();
-  setupBgPillClicks();
+  setupBGPillClicks();
   ['fk0','fk1','fk2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     el.addEventListener('focus',function(){if(this.value.startsWith('•'))this.value='';});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')saveKey(i);});
   });
   document.getElementById('as-bg').addEventListener('change',function(){
-    document.getElementById('as-bgc').style.display=this.value==='custom'?'block':'none';
+    document.getElementById('as-bgcw').style.display=this.value==='custom'?'block':'none';
   });
   document.getElementById('es-bg').addEventListener('change',function(){
-    document.getElementById('es-bgc').style.display=this.value==='custom'?'block':'none';
+    document.getElementById('es-bgcw').style.display=this.value==='custom'?'block':'none';
   });
   document.getElementById('gprompt').addEventListener('input',updateRev);
   document.getElementById('m-res').addEventListener('change',()=>{updCost('m');updateRev();});
+  document.getElementById('gn-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmGrp();});
+  document.getElementById('sm-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSaveModel();});
   updCost('m');updCost('w');updCost('p');
 })();
 
@@ -957,14 +734,64 @@ function buildSTPicker(){
 }
 function pickST(el,id){document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));el.classList.add('on');pickedST=id;document.getElementById('as-err').style.display='none';}
 
+// ════════ KEY ════════
+function saveKey(n){
+  const ids=['fk0','fk1','fk2'];
+  const v=document.getElementById(ids[n]).value.trim();
+  if(v&&!v.startsWith('•'))falKey=v;
+  if(falKey) ids.forEach(id=>document.getElementById(id).value='••••••••••••');
+  ['kst0','kst1','kst2'].forEach(id=>{
+    const e=document.getElementById(id);
+    e.textContent=falKey?'✓ Key saved':'Enter your key';
+    e.className=falKey?'kst ok':'kst';
+  });
+  if(falKey){loadModels();loadStyles();}
+  updateRev();updCost('p');
+}
+
+// ════════ NAV ════════
+function switchPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('on',['model','website','planner'][i]===p));
+}
+function goStep(n){
+  step=n;
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('ms'+i);if(s)s.style.display=i===n?'block':'none';
+    const t=document.getElementById('st'+i);
+    if(t){t.classList.toggle('on',i===n);if(i<n)t.classList.add('done');else t.classList.remove('done');}
+  });
+  if(n===2&&pm==='i')renderPP();
+  if(n===3)updateRev();
+}
+function setPM(m){
+  pm=m;
+  document.getElementById('pm-g').classList.toggle('on',m==='g');
+  document.getElementById('pm-i').classList.toggle('on',m==='i');
+  document.getElementById('gw').style.display=m==='g'?'block':'none';
+  document.getElementById('iw').style.display=m==='i'?'block':'none';
+  if(m==='i')renderPP();
+}
+function renderPP(){
+  const list=document.getElementById('pplist');list.innerHTML='';
+  groups.m.forEach((g,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--br);border-radius:var(--r);background:var(--bg);margin-bottom:7px';
+    const imgs=g.images.slice(0,3).map(im=>`<img src="data:${im.mimeType};base64,${im.b64}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0"/>`).join('');
+    d.innerHTML=`<div style="display:flex;gap:3px">${imgs}</div><div style="flex:1"><div style="font-size:11px;font-weight:600;margin-bottom:3px">${g.name}</div><textarea id="pp${i}" rows="2" style="font-size:12px" placeholder="Prompt for ${g.name}..."></textarea></div>`;
+    list.appendChild(d);
+  });
+}
+
+// ════════ CAT / AR / BG ════════
 function setupCatClicks(){
-  ['cats-model','cats-plan'].forEach((grid,gi)=>{
-    const ctx=gi===0?'model':'plan';
-    document.getElementById(grid).querySelectorAll('.chip').forEach(btn=>{
+  [['cat-m','m'],['cat-p','p']].forEach(([gid,ctx])=>{
+    document.getElementById(gid).querySelectorAll('.chip').forEach(btn=>{
       btn.addEventListener('click',()=>{
-        document.getElementById(grid).querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
-        btn.classList.add('on'); cats[ctx]=btn.dataset.v;
-        if(ctx==='model')updateRev(); else updCost('p');
+        document.getElementById(gid).querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');cats[ctx]=btn.dataset.v;
+        if(ctx==='m')updateRev();else updCost('p');
       });
     });
   });
@@ -976,86 +803,42 @@ function setupARClicks(){
     el.querySelectorAll('.arb').forEach(btn=>{
       btn.addEventListener('click',()=>{
         el.querySelectorAll('.arb').forEach(b=>b.classList.remove('on'));
-        btn.classList.add('on'); ARs[ctx]=btn.dataset.r;
+        btn.classList.add('on');ARs[ctx]=btn.dataset.r;
       });
     });
   });
 }
-function setupBgPillClicks(){
-  document.getElementById('bgp-m').querySelectorAll('.bgp').forEach(el=>{
-    el.addEventListener('click',()=>{document.getElementById('bgp-m').querySelectorAll('.bgp').forEach(p=>p.classList.remove('on'));el.classList.add('on');BGs.m=el.dataset.b;});
-  });
-  document.getElementById('bgp-w').querySelectorAll('.bgp').forEach(el=>{
-    el.addEventListener('click',()=>{
-      document.getElementById('bgp-w').querySelectorAll('.bgp').forEach(p=>p.classList.remove('on'));
-      el.classList.add('on'); BGs.w=el.dataset.b;
-      document.getElementById('w-bgcustom-wrap').style.display=el.dataset.b==='custom'?'block':'none';
-    });
-  });
-  document.getElementById('bgp-p').querySelectorAll('.bgp').forEach(el=>{
-    el.addEventListener('click',()=>{
-      document.getElementById('bgp-p').querySelectorAll('.bgp').forEach(p=>p.classList.remove('on'));
-      el.classList.add('on'); BGs.p=el.dataset.b;
+function setupBGPillClicks(){
+  [['bgp-m','m'],['bgp-w','w'],['bgp-p','p']].forEach(([gid,ctx])=>{
+    const el=document.getElementById(gid);if(!el)return;
+    el.querySelectorAll('.bgp').forEach(p=>{
+      p.addEventListener('click',()=>{
+        el.querySelectorAll('.bgp').forEach(x=>x.classList.remove('on'));
+        p.classList.add('on');BGs[ctx]=p.dataset.b;
+        if(ctx==='w'){document.getElementById('w-bgcw').style.display=p.dataset.b==='custom'?'block':'none';}
+      });
     });
   });
 }
 function onBgMode(ctx){
   const mode=document.getElementById(`${ctx}-bgmode`).value;
   bgModes[ctx]=mode;
-  document.getElementById(`${ctx}-bgpick`).style.display=mode==='pick'?'block':'none';
-  document.getElementById(`${ctx}-bgcustom-wrap`).style.display=mode==='custom'?'block':'none';
+  const pickEl=document.getElementById(`${ctx}-bgpick`);
+  const custEl=document.getElementById(`${ctx}-bgcw`);
+  if(pickEl)pickEl.style.display=mode==='pick'?'block':'none';
+  if(custEl)custEl.style.display=mode==='custom'?'block':'none';
 }
-function onPBgMode(){onBgMode('p');}
+function selWN(btn){document.querySelectorAll('[data-wn]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');wCount=parseInt(btn.dataset.wn);updCost('w');}
 
-// ════════════ KEY ════════════
-function saveKey(n){
-  const v=document.getElementById(['fk0','fk1','fk2'][n]).value.trim();
-  if(v&&!v.startsWith('•'))falKey=v;
-  if(falKey){['fk0','fk1','fk2'].forEach(id=>document.getElementById(id).value='••••••••••••');}
-  ['kst0','kst1','kst2'].forEach(id=>{const e=document.getElementById(id);e.textContent=falKey?'✓ Key saved':'Enter your key';e.className=falKey?'kst ok':'kst';});
-  updateRev();updCost('p');
-  if(falKey) { loadModels(); loadStyles(); }
-}
-
-// ════════════ NAV ════════════
-function switchPage(p){
-  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
-  document.getElementById('pg-'+p).classList.add('on');
-  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('on',['model','website','planner'][i]===p));
-}
-function goStep(n){
-  step=n;
-  [1,2,3,4,5].forEach(i=>{
-    const s=document.getElementById('step'+i);if(s)s.style.display=i===n?'block':'none';
-    const t=document.getElementById('st'+i);
-    if(t){t.classList.toggle('on',i===n);if(i<n)t.classList.add('done');else t.classList.remove('done');}
-  });
-  if(n===3&&pm==='i') renderPP();
-  if(n===4) updateRev();
-}
-function setPM(m){pm=m;document.getElementById('pm-g').classList.toggle('on',m==='g');document.getElementById('pm-i').classList.toggle('on',m==='i');document.getElementById('gw').style.display=m==='g'?'block':'none';document.getElementById('iw').style.display=m==='i'?'block':'none';if(m==='i')renderPP();}
-function renderPP(){
-  const list=document.getElementById('pplist');list.innerHTML='';
-  groups.m.forEach((g,i)=>{
-    const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--br);border-radius:var(--r);background:var(--bg);margin-bottom:7px';
-    const imgs=g.images.slice(0,3).map(im=>`<img src="data:image/jpeg;base64,${im.b64}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0"/>`).join('');
-    row.innerHTML=`<div style="display:flex;gap:3px">${imgs}</div><div style="flex:1"><div style="font-size:11px;font-weight:600;margin-bottom:3px">${g.name}</div><textarea id="pp${i}" rows="2" style="font-size:12px" placeholder="Prompt for ${g.name}..."></textarea></div>`;
-    list.appendChild(row);
-  });
-}
-
-// ════════════ DROPZONES ════════════
+// ════════ DROPZONES ════════
 function setupAllDZ(){
-  // Pool dropzones
   setupPoolDZ('dz-m','fi-m','m');
   setupPoolDZ('dz-w','fi-w','w');
   setupPoolDZ('dz-p','fi-p','p');
-  // Ref dropzones
-  setupRefDZ('dz-mref','fi-mref','mref');
-  setupRefDZ('dz-sref','fi-sref','sref');
-  setupRefDZ('dz-wref','fi-wref','wref');
-  setupRefDZ('dz-pmref','fi-pmref','pmref');
-  setupRefDZ('dz-psref','fi-psref','psref');
+  // Style ref for model page
+  document.getElementById('fi-sref').addEventListener('change',e=>{
+    addSrefFiles('m',Array.from(e.target.files));e.target.value='';
+  });
 }
 function setupPoolDZ(dzId,fiId,ctx){
   const dz=document.getElementById(dzId),fi=document.getElementById(fiId);
@@ -1065,257 +848,198 @@ function setupPoolDZ(dzId,fiId,ctx){
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');addToPool(ctx,Array.from(e.dataTransfer.files));});
 }
 
-function setupRefDZ(dzId,fiId,refKey){
-  const dz=document.getElementById(dzId),fi=document.getElementById(fiId);
-  fi.addEventListener('change',e=>{addRefs(refKey,Array.from(e.target.files));fi.value='';});
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');addRefs(refKey,Array.from(e.dataTransfer.files));});
-}
-
 function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
 
 async function addToPool(ctx,files){
-  const validFiles=files.filter(f=>f.type.startsWith('image/'));
-  for(const f of validFiles){
+  for(const f of files.filter(f=>f.type.startsWith('image/'))){
     const b64=await toB64(f);
-    const id='pi_'+Math.random().toString(36).slice(2);
-    pools[ctx].push({id,file:f,b64,name:f.name.replace(/\.[^.]+$/,''),mimeType:f.type||'image/jpeg'});
+    pools[ctx].push({id:'pi'+Math.random().toString(36).slice(2),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});
   }
   renderPool(ctx);
-  afterPoolChange(ctx);
 }
 
-async function addRefs(key,files){
-  const maxMap={mref:3,sref:3,wref:3,pmref:3,psref:3};
-  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs,psref:styleRefs.p};
-  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs',psref:'psref-thumbs'};
-  const arr=arrMap[key]; const max=maxMap[key]||3;
+async function addSrefFiles(ctx,files){
   for(const f of files.filter(f=>f.type.startsWith('image/'))){
-    if(arr.length>=max)break;
+    if(srefFiles[ctx].length>=3)break;
     const b64=await toB64(f);
-    arr.push({b64,mimeType:f.type||'image/jpeg'});
+    srefFiles[ctx].push({b64,mimeType:f.type||'image/jpeg',name:f.name});
   }
-  renderRefThumbs(key,arr,thumbMap[key]);
+  renderSref(ctx);
 }
 
-function renderRefThumbs(key,arr,thumbsId){
-  const el=document.getElementById(thumbsId);if(!el)return;
-  el.innerHTML=arr.map((r,i)=>`
-    <div class="mlock-thumb"><img src="data:${r.mimeType};base64,${r.b64}"/>
-    <button onclick="delRef('${key}',${i})">×</button></div>`).join('');
-}
-
-function delRef(key,i){
-  const arrMap={mref:modelRefs,sref:styleRefs.m,wref:styleRefs.w,pmref:pModelRefs,psref:styleRefs.p};
-  const thumbMap={mref:'mref-thumbs',sref:'sref-thumbs',wref:'wref-thumbs',pmref:'pmref-thumbs',psref:'psref-thumbs'};
-  arrMap[key].splice(i,1);
-  renderRefThumbs(key,arrMap[key],thumbMap[key]);
+function renderSref(ctx){
+  const el=document.getElementById('pool-sref');if(!el)return;
+  el.innerHTML='';
+  srefFiles[ctx].forEach((f,i)=>{
+    const d=document.createElement('div');d.className='pi';d.style.cursor='default';
+    d.innerHTML=`<img src="data:${f.mimeType};base64,${f.b64}"/><button class="pdel" style="display:flex" onclick="srefFiles['${ctx}'].splice(${i},1);renderSref('${ctx}')">×</button><div class="pname">${f.name}</div>`;
+    el.appendChild(d);
+  });
 }
 
 function renderPool(ctx){
-  const el=document.getElementById(ctx+'-pool')||document.getElementById('pool');
-  // find correct pool element
-  const poolId={m:'pool',w:'w-pool',p:'p-pool'}[ctx];
-  const poolEl=document.getElementById(poolId);if(!poolEl)return;
-  poolEl.innerHTML='';
-  const wrapId={m:'pool-wrap',w:'w-pool-wrap',p:'p-pool-wrap'}[ctx];
+  const poolId={m:'pool-m',w:'pool-w',p:'pool-p'}[ctx];
+  const wrapId={m:'m-pool-wrap',w:'w-pool-wrap',p:'p-pool-wrap'}[ctx];
+  const el=document.getElementById(poolId);if(!el)return;
   document.getElementById(wrapId).style.display=pools[ctx].length?'block':'none';
-
+  el.innerHTML='';
   pools[ctx].forEach(pi=>{
-    const isSel=poolSel[ctx].has(pi.id);
-    const div=document.createElement('div');
-    div.className='pool-img'+(isSel?' sel':'');
-    div.id='pi-'+pi.id;
-    div.innerHTML=`<img src="data:${pi.mimeType};base64,${pi.b64}" alt=""/>
-      <div class="pck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    const sel=poolSel[ctx].has(pi.id);
+    const d=document.createElement('div');
+    d.className='pi'+(sel?' sel':'');d.id='pi-'+pi.id;
+    d.innerHTML=`<img src="data:${pi.mimeType};base64,${pi.b64}"/>
+      <div class="pck"><div class="pck-ic"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
       <button class="pdel" onclick="event.stopPropagation();delPoolImg('${ctx}','${pi.id}')">×</button>
       <div class="pname">${pi.name}</div>`;
-    div.addEventListener('click',()=>togglePoolSel(ctx,pi.id));
-    poolEl.appendChild(div);
+    d.addEventListener('click',()=>toggleSel(ctx,pi.id));
+    el.appendChild(d);
   });
-  updatePoolSelUI(ctx);
+  updateSelUI(ctx);
 }
 
-function togglePoolSel(ctx,id){
-  if(poolSel[ctx].has(id)) poolSel[ctx].delete(id);
-  else poolSel[ctx].add(id);
+function toggleSel(ctx,id){
+  if(poolSel[ctx].has(id))poolSel[ctx].delete(id);else poolSel[ctx].add(id);
   const el=document.getElementById('pi-'+id);
-  if(el) el.classList.toggle('sel',poolSel[ctx].has(id));
-  updatePoolSelUI(ctx);
+  if(el)el.classList.toggle('sel',poolSel[ctx].has(id));
+  updateSelUI(ctx);
 }
-
-function updatePoolSelUI(ctx){
+function updateSelUI(ctx){
   const n=poolSel[ctx].size;
-  const infoIds={m:'pool-sel-info',w:'w-pool-sel-info',p:'p-pool-sel-info'};
-  const btnIds={m:'btn-group',w:'w-btn-group',p:'p-btn-group'};
-  const el=document.getElementById(infoIds[ctx]);
-  if(el) el.innerHTML=n>0?`<strong>${n} selected</strong> — ready to group`:'Click images to select them, then group as one product';
-  const btn=document.getElementById(btnIds[ctx]);
-  if(btn) btn.disabled=n===0;
+  const infoId={m:'m-psi',w:'w-psi',p:'p-psi'}[ctx];
+  const btnId={m:'m-gbtn',w:'w-gbtn',p:'p-gbtn'}[ctx];
+  const el=document.getElementById(infoId);
+  if(el)el.innerHTML=n>0?`<strong>${n} selected</strong> — ready to group`:'Click images to select, then group';
+  const btn=document.getElementById(btnId);
+  if(btn)btn.disabled=n===0;
+}
+function selAll(ctx){pools[ctx].forEach(pi=>poolSel[ctx].add(pi.id));renderPool(ctx);}
+function clrSel(ctx){poolSel[ctx].clear();renderPool(ctx);}
+function delPoolImg(ctx,id){pools[ctx]=pools[ctx].filter(p=>p.id!==id);poolSel[ctx].delete(id);renderPool(ctx);afterGrpChange(ctx);}
+
+function grpSel(ctx){
+  const sel=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
+  if(!sel.length)return;
+  pendingCtx=ctx;
+  document.getElementById('gn-sub').textContent=`${sel.length} image${sel.length!==1?'s':''} selected`;
+  const auto=sel[0].name.replace(/_?\d+$/,'').replace(/[-_]/g,' ').trim();
+  document.getElementById('gn-inp').value=auto||'Product '+(groups[ctx].length+1);
+  openM('m-grp-name');
+  setTimeout(()=>document.getElementById('gn-inp').select(),50);
 }
 
-function selAll(ctx='m'){pools[ctx].forEach(pi=>poolSel[ctx].add(pi.id));renderPool(ctx);}
-function clearSel(ctx='m'){poolSel[ctx].clear();renderPool(ctx);}
-
-function delPoolImg(ctx,id){
-  pools[ctx]=pools[ctx].filter(p=>p.id!==id);
-  poolSel[ctx].delete(id);
-  renderPool(ctx);
-  afterPoolChange(ctx);
-}
-
-function afterPoolChange(ctx){
-  if(ctx==='m'){
-    const hasGroups=groups.m.length>0;
-    document.getElementById('btn-step2').disabled=!hasGroups;
-    updCost('m');updateRev();
-  }
-  if(ctx==='w') updCost('w');
-  if(ctx==='p') updCost('p');
-}
-
-function groupSelected(ctx='m'){
-  const selected=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
-  if(!selected.length) return;
-  pendingGroupCtx=ctx;
-  document.getElementById('gn-count').textContent=`${selected.length} image${selected.length!==1?'s':''} selected`;
-  document.getElementById('gn-input').value='';
-  // auto-suggest name from first file
-  const firstName=selected[0].name.replace(/_?\d+$/,'').replace(/[-_]/g,' ').trim();
-  document.getElementById('gn-input').value=firstName||'Product '+(groups[ctx].length+1);
-  openM('m-group-name');
-  setTimeout(()=>document.getElementById('gn-input').select(),50);
-}
-
-function confirmGroup(){
-  const ctx=pendingGroupCtx;
-  const name=document.getElementById('gn-input').value.trim()||('Product '+(groups[ctx].length+1));
-  const selected=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
-  if(!selected.length) return;
-  // Create group
-  groups[ctx].push({
-    id:'g_'+Math.random().toString(36).slice(2),
-    name,
-    images:selected.map(pi=>({b64:pi.b64,mimeType:pi.mimeType,name:pi.name}))
-  });
-  // Remove from pool
+function confirmGrp(){
+  const ctx=pendingCtx;
+  const name=document.getElementById('gn-inp').value.trim()||('Product '+(groups[ctx].length+1));
+  const sel=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
+  if(!sel.length)return;
+  groups[ctx].push({id:'g'+Math.random().toString(36).slice(2),name,images:sel.map(pi=>({b64:pi.b64,mimeType:pi.mimeType}))});
   const selIds=new Set(poolSel[ctx]);
   pools[ctx]=pools[ctx].filter(pi=>!selIds.has(pi.id));
   poolSel[ctx].clear();
-  closeM('m-group-name');
+  closeM('m-grp-name');
   renderPool(ctx);
   renderGroups(ctx);
-  afterPoolChange(ctx);
-  toast(`"${name}" created with ${selected.length} image${selected.length!==1?'s':''}`, 'ok');
+  afterGrpChange(ctx);
+  toast(`"${name}" created with ${sel.length} image${sel.length!==1?'s':''}!`,'ok');
 }
 
 function renderGroups(ctx){
-  const listId={m:'groups-list',w:'w-groups-list',p:'p-groups-list'}[ctx];
-  const emptyId={m:'no-groups',w:'w-no-groups',p:'p-no-groups'}[ctx];
-  const countId={m:'groups-count',w:'w-groups-count',p:'p-groups-count'}[ctx];
+  const listId={m:'m-groups',w:'w-groups',p:'p-groups'}[ctx];
+  const emptyId={m:'m-nogrp',w:'w-nogrp',p:'p-nogrp'}[ctx];
+  const cntId={m:'m-gcnt',w:'w-gcnt',p:'p-gcnt'}[ctx];
   const list=document.getElementById(listId);
+  if(!list)return;
   const empty=document.getElementById(emptyId);
   if(!groups[ctx].length){list.innerHTML='';list.appendChild(empty);empty.style.display='block';return;}
   empty.style.display='none';
-  document.getElementById(countId).textContent=groups[ctx].length+' products';
-
-  list.innerHTML=groups[ctx].map((g,gi)=>`
-    <div class="group-card">
-      <div class="group-header">
-        <div class="group-num">${gi+1}</div>
-        <input class="group-name-input" value="${g.name}" onchange="groups['${ctx}'][${gi}].name=this.value" placeholder="Product name"/>
-        <button class="group-del" onclick="deleteGroup('${ctx}',${gi})">✕</button>
-      </div>
-      <div class="group-body">
-        <div class="group-imgs">
-          ${g.images.map((im,ii)=>`
-            <div class="group-img">
-              <img src="data:${im.mimeType};base64,${im.b64}" alt="${im.name}"/>
-              <button class="gidel" onclick="removeGroupImg('${ctx}',${gi},${ii})">×</button>
-            </div>`).join('')}
-        </div>
-        <div style="font-size:11px;color:var(--t2);">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI for full product context</div>
-      </div>
-    </div>`).join('');
-
-  // Update step2 button
-  if(ctx==='m'){
-    document.getElementById('btn-step2').disabled=groups.m.length===0;
-    updateRev();
-  }
-  updCost(ctx);
+  document.getElementById(cntId).textContent=groups[ctx].length+' products';
+  const wrap=document.createElement('div');wrap.className='groups-wrap';
+  groups[ctx].forEach((g,gi)=>{
+    const gc=document.createElement('div');gc.className='gc';
+    const imgs=g.images.map((im,ii)=>`<div class="gi"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gidel" onclick="delGrpImg('${ctx}',${gi},${ii})">×</button></div>`).join('');
+    gc.innerHTML=`<div class="gc-hd">
+      <div class="gc-num">${gi+1}</div>
+      <input class="gc-name" value="${g.name}" onchange="groups['${ctx}'][${gi}].name=this.value"/>
+      <button class="gc-del" onclick="delGrp('${ctx}',${gi})">✕</button>
+    </div>
+    <div class="gc-body">
+      <div class="gc-imgs">${imgs}</div>
+      <div class="gc-info">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
+    </div>`;
+    wrap.appendChild(gc);
+  });
+  list.innerHTML='';list.appendChild(wrap);
+  afterGrpChange(ctx);
 }
 
-function deleteGroup(ctx,i){groups[ctx].splice(i,1);renderGroups(ctx);afterPoolChange(ctx);}
-function removeGroupImg(ctx,gi,ii){
-  groups[ctx][gi].images.splice(ii,1);
-  if(!groups[ctx][gi].images.length) groups[ctx].splice(gi,1);
-  renderGroups(ctx);afterPoolChange(ctx);
+function delGrp(ctx,i){groups[ctx].splice(i,1);renderGroups(ctx);}
+function delGrpImg(ctx,gi,ii){groups[ctx][gi].images.splice(ii,1);if(!groups[ctx][gi].images.length)groups[ctx].splice(gi,1);renderGroups(ctx);}
+function afterGrpChange(ctx){
+  if(ctx==='m'){document.getElementById('m-next1').disabled=groups.m.length===0;updCost('m');updateRev();}
+  if(ctx==='w')updCost('w');
+  if(ctx==='p')updCost('p');
 }
 
-// ════════════ COST ════════════
+// ════════ COST ════════
 function rate(id){return document.getElementById(id)?.value==='2K'?0.12:0.08;}
 function updCost(ctx){
-  if(ctx==='m'){const r=rate('m-res');const n=groups.m.length;const t=n;document.getElementById('m-camt').textContent=`$${(t*r).toFixed(2)}`;document.getElementById('m-cmeta').textContent=`${n} product${n!==1?'s':''} × $${r}`;}
+  if(ctx==='m'){const r=rate('m-res');const n=groups.m.length;document.getElementById('m-camt').textContent=`$${(n*r).toFixed(2)}`;document.getElementById('m-cmeta').textContent=`${n} product${n!==1?'s':''} × $${r}`;}
   if(ctx==='w'){const r=rate('w-res');const n=groups.w.length*wCount;document.getElementById('w-camt').textContent=`$${(n*r).toFixed(2)}`;document.getElementById('w-cmeta').textContent=`${n} img × $${r}`;}
-  if(ctx==='p'){const r=rate('p-res');const n=groups.p.length*SQ.length;document.getElementById('p-camt').textContent=`$${(n*r).toFixed(2)}`;document.getElementById('p-cmeta').textContent=`${SQ.length} shots × ${groups.p.length} products = ${n} imgs`;document.getElementById('sqbdg').textContent=SQ.length+' shots';document.getElementById('spsumm').textContent=n>0?`${n} images · ~$${(n*r).toFixed(2)}`:'Add shots and products';document.getElementById('spgen').disabled=!falKey||!cats.plan||!groups.p.length||!SQ.length;}
+  if(ctx==='p'){
+    const r=rate('p-res');const n=groups.p.length*SQ.length;
+    document.getElementById('p-camt').textContent=`$${(n*r).toFixed(2)}`;
+    document.getElementById('p-cmeta').textContent=`${SQ.length} shots × ${groups.p.length} products = ${n} imgs`;
+    document.getElementById('sqbdg').textContent=SQ.length+' shots';
+    document.getElementById('spsumm').textContent=n>0?`${n} images · ~$${(n*r).toFixed(2)}`:'Add shots and products';
+    document.getElementById('spgen').disabled=!falKey||!cats.p||!groups.p.length||!SQ.length;
+  }
 }
-
 function updateRev(){
   const n=groups.m.length,gp=document.getElementById('gprompt').value.trim(),r=rate('m-res');
   document.getElementById('m-camt').textContent=`$${(n*r).toFixed(2)}`;
   document.getElementById('m-cmeta').textContent=`${n} product${n!==1?'s':''} × $${r}`;
   document.getElementById('rev-n').textContent=`${n} product${n!==1?'s':''}`;
-  const md=document.getElementById('m-modeldesc').value.trim();
-  document.getElementById('rev-m').textContent=`${cats.model||'no cat'} · ${ARs.m} · model: ${md?'locked ✓':'not locked'}`;
+  document.getElementById('rev-m').textContent=`${cats.m||'no cat'} · ${ARs.m} · bg:${BGs.m}`;
+  const am=activeModel.m;
+  const lr=document.getElementById('m-lock-row');
+  if(lr){lr.style.display=am?'block':'none';if(am)document.getElementById('m-lock-name').textContent=am.name;}
   const w=[];
   if(!falKey)w.push('<div style="color:var(--red);font-size:12px;margin-bottom:4px">⚠ Key not saved</div>');
-  if(!cats.model)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No category selected</div>');
-  if(!n)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No products grouped yet</div>');
+  if(!cats.m)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No category</div>');
+  if(!n)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No products grouped</div>');
   if(!gp&&pm==='g')w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No prompt written</div>');
-  if(!md&&!modelRefs.length)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">💡 Consider adding a model description for consistency</div>');
   document.getElementById('rev-w').innerHTML=w.join('');
-  document.getElementById('gen-btn').disabled=!falKey||!cats.model||!n||(!gp&&pm==='g');
+  document.getElementById('gen-btn').disabled=!falKey||!cats.m||!n||(!gp&&pm==='g');
   document.getElementById('gen-btn').textContent=`Generate ${n} Image${n!==1?'s':''}`;
 }
 
-function selWN(btn){document.querySelectorAll('[data-wn]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');wCount=parseInt(btn.dataset.wn);updCost('w');}
-
-// ════════════ SHOT QUEUE ════════════
+// ════════ SHOT QUEUE ════════
 function openAddShot(){
-  pickedST=null;
-  document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));
-  document.getElementById('as-bg').value='ai';
-  document.getElementById('as-ar').value='3:4';
-  document.getElementById('as-style').value='';
-  document.getElementById('as-bgc').style.display='none';
+  pickedST=null;document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));
+  ['as-bg','as-ar','as-style'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='as-ar'?'3:4':id==='as-bg'?'ai':'';});
+  document.getElementById('as-bgcw').style.display='none';
   document.getElementById('as-err').style.display='none';
   document.getElementById('as-prompt').value='';
   openM('m-add-shot');
 }
-
 function confirmShot(){
   if(!pickedST){document.getElementById('as-err').style.display='block';return;}
   const st=ST.find(s=>s.id===pickedST);
   const bg=document.getElementById('as-bg').value;
-  SQ.push({shotType:pickedST,label:st.name,icon:st.icon,bg,bgCustom:document.getElementById('as-bgt').value.trim(),aspectRatio:document.getElementById('as-ar').value,styleKey:document.getElementById('as-style').value,customPrompt:document.getElementById('as-prompt').value.trim()});
+  SQ.push({shotType:pickedST,label:st.name,icon:st.icon,bg,bgCustom:document.getElementById('as-bgc').value.trim(),aspectRatio:document.getElementById('as-ar').value,styleKey:document.getElementById('as-style').value,customPrompt:document.getElementById('as-prompt').value.trim()});
   closeM('m-add-shot');renderSQ();updCost('p');toast(`"${st.name}" added`,'ok');
 }
-
-function addGroup(g){
+function addShotGroup(g){
   (SG[g]||[]).forEach(tid=>{
     const st=ST.find(s=>s.id===tid);if(!st)return;
     const bg=tid.includes('white')?'white':tid.includes('grey')||tid==='flat_lay'||tid==='mannequin'?'grey':'ai';
-    const ar=(tid==='flat_lay'||tid.startsWith('alone'))?'1:1':'3:4';
+    const ar=tid==='flat_lay'||tid.startsWith('alone')?'1:1':'3:4';
     SQ.push({shotType:tid,label:st.name,icon:st.icon,bg,bgCustom:'',aspectRatio:ar,styleKey:'',customPrompt:''});
   });
   renderSQ();updCost('p');toast('Pack added','ok');
 }
-
 function clearSQ(){SQ=[];renderSQ();updCost('p');}
 function remShot(i){SQ.splice(i,1);renderSQ();updCost('p');}
-
 function openEditShot(i){
   const s=SQ[i];
   document.getElementById('esi').value=i;
@@ -1323,14 +1047,14 @@ function openEditShot(i){
   document.getElementById('es-ar').value=s.aspectRatio||'3:4';
   document.getElementById('es-style').value=s.styleKey||'';
   document.getElementById('es-prompt').value=s.customPrompt||'';
-  document.getElementById('es-bgc').style.display=s.bg==='custom'?'block':'none';
-  document.getElementById('es-bgt').value=s.bgCustom||'';
+  document.getElementById('es-bgcw').style.display=s.bg==='custom'?'block':'none';
+  document.getElementById('es-bgc').value=s.bgCustom||'';
   openM('m-edit-shot');
 }
 function saveEditShot(){
   const i=parseInt(document.getElementById('esi').value);
   SQ[i].bg=document.getElementById('es-bg').value;
-  SQ[i].bgCustom=document.getElementById('es-bgt').value.trim();
+  SQ[i].bgCustom=document.getElementById('es-bgc').value.trim();
   SQ[i].aspectRatio=document.getElementById('es-ar').value;
   SQ[i].styleKey=document.getElementById('es-style').value;
   SQ[i].customPrompt=document.getElementById('es-prompt').value.trim();
@@ -1349,73 +1073,60 @@ function renderSQ(){
         </div>
         <div class="siacts"><button class="ibt" onclick="event.stopPropagation();openEditShot(${i})">✏</button><button class="ibt danger" onclick="event.stopPropagation();remShot(${i})">✕</button></div>
       </div>
-      <div class="sibody">${s.customPrompt?`<span class="fl">Extra:</span> <span style="font-size:12px;color:var(--t2)">${s.customPrompt}</span>`:'<span style="font-size:12px;color:var(--t3)">No extra prompt</span>'}</div>
+      <div class="sibody">${s.customPrompt?`Extra: ${s.customPrompt}`:'No extra prompt'}</div>
     </div>`).join('');
 }
 
-// ════════════ API ════════════
-async function buildProducts(ctx,gp){
-  const prods=[];
-  for(let i=0;i<groups[ctx].length;i++){
-    const g=groups[ctx][i];
-    const perPrompt=pm==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp;
-    prods.push({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:perPrompt});
-  }
-  return prods;
+// ════════ API ════════
+function getBgOpt(ctx){
+  const mode=bgModes[ctx];
+  if(mode==='ai')return{bgOption:'ai',bgCustom:''};
+  if(mode==='custom')return{bgOption:'custom',bgCustom:document.getElementById(`${ctx}-bgc`)?.value?.trim()||''};
+  return{bgOption:BGs[ctx]||'white',bgCustom:''};
 }
 
 async function startModelGen(){
   const gp=document.getElementById('gprompt').value.trim();
-  if(!falKey||!cats.model||!groups.m.length||(!gp&&pm==='g'))return;
-  document.getElementById('gen-btn').disabled=true;
-  document.getElementById('gen-btn').textContent='Preparing...';
+  if(!falKey||!cats.m||!groups.m.length||(!gp&&pm==='g'))return;
+  document.getElementById('gen-btn').disabled=true;document.getElementById('gen-btn').textContent='Preparing...';
   try{
-    const products=await buildProducts('m',gp);
-    const bgOpt=bgModes.m==='custom'?'custom':(bgModes.m==='ai'?'ai':BGs.m||'white');
-    const bgCust=bgModes.m==='custom'?document.getElementById('m-bgcustom').value.trim():'';
-    const modelDesc=document.getElementById('m-modeldesc').value.trim();
-    const r=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+    const products=groups.m.map((g,i)=>({
+      name:g.name,
+      images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),
+      prompt:pm==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
+    }));
+    const{bgOption,bgCustom}=getBgOpt('m');
+    const r=await fetch('/api/batch/create',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
       body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:pm==='g'?'global':'individual',
-        category:cats.model,styleKey:document.getElementById('m-style').value,
-        bgOption:bgOpt,bgCustom:bgCust,bgMode:bgModes.m,
-        gender:document.getElementById('m-gender').value,
+        category:cats.m,styleKey:document.getElementById('m-style').value,
+        bgOption,bgCustom,gender:document.getElementById('m-gender').value,
         realism:document.getElementById('m-realism').value,
-        resolution:document.getElementById('m-res').value,
-        aspectRatio:ARs.m,
-        modelDesc,
-        modelRefImages:modelRefs,
-        styleRefImages:styleRefs.m,
-        savedModelUrl: activeModel?.imageUrl || null,
-        savedModelName: activeModel?.name || null,
+        resolution:document.getElementById('m-res').value,aspectRatio:ARs.m,
+        modelDesc:document.getElementById('m-mdesc').value.trim(),
+        styleRefImages:srefFiles.m,
+        savedModelUrl:activeModel.m?.imageUrl||null,
       })});
     const d=await r.json();if(d.error)throw new Error(d.error);
-    bids.m=d.batchId;goStep(5);document.getElementById('mprog').style.display='block';startPoll('m');toast(`${d.total} images queued`,'ok');
+    bids.m=d.batchId;goStep(4);document.getElementById('mprog').style.display='block';startPoll('m');toast(`${d.total} images queued`,'ok');
   }catch(e){toast(e.message,'err');document.getElementById('gen-btn').disabled=false;updateRev();}
 }
 
 async function startWebGen(){
-  if(!falKey||!groups.w.length){toast('Save key + group products first','err');return;}
+  if(!falKey||!groups.w.length){toast('Save key + group products','err');return;}
   document.getElementById('wgen').disabled=true;document.getElementById('wgen').textContent='Preparing...';
   try{
     const gp=document.getElementById('wprompt').value.trim()||'professional product photo';
-    const products=[];
-    for(const g of groups.w){
-      // For each group, create wCount shot entries
-      const shots=[];
-      for(let v=0;v<wCount;v++){
-        const shotTypes=['alone_white','flat_lay','alone_grey'];
-        shots.push({shotType:shotTypes[v]||'alone_white',label:`Shot ${v+1}`,bg:BGs.w||'white',bgCustom:BGs.w==='custom'?document.getElementById('w-bgcustom').value.trim():'',aspectRatio:ARs.w,styleKey:'',customPrompt:''});
-      }
-      products.push({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp});
-    }
-    const wBgOpt=BGs.w==='custom'?'custom':BGs.w||'white';
-    const wBgCust=BGs.w==='custom'?document.getElementById('w-bgcustom').value.trim():'';
-    const r=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body:JSON.stringify({type:'website',products,globalPrompt:gp,promptMode:'global',category:'other',
-        bgOption:wBgOpt,bgCustom:wBgCust,bgMode:'same',
-        resolution:document.getElementById('w-res').value,aspectRatio:ARs.w,
-        styleRefImages:styleRefs.w,
-        shots:groups.w.length>0&&wCount>1?products.flatMap(()=>[...Array(wCount)].map((_,v)=>({shotType:['alone_white','flat_lay','alone_grey'][v]||'alone_white',label:`Shot ${v+1}`,bg:wBgOpt,bgCustom:wBgCust,aspectRatio:ARs.w,styleKey:'',customPrompt:''}))):undefined,
+    const wBg=BGs.w||'white';
+    const wBgC=wBg==='custom'?document.getElementById('w-bgc').value.trim():'';
+    const shotTypes=['alone_white','flat_lay','alone_grey'];
+    const shots=wCount>1?Array.from({length:wCount},(_,v)=>({shotType:shotTypes[v]||'alone_white',label:`Shot ${v+1}`,bg:wBg,bgCustom:wBgC,aspectRatio:ARs.w,styleKey:'',customPrompt:''})):null;
+    const products=groups.w.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp}));
+    const r=await fetch('/api/batch/create',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+      body:JSON.stringify({type:'website',products,globalPrompt:gp,promptMode:'global',
+        category:'other',bgOption:wBg,bgCustom:wBgC,resolution:document.getElementById('w-res').value,
+        aspectRatio:ARs.w,shots:shots||undefined,
       })});
     const d=await r.json();if(d.error)throw new Error(d.error);
     bids.w=d.batchId;document.getElementById('wprog').style.display='block';document.getElementById('wzip').style.display='inline-flex';startPoll('w');toast(`${d.total} photos queued`,'ok');
@@ -1423,45 +1134,40 @@ async function startWebGen(){
 }
 
 async function startPlanGen(){
-  if(!falKey||!cats.plan||!groups.p.length||!SQ.length)return;
+  if(!falKey||!cats.p||!groups.p.length||!SQ.length)return;
   document.getElementById('spgen').disabled=true;document.getElementById('spgen').textContent='Preparing...';
   try{
     const gp=document.getElementById('pprompt').value.trim()||'professional fashion photo';
+    const{bgOption,bgCustom}=getBgOpt('p');
     const products=groups.p.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType}))}));
-    const modelDesc=document.getElementById('p-modeldesc').value.trim();
-    const bgOpt=bgModes.p==='custom'?'custom':(bgModes.p==='ai'?'ai':BGs.p||'white');
-    const bgCust=bgModes.p==='custom'?document.getElementById('p-bgcustom').value.trim():'';
-    const r=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+    const r=await fetch('/api/batch/create',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
       body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:'global',
-        category:cats.plan,styleKey:document.getElementById('p-style').value,
-        bgOption:bgOpt,bgCustom:bgCust,
-        gender:document.getElementById('p-gender').value,
+        category:cats.p,styleKey:document.getElementById('p-style').value,
+        bgOption,bgCustom,gender:document.getElementById('p-gender').value,
         realism:document.getElementById('p-realism').value,
-        resolution:document.getElementById('p-res').value,
-        aspectRatio:ARs.p,
-        shots:SQ,modelDesc,
-        modelRefImages:pModelRefs,
-        styleRefImages:styleRefs.p,
-        savedModelUrl:pActiveModel?.imageUrl||null,
-        savedModelName:pActiveModel?.name||null,
+        resolution:document.getElementById('p-res').value,aspectRatio:ARs.p,
+        modelDesc:document.getElementById('p-mdesc').value.trim(),
+        shots:SQ,savedModelUrl:activeModel.p?.imageUrl||null,
       })});
     const d=await r.json();if(d.error)throw new Error(d.error);
     bids.p=d.batchId;document.getElementById('pprog').style.display='block';document.getElementById('pzip').style.display='inline-flex';startPoll('p');toast(`${d.total} shots queued`,'ok');
   }catch(e){toast(e.message,'err');document.getElementById('spgen').disabled=false;updCost('p');}
 }
 
-// ════════════ POLLING ════════════
+// ════════ POLLING ════════
 const PC={
-  m:{prog:'mprog',pct:'mpct',fil:'mfil',dn:'mdn',tot:'mtot',grid:'rg-m',zip:'mzip',rc:'mrc',res:'m-res'},
-  w:{prog:'wprog',pct:'wpct',fil:'wfil',dn:'wdn',tot:'wtot',grid:'rg-w',zip:'wzip',res:'w-res'},
-  p:{prog:'pprog',pct:'ppct',fil:'pfil',dn:'pdn',tot:'ptot',grid:'rg-p',zip:'pzip',res:'p-res'},
+  m:{prog:'mprog',pct:'mpct',fil:'mfil',dn:'mdn',tot:'mtot',grid:'rg-m',zip:'mzip',rc:'mrc'},
+  w:{prog:'wprog',pct:'wpct',fil:'wfil',dn:'wdn',tot:'wtot',grid:'rg-w',zip:'wzip'},
+  p:{prog:'pprog',pct:'ppct',fil:'pfil',dn:'pdn',tot:'ptot',grid:'rg-p',zip:'pzip'},
 };
 function startPoll(ctx){if(ptimers[ctx])clearInterval(ptimers[ctx]);ptimers[ctx]=setInterval(()=>doPoll(ctx),3500);doPoll(ctx);}
 async function doPoll(ctx){
   const bid=bids[ctx];if(!bid)return;
   try{
     const resp=await fetch(`/api/batch/${bid}/status`);const data=await resp.json();if(data.error)return;
-    const cfg=PC[ctx],{total:tot,completed:dn}=data,pct=tot?Math.round(dn/tot*100):0;
+    const{total:tot,completed:dn}=data,pct=tot?Math.round(dn/tot*100):0;
+    const cfg=PC[ctx];
     const f=document.getElementById(cfg.fil),p=document.getElementById(cfg.pct);
     if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';
     const de=document.getElementById(cfg.dn),te=document.getElementById(cfg.tot);
@@ -1486,24 +1192,38 @@ function renderRes(items,gridId,ctx){
     let card=document.getElementById('rc-'+it.id);
     if(!card){card=document.createElement('div');card.className='rc';card.id='rc-'+it.id;grid.appendChild(card);}
     if(it.status==='done'&&it.resultUrl){
-      const ar=it.aspectRatio||'3:4';const [aw,ah]=ar.split(':').map(Number);const pp=Math.round(ah/aw*100);
+      const ar=it.aspectRatio||'3:4';const[aw,ah]=ar.split(':').map(Number);const pp=Math.round(ah/aw*100);
       card.innerHTML=`
         <div class="rcimg" style="padding-bottom:${pp}%;position:relative">
-          <img src="${it.resultUrl}" alt="${it.name}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
-          <div class="rcov" style="position:absolute"><button onclick="openEI('${it.id}','${it.name}','${ctx}')">✏ Edit</button><button onclick="doUpscale('${it.id}','${ctx}')">↑ Upscale</button><a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg">↓ Save</a></div>
+          <img src="${it.resultUrl}" alt="${it.productName||it.name}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
+          <div class="rcov" style="position:absolute">
+            <button onclick="openEI('${it.id}','${it.name}','${ctx}')">✏ Edit</button>
+            <button onclick="doUpscale('${it.id}','${ctx}')">↑ Upscale</button>
+            <a href="${it.resultUrl}" target="_blank" download="${(it.productName||it.name).replace(/[^a-z0-9]/gi,'_')}.jpg">↓ Save</a>
+          </div>
         </div>
-        <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcacts"><button class="btn bout bxs" onclick="openEI('${it.id}','${it.name}','${ctx}')">Edit</button><button class="btn bout bxs" onclick="doUpscale('${it.id}','${ctx}')">↑</button><a href="${it.resultUrl}" target="_blank" download="${it.name}.jpg" class="btn bout bxs">↓</a>${ctx!=='w'?`<button class="save-model-btn" onclick="openSaveModel('${it.resultUrl}')">🔒 Save Model</button>`:''}    </div></div>`;
+        <div class="rcm">
+          <div class="rcn">${it.productName||it.name}</div>
+          ${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}
+          <div class="rcacts">
+            <button class="btn bout bxs" onclick="openEI('${it.id}','${it.name}','${ctx}')">Edit</button>
+            <button class="btn bout bxs" onclick="doUpscale('${it.id}','${ctx}')">↑</button>
+            <a href="${it.resultUrl}" target="_blank" download="${(it.productName||it.name).replace(/[^a-z0-9]/gi,'_')}.jpg" class="btn bout bxs">↓</a>
+            ${ctx!=='w'?`<button class="smb" onclick="openSaveModel('${it.resultUrl}')">🔒 Save Model</button>`:''}
+          </div>
+        </div>`;
     }else if(it.status==='error'){
-      card.innerHTML=`<div class="rcm"><div class="ebox">${it.error||'Failed'}<br><button onclick="openEI('${it.id}','${it.name}','${ctx}')" style="margin-top:5px;background:none;border:1px solid rgba(220,38,38,.35);color:var(--red);border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit">Retry</button></div><div class="rcn">${it.name}</div></div>`;
+      card.innerHTML=`<div class="rcm"><div class="ebox">${it.error||'Failed'}<br><button onclick="openEI('${it.id}','${it.name}','${ctx}')" style="margin-top:5px;background:none;border:1px solid rgba(220,38,38,.35);color:var(--red);border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit">Retry</button></div><div class="rcn">${it.productName||it.name}</div></div>`;
     }else{
-      const lab={queued:'Queued',uploading:'Uploading...',generating:'Generating...'}[it.status]||it.status;
-      const dc={queued:'dq',uploading:'du',generating:'dg'}[it.status]||'dq';
-      card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">${lab}${it.shotLabel?'<br><span style="color:var(--blue)">'+it.shotLabel+'</span>':''}</div></div><div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcst"><span class="dot ${dc}"></span>${lab}</div></div>`;
+      const lab={queued:'Queued',uploading:'Uploading...',generating:'Generating...',waiting:'Waiting for anchor...'}[it.status]||it.status;
+      const dc={queued:'dq',uploading:'du',generating:'dg',waiting:'dw'}[it.status]||'dq';
+      card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">${lab}${it.shotLabel&&it.shotLabel!=='Photo'?'<br><span style="color:var(--bl)">'+it.shotLabel+'</span>':''}</div></div>
+        <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcst"><span class="dot ${dc}"></span>${lab}</div></div>`;
     }
   });
 }
 
-// ════════════ EDIT / REGEN / UPSCALE / ZIP ════════════
+// ════════ EDIT / REGEN / UPSCALE / ZIP ════════
 function openEI(iid,name,ctx){
   const bid=bids[ctx]||bids.m||bids.p;
   document.getElementById('ei-bid').value=bid;document.getElementById('ei-iid').value=iid;
@@ -1515,9 +1235,10 @@ async function doRegen(){
   const bid=document.getElementById('ei-bid').value,iid=document.getElementById('ei-iid').value;
   const prompt=document.getElementById('ei-prompt').value.trim(),bg=document.getElementById('ei-bg').value,res=document.getElementById('ei-res').value;
   closeM('m-edit-item');
-  const card=document.getElementById('rc-'+iid);if(card)card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">Regenerating...</div></div><div class="rcm"><div class="rcn">Regenerating...</div></div>`;
+  const card=document.getElementById('rc-'+iid);
+  if(card)card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">Regenerating...</div></div><div class="rcm"><div class="rcn">Regenerating...</div></div>`;
   try{
-    const r=await fetch(`/api/item/${bid}/${iid}/regenerate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,category:cats.model||cats.plan,bgOption:bg,resolution:res,modelDesc:document.getElementById('m-modeldesc')?.value?.trim()||''})});
+    const r=await fetch(`/api/item/${bid}/${iid}/regenerate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,category:cats.m||cats.p,bgOption:bg,resolution:res})});
     const d=await r.json();if(d.error)throw new Error(d.error);
     for(const ctx of['m','w','p']){if(bids[ctx]===bid&&!ptimers[ctx])startPoll(ctx);}
     toast('Regenerating...','ok');
@@ -1526,136 +1247,118 @@ async function doRegen(){
 async function doEditBatch(){
   const prompt=document.getElementById('be-prompt').value.trim();
   if(!prompt){toast('Enter prompt','err');return;}
-  const bid=bids.m;closeM('m-batch-edit');
+  closeM('m-batch-edit');
   try{
-    const r=await fetch(`/api/batch/${bid}/edit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({globalPrompt:prompt,category:cats.model,bgOption:document.getElementById('be-bg').value,modelDesc:document.getElementById('m-modeldesc')?.value?.trim()||''})});
+    const r=await fetch(`/api/batch/${bids.m}/edit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({globalPrompt:prompt,category:cats.m,bgOption:document.getElementById('be-bg').value})});
     const d=await r.json();if(d.error)throw new Error(d.error);
     document.getElementById('mprog').style.display='block';document.getElementById('mzip').disabled=true;startPoll('m');toast('Regenerating all...','ok');
   }catch(e){toast(e.message,'err');}
 }
 async function doUpscale(iid,ctx){
   const bid=bids[ctx]||bids.m||bids.p;toast('Upscaling...');
-  try{const r=await fetch(`/api/item/${bid}/${iid}/upscale`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}});const d=await r.json();if(d.error)throw new Error(d.error);if(d.url){const img=document.querySelector(`#rc-${iid} img`);if(img)img.src=d.url;toast('Upscaled!','ok');}
+  try{
+    const r=await fetch(`/api/item/${bid}/${iid}/upscale`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}});
+    const d=await r.json();if(d.error)throw new Error(d.error);
+    if(d.url){const img=document.querySelector(`#rc-${iid} img`);if(img)img.src=d.url;toast('Upscaled!','ok');}
   }catch(e){toast(e.message,'err');}
 }
-function doZip(ctx){const map={m:bids.m,w:bids.w,p:bids.p};const id=map[ctx];if(id)window.location.href=`/api/batch/${id}/zip`;}
-function resetM(){bids.m=null;groups.m=[];pools.m=[];poolSel.m.clear();modelRefs=[];styleRefs.m=[];['rg-m','mref-thumbs','sref-thumbs'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});renderGroups('m');renderPool('m');if(ptimers.m)clearInterval(ptimers.m);goStep(1);}
+function doZip(ctx){const id=bids[ctx];if(id)window.location.href=`/api/batch/${id}/zip`;}
+function resetM(){bids.m=null;groups.m=[];pools.m=[];poolSel.m.clear();srefFiles.m=[];renderGroups('m');renderPool('m');renderSref('m');if(ptimers.m)clearInterval(ptimers.m);goStep(1);}
 
-// ════════════ SAVED MODELS ════════════
-let activeModel = null;   // model lock for Model Images page
-let pActiveModel = null;  // model lock for Shot Planner page
-
-function openSaveModel(imageUrl) {
-  document.getElementById('sm-url').value = imageUrl;
-  document.getElementById('sm-preview').src = imageUrl;
-  document.getElementById('sm-name').value = '';
-  document.getElementById('sm-desc').value = '';
-  openM('m-save-model');
-  setTimeout(()=>document.getElementById('sm-name').focus(), 80);
+// ════════ SAVED MODELS ════════
+function openSaveModel(imageUrl){
+  document.getElementById('sm-url').value=imageUrl;
+  document.getElementById('sm-prev').src=imageUrl;
+  document.getElementById('sm-name').value='';
+  document.getElementById('sm-desc').value='';
+  openM('ms-model');
+  setTimeout(()=>document.getElementById('sm-name').focus(),80);
 }
-
-async function confirmSaveModel() {
-  const name = document.getElementById('sm-name').value.trim();
-  if(!name) { toast('Enter a name for this model','err'); return; }
-  if(!falKey) { toast('Save your key first','err'); return; }
-  const imageUrl = document.getElementById('sm-url').value;
-  const description = document.getElementById('sm-desc').value.trim();
-  try {
-    const r = await fetch('/api/models/save', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body: JSON.stringify({ name, imageUrl, description })
-    });
-    const d = await r.json();
-    if(d.error) throw new Error(d.error);
-    closeM('m-save-model');
-    toast(`"${name}" saved to model library ✓`, 'ok');
-    loadModels();
-  } catch(e) { toast(e.message, 'err'); }
+async function confirmSaveModel(){
+  const name=document.getElementById('sm-name').value.trim();
+  if(!name){toast('Enter a name','err');return;}
+  if(!falKey){toast('Save key first','err');return;}
+  const imageUrl=document.getElementById('sm-url').value;
+  const description=document.getElementById('sm-desc').value.trim();
+  try{
+    const r=await fetch('/api/models/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,imageUrl,description})});
+    const d=await r.json();if(d.error)throw new Error(d.error);
+    closeM('ms-model');toast(`"${name}" saved ✓`,'ok');loadModels();
+  }catch(e){toast(e.message,'err');}
 }
-
-async function loadModels() {
-  if(!falKey) return;
-  try {
-    const r = await fetch('/api/models', { headers:{'Authorization':`Key ${falKey}`} });
-    const models = await r.json();
-    renderModelsPanel(models);
-  } catch {}
+async function loadModels(){
+  if(!falKey)return;
+  try{
+    const r=await fetch('/api/models',{headers:{'Authorization':`Key ${falKey}`}});
+    savedModels=await r.json();
+    renderModelLib('m');renderModelLib('p');
+  }catch{}
 }
-
-function renderModelsPanel(models) {
-  ['models-panel','p-models-panel'].forEach(panelId=>{
-    const panel=document.getElementById(panelId);if(!panel)return;
-    const isPlanner=panelId.startsWith('p-');
-    const cur=isPlanner?pActiveModel:activeModel;
-    if(!models.length){
-      panel.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → click "🔒 Save Model"</div>';
-      return;
-    }
-    panel.innerHTML=models.map(m=>{
-      const esc=m.name.replace(/'/g,"\'");
-      const edesc=(m.description||'').replace(/'/g,"\'");
-      const ctx=isPlanner?'p':'m';
-      return `<div class="model-card${cur?.id===m.id?' active-model':''}" onclick="selectModel('${m.id}','${esc}','${m.imageUrl}','${edesc}','${ctx}')">
-        ${cur?.id===m.id?'<div class="model-active-bar">✓ ACTIVE</div>':''}
-        <div class="model-card-inner">
-          <img class="model-thumb" src="${m.imageUrl}" alt="${esc}" onerror="this.style.display='none'"/>
-          <div class="model-info"><div class="model-name">${m.name}</div>${m.description?`<div class="model-desc">${m.description}</div>`:''}</div>
-          <button class="model-del" onclick="event.stopPropagation();deleteModel('${m.id}')" title="Delete">×</button>
-        </div></div>`;
-    }).join('');
-  });
-  const cb=document.getElementById('model-clear-btn');if(cb)cb.className=activeModel?'model-clear-btn visible':'model-clear-btn';
-  const pcb=document.getElementById('p-model-clear-btn');if(pcb)pcb.className=pActiveModel?'model-clear-btn visible':'model-clear-btn';
+function renderModelLib(ctx){
+  const el=document.getElementById(`mlib-${ctx}`);if(!el)return;
+  const cur=activeModel[ctx];
+  if(!savedModels.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → "Save Model"</div>';return;}
+  el.innerHTML=savedModels.map(m=>`
+    <div class="mcard${cur?.id===m.id?' on':''}" onclick="selectModel('${m.id}','${m.name}','${m.imageUrl}','${ctx}')">
+      ${cur?.id===m.id?'<div class="mcard-bar">✓ ACTIVE</div>':''}
+      <div class="mcard-inner">
+        <img class="mthumb" src="${m.imageUrl}" onerror="this.style.display='none'" alt="${m.name}"/>
+        <div class="minfo"><div class="mname">${m.name}</div>${m.description?`<div class="mdesc">${m.description}</div>`:''}</div>
+        <button class="mdel" onclick="event.stopPropagation();delModel('${m.id}')" title="Delete">×</button>
+      </div>
+    </div>`).join('');
+  const cb=document.getElementById(`mclr-${ctx}`);
+  if(cb)cb.className=cur?'mclr vis':'mclr';
 }
-
-function selectModel(id,name,imageUrl,description,ctx='m'){
-  const isP=ctx==='p';
-  if(isP){pActiveModel=pActiveModel?.id===id?null:{id,name,imageUrl,description};updatePModelPickerUI();toast(pActiveModel?`🔒 "${pActiveModel.name}" locked`:'Lock removed',pActiveModel?'ok':'');}
-  else{activeModel=activeModel?.id===id?null:{id,name,imageUrl,description};updateModelPickerUI();toast(activeModel?`🔒 "${activeModel.name}" locked`:'Lock removed',activeModel?'ok':'');}
-  loadModels();
+function selectModel(id,name,imageUrl,ctx){
+  activeModel[ctx]=activeModel[ctx]?.id===id?null:{id,name,imageUrl};
+  renderModelLib(ctx);
+  if(ctx==='m')updateRev();
+  toast(activeModel[ctx]?`🔒 "${name}" locked`:'Lock removed',activeModel[ctx]?'ok':'');
 }
-
-function clearActiveModel(){activeModel=null;loadModels();updateModelPickerUI();toast('Model lock removed');}
-function clearPActiveModel(){pActiveModel=null;loadModels();updatePModelPickerUI();toast('Model lock removed');}
-
-function updateModelPickerUI(){
-  const row=document.getElementById('mp-row');if(!row)return;
-  if(activeModel){row.className='model-picker-row has-model';document.getElementById('mp-label').className='mp-label has-model';document.getElementById('mp-label').textContent='✓ Locked: '+activeModel.name;document.getElementById('mp-none').style.display='none';document.getElementById('mp-selected-wrap').style.display='flex';document.getElementById('mp-thumb').src=activeModel.imageUrl;document.getElementById('mp-name').textContent=activeModel.name;}
-  else{row.className='model-picker-row';document.getElementById('mp-label').className='mp-label';document.getElementById('mp-label').textContent='🔒 Model Lock';document.getElementById('mp-none').style.display='block';document.getElementById('mp-selected-wrap').style.display='none';}
-}
-
-function updatePModelPickerUI(){
-  const row=document.getElementById('p-mp-row');if(!row)return;
-  if(pActiveModel){row.className='model-picker-row has-model';document.getElementById('p-mp-label').className='mp-label has-model';document.getElementById('p-mp-label').textContent='✓ Locked: '+pActiveModel.name;document.getElementById('p-mp-none').style.display='none';document.getElementById('p-mp-selected-wrap').style.display='flex';document.getElementById('p-mp-thumb').src=pActiveModel.imageUrl;document.getElementById('p-mp-name').textContent=pActiveModel.name;}
-  else{row.className='model-picker-row';document.getElementById('p-mp-label').className='mp-label';document.getElementById('p-mp-label').textContent='🔒 Model Lock';document.getElementById('p-mp-none').style.display='block';document.getElementById('p-mp-selected-wrap').style.display='none';}
-}
-
-async function deleteModel(id){
+function clearModel(ctx){activeModel[ctx]=null;renderModelLib(ctx);if(ctx==='m')updateRev();toast('Model lock removed');}
+async function delModel(id){
   if(!falKey)return;
   try{
     await fetch(`/api/models/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});
-    if(activeModel?.id===id){activeModel=null;updateModelPickerUI();}
-    if(pActiveModel?.id===id){pActiveModel=null;updatePModelPickerUI();}
+    if(activeModel.m?.id===id){activeModel.m=null;if(step===3)updateRev();}
+    if(activeModel.p?.id===id)activeModel.p=null;
     loadModels();toast('Model deleted');
   }catch(e){toast(e.message,'err');}
 }
 
-document.getElementById('sm-name').addEventListener('keydown', e=>{ if(e.key==='Enter') confirmSaveModel(); });
+// ════════ STYLE LIBRARY ════════
 async function doSaveStyle(){
   const name=document.getElementById('ssn').value.trim();if(!name){toast('Enter name','err');return;}if(!falKey){toast('Save key first','err');return;}
-  closeM('ms-save');
-  try{await fetch('/api/styles/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,prompt:document.getElementById('gprompt').value.trim(),styleKey:document.getElementById('m-style').value,category:cats.model,bgOption:BGs.m,realism:document.getElementById('m-realism').value})});toast(`"${name}" saved`,'ok');loadStyles();}catch(e){toast(e.message,'err');}
+  closeM('ms-style');
+  try{await fetch('/api/styles/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,prompt:document.getElementById('gprompt').value.trim(),styleKey:document.getElementById('m-style').value,category:cats.m,bgOption:BGs.m,realism:document.getElementById('m-realism').value})});toast(`"${name}" saved`,'ok');loadStyles();}catch(e){toast(e.message,'err');}
 }
-async function loadStyles(){if(!falKey)return;try{const r=await fetch('/api/styles',{headers:{'Authorization':`Key ${falKey}`}});const s=await r.json();const el=document.getElementById('slib');if(!s.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">No saved styles</div>';return;}el.innerHTML=s.map(x=>`<div class="sli"><span>${x.name}</span><button class="sld" onclick="delSty('${x.name}')">×</button></div>`).join('');}catch{}}
-async function delSty(name){if(!falKey)return;await fetch(`/api/styles/${encodeURIComponent(name)}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});loadStyles();}
+async function loadStyles(){
+  if(!falKey)return;
+  try{
+    const r=await fetch('/api/styles',{headers:{'Authorization':`Key ${falKey}`}});const s=await r.json();
+    const el=document.getElementById('slib');
+    if(!s.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">No saved styles</div>';return;}
+    el.innerHTML=s.map(x=>`<div class="sli" onclick="applyStyle('${x.name}','${x.styleKey||''}','${x.category||''}','${x.bgOption||'white'}')"><span>${x.name}</span><button class="sld" onclick="event.stopPropagation();delStyle('${x.name}')">×</button></div>`).join('');
+  }catch{}
+}
+function applyStyle(name,styleKey,category,bgOption){
+  if(styleKey){const el=document.getElementById('m-style');if(el)el.value=styleKey;}
+  if(category){cats.m=category;document.getElementById('cat-m').querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b.dataset.v===category));}
+  if(bgOption){BGs.m=bgOption;document.getElementById('bgp-m').querySelectorAll('.bgp').forEach(p=>p.classList.toggle('on',p.dataset.b===bgOption));}
+  toast(`"${name}" applied`,'ok');
+}
+async function delStyle(name){if(!falKey)return;await fetch(`/api/styles/${encodeURIComponent(name)}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});loadStyles();}
 
-// ════════════ MODAL / TOAST ════════════
+// ════════ MODAL / TOAST ════════
 function openM(id){document.getElementById(id).classList.add('open');}
 function closeM(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.mbg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
-document.getElementById('gn-input').addEventListener('keydown',e=>{if(e.key==='Enter')confirmGroup();});
-function toast(msg,type=''){const w=document.getElementById('toasts');const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;w.appendChild(el);setTimeout(()=>el.remove(),3500);}
+function toast(msg,type=''){
+  const w=document.getElementById('toasts');
+  const el=document.createElement('div');el.className=`ti ${type}`;el.textContent=msg;w.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
 </script>
 </body>
 </html>
