@@ -62,6 +62,7 @@ const CAT_HINTS = {
   jewelry:'person wearing the jewelry, close detail visible',
   hats:'person wearing the hat',
   other:'person wearing or holding the product',
+  outfit:'model wearing the complete outfit — all garments and accessories shown together, full body visible, complete head-to-toe look',
 };
 const STYLE_HINTS = {
   editorial:'high fashion editorial, Vogue magazine, dramatic studio lighting, high contrast',
