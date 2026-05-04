@@ -319,6 +319,61 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column-reverse;gap:5px;pointer-events:none}
 .ti{background:#1e293b;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease;pointer-events:all}
 .ti.ok{background:var(--grn)}.ti.err{background:var(--red)}.ti.warn{background:var(--ylw)}
+
+/* TAB NAV */
+.tab-nav{padding:4px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
+.tab-nav:hover{background:var(--bg);color:var(--tx)}.tab-nav.on{background:var(--bl);color:#fff}
+
+/* VIDEO TAB */
+.vtab{display:none;height:calc(100vh - 88px);overflow-y:auto}
+.vtab.on{display:block}
+
+/* PASSWORD OVERLAY */
+.pw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.pw-box{background:var(--w);border-radius:var(--rxl);padding:2.5rem;width:90%;max-width:380px;text-align:center;box-shadow:var(--sh3)}
+.pw-icon{font-size:48px;margin-bottom:1rem}
+.pw-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.pw-sub{font-size:13px;color:var(--t2);margin-bottom:1.5rem;line-height:1.5}
+.pw-input{width:100%;padding:12px 16px;border:2px solid var(--br2);border-radius:var(--r);font-size:16px;font-family:'Inter',sans-serif;text-align:center;letter-spacing:4px;outline:none;margin-bottom:12px}
+.pw-input:focus{border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.pw-err{color:var(--red);font-size:12px;margin-bottom:12px;display:none}
+
+/* VIDEO CLIPS */
+.clip-card{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
+.clip-card:hover{box-shadow:var(--sh2)}
+.clip-thumb{position:relative;background:var(--bg)}
+.clip-thumb video{width:100%;display:block;border-radius:0}
+.clip-play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s;cursor:pointer}
+.clip-thumb:hover .clip-play-overlay{opacity:1}
+.play-btn{width:48px;height:48px;background:rgba(255,255,255,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px}
+.clip-meta{padding:8px 10px 10px}
+.clip-name{font-size:12px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-acts{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.clip-spin{aspect-ratio:9/16;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--bg)}
+.clip-err{padding:10px;background:var(--rbg);margin:8px;border-radius:var(--r);font-size:11px;color:var(--red)}
+
+/* VIDEO QUEUE */
+.vq-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--br);border-radius:var(--r);background:var(--w);transition:background .12s}
+.vq-item:hover{background:var(--bg)}
+.vq-thumb{width:36px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--br)}
+.vq-thumb-placeholder{width:36px;height:48px;background:var(--bg);border-radius:6px;flex-shrink:0;border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:18px}
+.vq-info{flex:1;min-width:0}
+.vq-name{font-size:12px;font-weight:600}
+.vq-meta{font-size:10px;color:var(--t2)}
+.vq-acts{display:flex;gap:4px;flex-shrink:0}
+
+/* SOURCE SELECTOR */
+.src-tabs{display:flex;gap:4px;margin-bottom:1rem;background:var(--bg);border-radius:var(--r);padding:3px}
+.src-tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:7px;cursor:pointer;border:none;background:none;font-family:'Inter',sans-serif;color:var(--t2);transition:all .12s}
+.src-tab.on{background:var(--w);color:var(--bl);box-shadow:var(--sh)}
+
+/* TIMELINE */
+.timeline{display:flex;gap:8px;padding:12px;background:var(--bg);border-radius:var(--r);overflow-x:auto;min-height:80px;align-items:center}
+.tl-clip{flex-shrink:0;width:60px;height:60px;border-radius:7px;object-fit:cover;border:2px solid var(--br);cursor:pointer;transition:border-color .12s}
+.tl-clip:hover{border-color:var(--bl)}.tl-clip.on{border-color:var(--bl);box-shadow:0 0 0 2px var(--bl)}
+.tl-add{width:60px;height:60px;border-radius:7px;border:2px dashed var(--br2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;color:var(--t3);flex-shrink:0;transition:all .12s}
+.tl-add:hover{border-color:var(--bl);color:var(--bl)}
+
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
 @media(max-width:860px){.wrap{flex-direction:column}.sb{width:100%;height:auto}.rgrid{grid-template-columns:repeat(2,1fr)}}
@@ -332,16 +387,24 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
     Fashion AI
   </div>
   <div class="hdr-r">
-    <div class="key-wrap">
+    <div class="key-wrap" id="key-wrap" style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       <input type="password" id="fal-key" placeholder="fal-ai API key..." autocomplete="off"/>
       <button class="ksb" onclick="saveKey()">Save</button>
       <span class="kst" id="kst">—</span>
     </div>
+    <span class="kst ok" id="server-key-status" style="display:none">🔑 API Connected</span>
     <span class="spend" id="spend">$0.00</span>
   </div>
 </div>
 
+<!-- VIDEO TAB NAV -->
+<div style="background:var(--w);border-bottom:1px solid var(--br);padding:0 1.25rem;display:flex;gap:4px;align-items:center;height:38px">
+  <button class="tab-nav on" id="tab-images" onclick="switchTab('images')">📸 Images</button>
+  <button class="tab-nav" id="tab-video" onclick="switchTab('video')">🎬 Video <span style="font-size:9px;background:var(--pur);color:#fff;padding:1px 5px;border-radius:100px;margin-left:4px">BETA</span></button>
+</div>
+
+<div id="images-tab" class="vtab on">
 <div class="wrap">
 <div class="sb">
 
@@ -591,6 +654,131 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 </div>
 </div>
 </div>
+
+</div><!-- /images-tab -->
+
+
+<!-- PASSWORD OVERLAY FOR VIDEO TAB -->
+<div class="pw-overlay" id="pw-overlay" style="display:none">
+  <div class="pw-box">
+    <div class="pw-icon">🔐</div>
+    <div class="pw-title">Video Studio</div>
+    <div class="pw-sub">This section is restricted to internal team only.<br/>Enter the access password to continue.</div>
+    <input class="pw-input" type="password" id="pw-input" placeholder="••••••••" autocomplete="off"/>
+    <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
+    <button class="btn bpri bfull" onclick="checkPassword()" style="margin-bottom:8px">Unlock Video Studio</button>
+    <button class="btn bout bfull" onclick="switchTab('images')">← Back to Images</button>
+  </div>
+</div>
+
+<!-- VIDEO TAB -->
+<div id="video-tab" class="vtab">
+<div style="display:flex;height:100%">
+
+<!-- Video Sidebar -->
+<div class="sb" style="height:calc(100vh - 88px)">
+  <div class="sbs">
+    <div class="sbh">Video Source</div>
+    <div class="src-tabs">
+      <button class="src-tab on" id="vsrc-img" onclick="setVSrc('img')">From Image</button>
+      <button class="src-tab" id="vsrc-txt" onclick="setVSrc('txt')">Text Only</button>
+    </div>
+    <div id="vsrc-img-opts">
+      <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Pick images from your generated results or upload new ones</div>
+      <button class="btn bout bsm bfull" onclick="openVImgPicker()">+ Pick Source Images</button>
+      <div id="v-source-list" style="display:flex;flex-direction:column;gap:4px;margin-top:8px"></div>
+    </div>
+    <div id="vsrc-txt-opts" style="display:none">
+      <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Generate video purely from text description</div>
+    </div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">Motion Prompt</div>
+    <textarea id="v-prompt" rows="4" placeholder="E.g: Model walks slowly toward camera, dress flows naturally in soft breeze, confident fashion stride, cinematic movement, professional fashion video"></textarea>
+    <div style="font-size:10px;color:var(--t3);margin-top:4px">Describe the movement and scene. Be specific about motion type.</div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">Clip Settings</div>
+    <div class="fld"><label class="lbl">Duration per clip</label>
+      <select id="v-duration">
+        <option value="5">5 seconds</option>
+        <option value="10">10 seconds</option>
+      </select>
+    </div>
+    <div class="fld"><label class="lbl">Aspect Ratio</label>
+      <div class="ar-wrap">
+        <button class="arb on" data-vr="9:16" onclick="setVAR(this)">9:16 Reels</button>
+        <button class="arb" data-vr="1:1" onclick="setVAR(this)">1:1 Square</button>
+        <button class="arb" data-vr="16:9" onclick="setVAR(this)">16:9 Wide</button>
+      </div>
+    </div>
+    <div class="fld"><label class="lbl">AI Model</label>
+      <select id="v-model">
+        <option value="kling-v3-pro">Kling 3.0 Pro — Best quality</option>
+        <option value="kling-v1.6-pro">Kling 1.6 Pro — Faster</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sbs">
+    <div style="background:var(--ybg);border:1px solid rgba(245,158,11,.25);border-radius:var(--r);padding:10px 12px">
+      <div style="font-size:11px;color:var(--t2);margin-bottom:2px">Estimated cost</div>
+      <div id="v-cost-num" style="font-size:20px;font-weight:800;color:var(--ylw)">$0.00</div>
+      <div id="v-cost-meta" style="font-size:11px;color:var(--t2)">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- Video Main -->
+<div class="main">
+<div class="content">
+
+  <div class="sechd">
+    <div class="sectitle">Video Studio <span class="bdg bdg-p">Kling 3.0 Pro</span></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bout bsm" id="v-dl-all-btn" onclick="downloadAllClips()" disabled>↓ Download All</button>
+      <button class="btn bout bsm" onclick="clearVideoQueue()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Clip Queue -->
+  <div class="card" id="v-queue-card">
+    <div class="chd">Clip Queue <span class="bdg" id="v-queue-bdg">0 clips</span></div>
+    <div class="csub">Each source image becomes one clip. You can use the same prompt for all or set per-clip prompts.</div>
+    <div id="v-queue-list"><div style="text-align:center;padding:24px;color:var(--t3);font-size:13px;border:2px dashed var(--br);border-radius:var(--r)">No clips queued — add source images from the sidebar or type a text prompt</div></div>
+    <div style="display:flex;gap:8px;margin-top:1rem;align-items:center">
+      <div style="flex:1"></div>
+      <button class="btn bpri bxl" id="v-gen-btn" onclick="startVideoGen()" disabled>Generate Video Clips</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="prog" id="v-prog" style="display:none">
+    <div class="proghd"><div style="font-size:13px;font-weight:600">Generating clips...</div><div style="font-size:13px;font-weight:700;color:var(--pur)" id="v-ppct">0%</div></div>
+    <div class="progbg"><div class="progfil" id="v-pfil" style="width:0%;background:linear-gradient(90deg,var(--pur),#f59e0b)"></div></div>
+    <div class="progst"><span id="v-pdn">0 done</span><span id="v-ptot">of 0</span></div>
+  </div>
+
+  <!-- Results grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px" id="v-results-grid"></div>
+
+  <!-- Timeline / sequence builder -->
+  <div class="card" style="margin-top:1rem" id="v-timeline-card">
+    <div class="chd">Sequence Builder <span class="bdg bdg-g">Arrange clips into a sequence</span></div>
+    <div class="csub">Drag clips into order. A future update will auto-stitch them into one video.</div>
+    <div class="timeline" id="v-timeline">
+      <div class="tl-add" onclick="openVImgPicker()">+</div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px">Tip: Generate multiple clips from different images and arrange them in order for a full fashion campaign</div>
+  </div>
+
+</div>
+</div>
+</div>
+</div><!-- /video-tab -->
+
 
 <!-- MODALS -->
 <div class="mbg" id="m-grpname"><div class="modal">
@@ -1341,6 +1529,362 @@ function closeM(id){document.getElementById(id)?.classList.remove('open');}
 document.querySelectorAll('.mbg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));closeLightbox();closeCanvas();}});
 function toast(msg,type=''){const w=document.getElementById('toasts');const el=document.createElement('div');el.className='ti'+(type?' '+type:'');el.textContent=msg;w.appendChild(el);setTimeout(()=>el.remove(),3500);}
+
+// ════ VIDEO TAB ════
+const VIDEO_PASSWORD = 'adnan';
+let videoUnlocked = false;
+let vAR = '9:16';
+let vSrc = 'img';
+let vQueue = []; // [{id, name, imageUrl, prompt, duration, aspectRatio}]
+let vJobId = null;
+let vPollTimer = null;
+let vResults = [];
+
+// ── Tab switching ──
+function switchTab(tab) {
+  if(tab === 'video' && !videoUnlocked) {
+    document.getElementById('images-tab').style.display = 'none';
+    document.getElementById('video-tab').style.display = 'none';
+    document.getElementById('pw-overlay').style.display = 'flex';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-err').style.display = 'none';
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+    document.getElementById('tab-video').classList.remove('on');
+    return;
+  }
+  document.getElementById('images-tab').style.display = tab === 'images' ? 'block' : 'none';
+  document.getElementById('video-tab').style.display = tab === 'video' ? 'block' : 'none';
+  document.getElementById('tab-images').classList.toggle('on', tab === 'images');
+  document.getElementById('tab-video').classList.toggle('on', tab === 'video');
+  document.getElementById('pw-overlay').style.display = 'none';
+  // Fix: vtab display
+  document.getElementById('images-tab').className = tab === 'images' ? 'vtab on' : 'vtab';
+  document.getElementById('video-tab').className = tab === 'video' ? 'vtab on' : 'vtab';
+  if(tab === 'video') updateVideoCost();
+}
+
+function checkPassword() {
+  const pw = document.getElementById('pw-input').value;
+  if(pw === VIDEO_PASSWORD) {
+    videoUnlocked = true;
+    document.getElementById('pw-overlay').style.display = 'none';
+    switchTab('video');
+  } else {
+    document.getElementById('pw-err').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const pwInput = document.getElementById('pw-input');
+  if(pwInput) pwInput.addEventListener('keydown', e => { if(e.key === 'Enter') checkPassword(); });
+});
+
+// ── Video source ──
+function setVSrc(src) {
+  vSrc = src;
+  document.getElementById('vsrc-img').classList.toggle('on', src === 'img');
+  document.getElementById('vsrc-txt').classList.toggle('on', src === 'txt');
+  document.getElementById('vsrc-img-opts').style.display = src === 'img' ? 'block' : 'none';
+  document.getElementById('vsrc-txt-opts').style.display = src === 'txt' ? 'block' : 'none';
+  updateVideoCost();
+}
+function setVAR(btn) {
+  document.querySelectorAll('[data-vr]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  vAR = btn.dataset.vr;
+  updateVideoCost();
+}
+
+// ── Pick source images ──
+function openVImgPicker() {
+  // Build picker from generated image results
+  const done = allItems.filter(i => i.status === 'done' && i.resultUrl);
+  if(!done.length) { toast('Generate some images first — then use them as video sources', 'warn'); return; }
+  
+  const existing = new Set(vQueue.map(c => c.imageUrl));
+  const pickerHtml = done.map(it => {
+    const ar = it.aspectRatio || '3:4';
+    const [aw,ah] = ar.split(':').map(Number);
+    const pp = Math.round(ah/aw*100);
+    const inQueue = existing.has(it.resultUrl);
+    return `<div style="cursor:pointer;border:2px solid ${inQueue?'var(--bl)':'var(--br)'};border-radius:var(--r);overflow:hidden;position:relative" onclick="toggleVSource('${it.id}','${it.productName||it.name}','${it.resultUrl}',this)">
+      <div style="padding-bottom:${pp}%;position:relative;background:var(--bg)">
+        <img src="${it.resultUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
+        ${inQueue ? '<div style="position:absolute;top:4px;right:4px;background:var(--bl);color:#fff;border-radius:100px;font-size:10px;font-weight:700;padding:2px 6px">✓ Added</div>' : ''}
+      </div>
+      <div style="padding:5px 7px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.productName||it.name}</div>
+    </div>`;
+  }).join('');
+
+  // Create a quick picker modal-like overlay
+  const picker = document.createElement('div');
+  picker.id = 'v-img-picker';
+  picker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  picker.innerHTML = `<div style="background:var(--w);border-radius:var(--rxl);padding:1.4rem;width:90%;max-width:680px;max-height:80vh;overflow-y:auto;box-shadow:var(--sh3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="font-size:16px;font-weight:700">Select Source Images</div>
+      <button onclick="document.getElementById('v-img-picker').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--t2)">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem">Click images to add/remove from video queue. Selected images = one clip each.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:1rem">${pickerHtml}</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn bout" onclick="document.getElementById('v-img-picker').remove()">Done</button>
+    </div>
+  </div>`;
+  document.body.appendChild(picker);
+  picker.addEventListener('click', e => { if(e.target === picker) picker.remove(); });
+}
+
+function toggleVSource(id, name, imageUrl, el) {
+  const existing = vQueue.findIndex(c => c.imageUrl === imageUrl);
+  if(existing >= 0) {
+    vQueue.splice(existing, 1);
+    el.style.borderColor = 'var(--br)';
+    el.querySelector('[style*="Added"]')?.remove();
+  } else {
+    vQueue.push({ id: 'vc'+Math.random().toString(36).slice(2,8), srcId: id, name, imageUrl, prompt: '', duration: '5', aspectRatio: vAR });
+    el.style.borderColor = 'var(--bl)';
+    const img = el.querySelector('img');
+    if(img && !el.querySelector('[style*="Added"]')) {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--bl);color:#fff;border-radius:100px;font-size:10px;font-weight:700;padding:2px 6px';
+      badge.textContent = '✓ Added';
+      img.parentNode.appendChild(badge);
+    }
+  }
+  renderVQueue();
+}
+
+function addTextClip() {
+  const prompt = document.getElementById('v-prompt')?.value?.trim();
+  vQueue.push({ id: 'vc'+Math.random().toString(36).slice(2,8), srcId: null, name: 'Text Clip '+(vQueue.length+1), imageUrl: null, prompt: prompt||'', duration: '5', aspectRatio: vAR });
+  renderVQueue();
+}
+
+function renderVQueue() {
+  const el = document.getElementById('v-queue-list');
+  const bdg = document.getElementById('v-queue-bdg');
+  const genBtn = document.getElementById('v-gen-btn');
+  if(bdg) bdg.textContent = vQueue.length + ' clips';
+  if(genBtn) genBtn.disabled = vQueue.length === 0;
+  if(!vQueue.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px;border:2px dashed var(--br);border-radius:var(--r)">No clips queued — add source images from the sidebar</div>';
+    updateVideoCost(); return;
+  }
+  const globalPrompt = document.getElementById('v-prompt')?.value?.trim() || '';
+  el.innerHTML = '<div style="display:flex;flex-direction:column;gap:5px">' + vQueue.map((c,i) => `
+    <div class="vq-item">
+      ${c.imageUrl ? `<img class="vq-thumb" src="${c.imageUrl}" onerror="this.style.display='none'"/>` : `<div class="vq-thumb-placeholder">🎬</div>`}
+      <div class="vq-info">
+        <div class="vq-name">${c.name}</div>
+        <div class="vq-meta">${c.duration}s · ${c.aspectRatio}</div>
+      </div>
+      <div class="vq-acts">
+        <button class="ibt d" onclick="removeVClip(${i})" title="Remove">✕</button>
+      </div>
+    </div>`).join('') + '</div>';
+  updateVideoCost();
+}
+
+function removeVClip(i) { vQueue.splice(i, 1); renderVQueue(); }
+function clearVideoQueue() { vQueue = []; renderVQueue(); document.getElementById('v-results-grid').innerHTML = ''; }
+
+function renderVSourceList() {
+  const el = document.getElementById('v-source-list');
+  if(!el) return;
+  el.innerHTML = vQueue.slice(0,3).map(c => `<div style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;background:var(--grn);border-radius:50%;flex-shrink:0"></span>${c.name}</div>`).join('') + (vQueue.length > 3 ? `<div style="font-size:11px;color:var(--t3)">...and ${vQueue.length-3} more</div>` : '');
+}
+
+// ── Cost ──
+function updateVideoCost() {
+  const n = vQueue.length;
+  const dur = parseInt(document.getElementById('v-duration')?.value || '5');
+  // Kling 3.0 Pro costs ~$0.07/second for 720p
+  const costPerClip = dur * 0.07;
+  const total = n * costPerClip;
+  const el = document.getElementById('v-cost-num');
+  const me = document.getElementById('v-cost-meta');
+  if(el) el.textContent = '$' + total.toFixed(2);
+  if(me) me.textContent = `${n} clip${n!==1?'s':''} × ${dur}s × $0.07/sec`;
+}
+
+// ── Generation ──
+async function startVideoGen() {
+  if(!vQueue.length) return;
+  const auth = falKey ? `Key ${falKey}` : '';
+  const globalPrompt = document.getElementById('v-prompt')?.value?.trim() || 'fashion model, cinematic movement, professional fashion video';
+  const dur = document.getElementById('v-duration')?.value || '5';
+
+  const clips = vQueue.map(c => ({
+    id: c.id, imageUrl: c.imageUrl, name: c.name,
+    prompt: c.prompt || globalPrompt,
+    duration: dur,
+    aspectRatio: vAR,
+  }));
+
+  document.getElementById('v-gen-btn').disabled = true;
+  document.getElementById('v-gen-btn').textContent = 'Preparing...';
+  document.getElementById('v-prog').style.display = 'block';
+  document.getElementById('v-dl-all-btn').disabled = true;
+
+  try {
+    const headers = {'Content-Type':'application/json'};
+    if(auth) headers['Authorization'] = auth;
+    const resp = await fetch('/api/video/create', { method:'POST', headers, body: JSON.stringify({clips}) });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    vJobId = data.jobId;
+    initVGrid(data.total);
+    startVPoll();
+    toast(`${data.total} video clips queued`, 'ok');
+  } catch(e) {
+    toast(e.message, 'err');
+    document.getElementById('v-gen-btn').disabled = false;
+    document.getElementById('v-gen-btn').textContent = 'Generate Video Clips';
+  }
+}
+
+function initVGrid(total) {
+  document.getElementById('v-results-grid').innerHTML = '';
+  document.getElementById('v-pfil').style.width = '0%';
+  document.getElementById('v-ppct').textContent = '0%';
+  document.getElementById('v-pdn').textContent = '0 done';
+  document.getElementById('v-ptot').textContent = 'of ' + total;
+}
+
+function startVPoll() {
+  if(vPollTimer) clearInterval(vPollTimer);
+  vPollTimer = setInterval(doPollVideo, 5000);
+  doPollVideo();
+}
+
+async function doPollVideo() {
+  if(!vJobId) return;
+  try {
+    const resp = await fetch('/api/video/' + vJobId + '/status');
+    const data = await resp.json(); if(data.error) return;
+    const { total, completed, status } = data;
+    const pct = total ? Math.round(completed/total*100) : 0;
+    document.getElementById('v-pfil').style.width = pct + '%';
+    document.getElementById('v-ppct').textContent = pct + '%';
+    document.getElementById('v-pdn').textContent = completed + ' done';
+    document.getElementById('v-ptot').textContent = 'of ' + total;
+    renderVResults(data.clips);
+    if(status === 'done') {
+      clearInterval(vPollTimer);
+      document.getElementById('v-prog').style.display = 'none';
+      document.getElementById('v-gen-btn').disabled = false;
+      document.getElementById('v-gen-btn').textContent = 'Generate Video Clips';
+      const hasDone = data.clips.some(c => c.resultUrl);
+      document.getElementById('v-dl-all-btn').disabled = !hasDone;
+      toast('Video clips ready! ✓', 'ok');
+    }
+  } catch {}
+}
+
+function renderVResults(clips) {
+  const grid = document.getElementById('v-results-grid');
+  clips.forEach(clip => {
+    let card = document.getElementById('vcr-' + clip.id);
+    if(!card) { card = document.createElement('div'); card.className = 'clip-card'; card.id = 'vcr-' + clip.id; grid.appendChild(card); }
+    if(clip.status === 'done' && clip.resultUrl) {
+      card.innerHTML = `<div class="clip-thumb">
+        <video src="${clip.resultUrl}" loop muted playsinline style="width:100%;display:block;border-radius:var(--rl) var(--rl) 0 0" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
+        <div class="clip-play-overlay" onclick="this.previousElementSibling.play()"><div class="play-btn">▶</div></div>
+      </div>
+      <div class="clip-meta">
+        <div class="clip-name">${clip.prompt?.slice(0,40)||'Video clip'}...</div>
+        <div class="clip-acts">
+          <a href="${clip.resultUrl}" target="_blank" download="clip.mp4" class="btn bout bxs">↓ MP4</a>
+          <button class="btn bout bxs" onclick="addToTimeline('${clip.resultUrl}','${clip.id}')">+ Timeline</button>
+        </div>
+      </div>`;
+    } else if(clip.status === 'error') {
+      card.innerHTML = `<div class="clip-err">${clip.error||'Failed'}</div><div class="clip-meta"><div class="clip-name">Failed</div></div>`;
+    } else {
+      const lab = {queued:'Queued',generating:'Generating…'}[clip.status]||clip.status;
+      card.innerHTML = `<div class="clip-spin" style="min-height:180px"><div class="spin" style="border-top-color:var(--pur)"></div><div class="splbl">${lab}<br/><span style="color:var(--pur)">~2-5 min</span></div></div><div class="clip-meta"><div class="clip-name">${clip.prompt?.slice(0,40)||'Generating...'}...</div></div>`;
+    }
+  });
+  // Update timeline
+  addCompletedToTimeline(clips.filter(c=>c.status==='done'&&c.resultUrl));
+}
+
+// ── Timeline ──
+const timelineUrls = new Set();
+function addToTimeline(url, id) {
+  if(timelineUrls.has(url)) { toast('Already in timeline'); return; }
+  timelineUrls.add(url);
+  const tl = document.getElementById('v-timeline');
+  const add = tl.querySelector('.tl-add');
+  const el = document.createElement('video');
+  el.src = url; el.className = 'tl-clip'; el.loop = true; el.muted = true; el.playsinline = true;
+  el.addEventListener('mouseenter', () => el.play());
+  el.addEventListener('mouseleave', () => el.pause());
+  el.addEventListener('click', () => { el.classList.toggle('on'); });
+  tl.insertBefore(el, add);
+  toast('Added to timeline ✓', 'ok');
+}
+function addCompletedToTimeline(clips) {
+  clips.forEach(c => { if(!timelineUrls.has(c.resultUrl)) addToTimeline(c.resultUrl, c.id); });
+}
+
+// ── Download all ──
+async function downloadAllClips() {
+  if(!vJobId) return;
+  try {
+    const resp = await fetch('/api/video/' + vJobId + '/status');
+    const data = await resp.json();
+    const done = data.clips.filter(c => c.resultUrl);
+    if(!done.length) { toast('No clips ready to download', 'warn'); return; }
+    for(const clip of done) {
+      const a = document.createElement('a');
+      a.href = clip.resultUrl; a.download = (clip.prompt||'clip').slice(0,20)+'.mp4';
+      a.target = '_blank'; a.click();
+      await new Promise(r => setTimeout(r, 500));
+    }
+    toast('Downloading ' + done.length + ' clips ✓', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Auto-init video tab ──
+(function initVideoTab() {
+  // Sync duration changes to cost
+  const dur = document.getElementById('v-duration');
+  if(dur) dur.addEventListener('change', updateVideoCost);
+  const vp = document.getElementById('v-prompt');
+  if(vp) vp.addEventListener('input', updateVideoCost);
+  
+  // images-tab needs correct initial class
+  const it = document.getElementById('images-tab');
+  if(it) { it.className = 'vtab on'; it.style.display = 'block'; }
+  const vt = document.getElementById('video-tab');
+  if(vt) { vt.className = 'vtab'; vt.style.display = 'none'; }
+})();
+
+// ── Auto-load server key ──
+(async function checkServerKey() {
+  try {
+    const r = await fetch('/api/config');
+    const d = await r.json();
+    if(d.hasServerKey) {
+      // Server has the key — frontend doesn't need to show key input
+      document.getElementById('key-wrap').style.display = 'none';
+      document.getElementById('server-key-status').style.display = 'inline';
+      // Set a placeholder so API calls use server key (pass empty auth, server uses FAL_KEY_SERVER)
+      falKey = 'SERVER'; // flag — server will use its own key
+      setKeyUI(true);
+      loadLib();
+    } else {
+      document.getElementById('key-wrap').style.display = 'flex';
+      document.getElementById('server-key-status').style.display = 'none';
+    }
+  } catch {
+    document.getElementById('key-wrap').style.display = 'flex';
+  }
+})();
+
 </script>
 </body>
 </html>
