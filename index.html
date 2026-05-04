@@ -807,7 +807,7 @@ const PACKS={
 let falKey='',selCat='',selAR='3:4',selBg='white',bgMode='pick';
 let curMode='model',promptMode='g',curStep=1,curView='upload';
 let batchId=null,pollTimer=null,totalSpent=0;
-let pool=[],poolSel=new Set(),groups=[],pendingImgs=[];
+let pool=[],poolSel=new Set(),groups=[],pendingImgs=[],selGroups=new Set();
 let shots=[],pickedST=null;
 let savedModels=[],savedBgs=[],savedTemplates=[];
 let activeModel=null,activeBg=null;
@@ -929,26 +929,73 @@ function confirmGrp(){
   const name=document.getElementById('gn-inp').value.trim()||('Product '+(groups.length+1));
   groups.push({id:'g'+Math.random().toString(36).slice(2,9),name,images:pendingImgs.map(p=>({b64:p.b64,mimeType:p.mimeType})),modelId:null,modelUrl:null,modelName:null});
   const ids=new Set(pendingImgs.map(p=>p.id));pool=pool.filter(p=>!ids.has(p.id));poolSel.clear();pendingImgs=[];
-  closeM('m-grpname');renderPool();renderGroups();updContinue();toast(`"${name}" grouped`,'ok');
+  selGroups.add(groups[groups.length-1].id);closeM('m-grpname');renderPool();renderGroups();updContinue();toast(`"${name}" grouped`,'ok');
 }
 function renderGroups(){
-  const con=document.getElementById('grps-con');document.getElementById('grps-bdg').textContent=groups.length+' groups';
-  if(!groups.length){con.innerHTML='<div class="no-grps">No products grouped yet</div>';return;}
-  con.innerHTML='<div class="gstack">'+groups.map((g,gi)=>{
+  const con=document.getElementById('grps-con');
+  const total=groups.length;
+  const selCount=selGroups.size;
+  document.getElementById('grps-bdg').textContent=total+' groups';
+  if(!total){con.innerHTML='<div class="no-grps">No products grouped yet</div>';updateGrpToolbar();return;}
+  con.innerHTML=`<div id="grp-toolbar" style="display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--br);margin-bottom:10px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--t2);flex:1" id="grp-sel-label">Click checkboxes to select products to generate</span>
+    <button class="btn bout bsm" onclick="grpSelAll()">Select All</button>
+    <button class="btn bout bsm" onclick="grpSelNone()">None</button>
+    <button class="btn bout bsm" onclick="grpSelInvert()">Invert</button>
+    <button class="btn bpri bsm" id="sel-gen-btn" onclick="showGen()" disabled>Generate Selected →</button>
+  </div>
+  <div class="gstack">`+groups.map((g,gi)=>{
+    const sel=selGroups.has(g.id);
     const imgs=g.images.map((im,ii)=>`<div class="gci"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gd" onclick="rmGI(${gi},${ii})">×</button></div>`).join('');
     const safeName=g.name.replace(/"/g,'&quot;');
     const mrow=g.modelUrl
       ?`<div class="gcmrow"><img class="gcmthumb" src="${g.modelUrl}" onerror="this.style.display='none'"/><div class="gcminfo"><div class="gcmname">🔒 ${g.modelName}</div><div class="gcmsub">Per-group model</div></div><button class="bghost bxs" onclick="rmGM(${gi})">✕</button></div>`
       :savedModels.length?`<div class="gcmrow"><div style="flex:1;font-size:11px;color:var(--t3)">No per-group model</div><select onchange="setGM(${gi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--br2);border-radius:6px"><option value="">Assign model...</option>${savedModels.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>`
       :`<div class="gcmrow"><div style="font-size:11px;color:var(--t3)">Save a model to assign per-group</div></div>`;
-    return`<div class="gc"><div class="gchd"><div class="gcnum">${gi+1}</div><input class="gcname" value="${safeName}" onchange="groups[${gi}].name=this.value"/><button class="gcdel" onclick="delG(${gi})">✕</button></div><div class="gcbody"><div class="gcimgs">${imgs}</div><div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>${mrow}</div></div>`;
+    return`<div class="gc${sel?' gc-sel':''}" style="cursor:pointer" onclick="toggleGrpSel('${g.id}',event)">
+      <div class="gchd">
+        <div class="gc-checkbox" style="width:18px;height:18px;border-radius:5px;border:2px solid ${sel?'var(--bl)':'var(--br2)'};background:${sel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s">
+          ${sel?'<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2 6 5 9 10 3" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
+        </div>
+        <div class="gcnum">${gi+1}</div>
+        <input class="gcname" value="${safeName}" onclick="event.stopPropagation()" onchange="groups[${gi}].name=this.value"/>
+        <button class="gcdel" onclick="event.stopPropagation();delG(${gi})">✕</button>
+      </div>
+      <div class="gcbody">
+        <div class="gcimgs">${imgs}</div>
+        <div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
+        ${mrow}
+      </div>
+    </div>`;
   }).join('')+'</div>';
+  updateGrpToolbar();
 }
-function delG(i){groups.splice(i,1);renderGroups();updContinue();}
+
+function toggleGrpSel(id, event){
+  // Don't toggle if clicking on inputs or buttons inside the card
+  if(event.target.tagName==='INPUT'||event.target.tagName==='BUTTON'||event.target.tagName==='SELECT'||event.target.closest('button')||event.target.closest('select'))return;
+  if(selGroups.has(id))selGroups.delete(id);else selGroups.add(id);
+  renderGroups();
+}
+function grpSelAll(){selGroups=new Set(groups.map(g=>g.id));renderGroups();}
+function grpSelNone(){selGroups.clear();renderGroups();}
+function grpSelInvert(){const newSel=new Set();groups.forEach(g=>{if(!selGroups.has(g.id))newSel.add(g.id);});selGroups=newSel;renderGroups();}
+function updateGrpToolbar(){
+  const n=selGroups.size;const total=groups.length;
+  const lbl=document.getElementById('grp-sel-label');const btn=document.getElementById('sel-gen-btn');
+  if(lbl){
+    if(n===0)lbl.innerHTML='<span style="color:var(--t2)">Click any product card to select it for generation</span>';
+    else if(n===total)lbl.innerHTML=`<strong style="color:var(--bl)">All ${total} products selected</strong>`;
+    else lbl.innerHTML=`<strong style="color:var(--bl)">${n} of ${total} selected</strong> — only these will be generated`;
+  }
+  if(btn)btn.disabled=n===0;
+  document.getElementById('continue-btn').disabled=n===0;
+}
+function delG(i){const id=groups[i].id;groups.splice(i,1);selGroups.delete(id);renderGroups();updContinue();}
 function rmGI(gi,ii){groups[gi].images.splice(ii,1);if(!groups[gi].images.length)groups.splice(gi,1);renderGroups();updContinue();}
 function rmGM(gi){groups[gi].modelId=null;groups[gi].modelUrl=null;groups[gi].modelName=null;renderGroups();}
 function setGM(gi,idx){if(idx==='')return;const m=savedModels[parseInt(idx)];if(!m)return;groups[gi].modelId=m.id;groups[gi].modelUrl=m.imageUrl;groups[gi].modelName=m.name;renderGroups();}
-function updContinue(){document.getElementById('continue-btn').disabled=groups.length===0;if(curView==='gen')updateReview();}
+function updContinue(){if(groups.length>0&&selGroups.size===0){grpSelAll();}updateGrpToolbar();if(curView==='gen')updateReview();}
 
 // ════ SHOTS ════
 function addPack(name){
@@ -987,9 +1034,9 @@ function updateCost(){const n=groups.length*(shots.length||1),r=getRate();const 
 function updateWebCost(){const n=groups.length,r=getRate();const ca=document.getElementById('w-cost-num'),cm=document.getElementById('w-cost-meta');if(ca)ca.textContent='$'+(n*r).toFixed(2);if(cm)cm.textContent=`${n} image${n!==1?'s':''} × $${r}`;const btn=document.getElementById('w-gen-btn');if(btn)btn.disabled=!falKey||!selCat||!groups.length;}
 function updateReview(){
   updateCost();
-  const n=groups.length,s=shots.length||1;
+  const n=(selGroups.size||groups.length),s=shots.length||1;
   const rn=document.getElementById('rev-n'),rd=document.getElementById('rev-d');
-  if(rn)rn.textContent=`${n} product${n!==1?'s':''} × ${s} shot${s!==1?'s':''}`;
+  if(rn)rn.textContent=`${n}/${groups.length} product${n!==1?'s':''} × ${s} shot${s!==1?'s':''}`;
   if(rd)rd.textContent=`${selCat||'no category'} · ${selAR} · ${document.getElementById('res-sel').value}`;
   const ld=document.getElementById('lock-disp');
   if(ld){const am=activeModel;ld.innerHTML=am?`<div class="lkbar"><img src="${am.imageUrl}" onerror="this.style.display='none'"/><div style="flex:1"><div class="lkname">🔒 ${am.name}</div><div class="lksub">Visual anchor for every shot</div></div><button class="lkdel" onclick="clearModelLock()">✕</button></div>`:''}
@@ -1010,12 +1057,13 @@ async function startGen(){
   const btn=document.getElementById('gen-btn');btn.disabled=true;btn.textContent='Preparing...';
   try{
     // Build smart category hint from all component names if outfit
-    const products=groups.map((g,i)=>({
+    const activeGroups=groups.filter(g=>selGroups.has(g.id));
+    const products=activeGroups.map((g,i)=>({
       name:g.name,
       images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),
       prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
       savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
-      componentNames:selCat==='outfit'?groups.map(gg=>gg.name):[],
+      componentNames:selCat==='outfit'?activeGroups.map(gg=>gg.name):[],
     }));
     const{bgOption,bgCustom}=getBgOpt();
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
@@ -1040,7 +1088,8 @@ async function startWebGen(){
   try{
     const gp=document.getElementById('prod-prompt')?.value?.trim()||'professional product photo';
     const{bgOption,bgCustom}=getBgOpt();
-    const products=groups.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp}));
+    const activeGroups=groups.filter(g=>selGroups.has(g.id));
+    const products=activeGroups.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp}));
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({type:'website',products,globalPrompt:gp,promptMode:'global',category:'other',bgOption,bgCustom,resolution:document.getElementById('res-sel').value,aspectRatio:selAR})});
     const data=await resp.json();if(data.error)throw new Error(data.error);
     batchId=data.batchId;allItems=[];showResults();
@@ -1054,7 +1103,7 @@ function setFilter(btn,f){document.querySelectorAll('.fb-chip').forEach(b=>b.cla
 function setProdFilter(prodName){curProdFilter=curProdFilter===prodName?'':prodName;document.querySelectorAll('.prod-filter').forEach(b=>{b.classList.toggle('on',b.dataset.prod===curProdFilter);});renderFiltered();}
 function setView(v,btn){curGridView=v;document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');const grid=document.getElementById('rgrid');grid.className='rgrid'+(v==='compact'?' compact':v==='list'?' list':'');}
 function buildProductFilterChips(){
-  const con=document.getElementById('product-filter-chips');const prods=[...new Set(groups.map(g=>g.name))];
+  const con=document.getElementById('product-filter-chips');const prods=[...new Set(groups.filter(g=>selGroups.has(g.id)).map(g=>g.name))];
   con.innerHTML=prods.map(p=>`<button class="fb-chip prod-filter" data-prod="${p}" onclick="setProdFilter('${p}')">${p}</button>`).join('');
 }
 function renderFiltered(){
