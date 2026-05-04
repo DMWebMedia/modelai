@@ -34,14 +34,33 @@ async function falReq(method,url,auth,body){
 const falQ   =(p,b,a)=>falReq('POST',`https://queue.fal.run${p}`,a,b);
 const falGet =(p,a)  =>falReq('GET', `https://queue.fal.run${p}`,a,null);
 
-async function uploadToFal(base64,mimeType,auth){
-  const init=await falReq('POST','https://rest.alpha.fal.ai/storage/upload/initiate',auth,{
-    file_name:`img_${Date.now()}_${Math.random().toString(36).slice(2,6)}.jpg`,
-    content_type:mimeType||'image/jpeg'
+// Upload cache: base64 prefix → fal URL (persists for session, saves repeated uploads)
+const uploadCache = new Map();
+
+async function uploadToFal(base64, mimeType, auth) {
+  // Cache key = first 128 chars of base64 (unique per image content)
+  const cacheKey = (mimeType||'img') + ':' + base64.slice(0, 128);
+  if(uploadCache.has(cacheKey)) {
+    return uploadCache.get(cacheKey);
+  }
+  const init = await falReq('POST','https://rest.alpha.fal.ai/storage/upload/initiate', auth, {
+    file_name: `img_${Date.now()}_${Math.random().toString(36).slice(2,6)}.jpg`,
+    content_type: mimeType || 'image/jpeg'
   });
-  if(!init.upload_url)throw new Error('Upload initiate failed: '+JSON.stringify(init).slice(0,120));
-  const put=await fetch(init.upload_url,{method:'PUT',headers:{'Content-Type':mimeType||'image/jpeg'},body:Buffer.from(base64,'base64')});
-  if(!put.ok)throw new Error(`PUT failed ${put.status}`);
+  if(!init.upload_url) throw new Error('Upload initiate failed: ' + JSON.stringify(init).slice(0,120));
+  const put = await fetch(init.upload_url, {
+    method: 'PUT',
+    headers: {'Content-Type': mimeType || 'image/jpeg'},
+    body: Buffer.from(base64, 'base64')
+  });
+  if(!put.ok) throw new Error(`PUT failed ${put.status}`);
+  // Cache and return
+  uploadCache.set(cacheKey, init.file_url);
+  // Keep cache from growing forever
+  if(uploadCache.size > 500) {
+    const firstKey = uploadCache.keys().next().value;
+    uploadCache.delete(firstKey);
+  }
   return init.file_url;
 }
 
@@ -165,10 +184,24 @@ const LOCK_HINT = 'same exact model as in the reference photo — identical face
 function buildPrompt(userPrompt, shot, opts={}) {
   const { category='other', styleKey='', bgOption='ai', bgCustom='',
           gender='female', realism='ultra', modelDesc='', isLocked=false,
-          productNames=[], modelCount=1, multiModelDesc='' } = opts;
+          productNames=[], modelCount=1, multiModelDesc='',
+          productHasModel=false  // true = product image contains a model, must be ignored
+        } = opts;
   const catHint = buildSmartCategoryHint(category, productNames, modelCount);
+
+  // Tell AI to ignore whatever model is in the product image when:
+  // - user explicitly said the product has a model (checkbox)
+  // - user provided a model description (they want someone specific)
+  // - a saved model lock is active (we're sending a separate anchor image)
+  // - isLocked (using first shot as anchor — still need to drop the product model)
+  const shouldReplaceProductModel = productHasModel || !!modelDesc || !!multiModelDesc;
+  const modelSwapHint = shouldReplaceProductModel
+    ? 'ignore and completely replace the model shown in the product reference image — extract ONLY the clothing, garments, and accessories, dress them on the new model described below, do not copy the original model face hair or body'
+    : '';
+
   const parts = [
     userPrompt || '',
+    modelSwapHint,
     isLocked ? LOCK_HINT : (multiModelDesc || modelDesc || (GENDER[gender] || GENDER.female)),
     catHint,
     SHOT[shot] || SHOT.front,
@@ -177,7 +210,7 @@ function buildPrompt(userPrompt, shot, opts={}) {
     REAL[realism] || REAL.ultra,
   ];
   const p = parts.filter(Boolean).join(', ');
-  return p.length > 480 ? p.slice(0, 477) + '...' : p;
+  return p.length > 500 ? p.slice(0, 497) + '...' : p;
 }
 
 function buildWebPrompt(userPrompt, shot, bgOption, bgCustom) {
@@ -201,16 +234,24 @@ const ENDPOINTS = {
 
 async function generate(item, auth, anchorUrls=[]) {
   item.status = 'uploading';
-  const productUrls = [];
-  for(const img of item.productImages)
-    productUrls.push(await uploadToFal(img.base64, img.mimeType, auth));
+  // Upload all images in parallel — much faster than sequential
+  const [productUrls, styleUrls] = await Promise.all([
+    Promise.all((item.productImages || []).map(img => uploadToFal(img.base64, img.mimeType, auth))),
+    Promise.all((item.styleRefImages || []).map(s => uploadToFal(s.base64, s.mimeType, auth))),
+  ]);
 
-  const styleUrls = [];
-  for(const s of (item.styleRefImages || []))
-    styleUrls.push(await uploadToFal(s.base64, s.mimeType, auth));
-
-  // Product images first, then anchors (model refs), then style refs
-  const allUrls = [...productUrls, ...anchorUrls, ...styleUrls];
+  // Image order matters for NB2:
+  // - Normal: product first (AI uses it as main reference)
+  // - productHasModel or custom model desc: put model anchor FIRST so AI anchors on that face,
+  //   product image goes after so AI takes clothing only, not the face
+  let allUrls;
+  if(item.productHasModel || item.modelDesc) {
+    // Model anchor first → product image second (clothing extraction mode)
+    allUrls = [...anchorUrls, ...productUrls, ...styleUrls];
+  } else {
+    // Standard: product first, then optional model anchor for consistency
+    allUrls = [...productUrls, ...anchorUrls, ...styleUrls];
+  }
 
   item.status = 'generating';
   const endpoint = ENDPOINTS[item.aiModel || 'nb2'] || ENDPOINTS.nb2;
@@ -234,7 +275,7 @@ async function generate(item, auth, anchorUrls=[]) {
   item.responseUrl = sub.response_url;
 
   for(let i = 0; i < 150; i++) {
-    await new Promise(r=>setTimeout(r, 4000));
+    await new Promise(r=>setTimeout(r, 2500));
     const sp = item.statusUrl ? item.statusUrl.replace('https://queue.fal.run','') : `${endpoint}/requests/${item.requestId}/status`;
     const st = await falGet(sp, auth);
     if(st.status === 'COMPLETED') {
@@ -288,7 +329,7 @@ async function processItem(batchId, itemId, auth) {
   }
 }
 
-function runBatch(batchId, auth, concurrency=3) {
+function runBatch(batchId, auth, concurrency=5) {
   const q = [...jobs[batchId].items.filter(i=>i.status==='queued')];
   const next = async() => { const it=q.shift(); if(!it) return; await processItem(batchId,it.id,auth); await next(); };
   Promise.all(Array.from({length:Math.min(concurrency,q.length||1)}, next))
@@ -359,7 +400,7 @@ app.post('/api/batch/create', async(req, res) => {
     }
     jobs[batchId] = { type, status:'processing', created:Date.now(), completedCount:0, items };
     res.json({ batchId, total: items.length });
-    runBatch(batchId, auth, 3);
+    runBatch(batchId, auth, 5);
     return; // skip per-product loop
   }
   // ── END GROUP SHOT ──────────────────────────────────────────────────────
@@ -368,6 +409,7 @@ app.post('/api/batch/create', async(req, res) => {
     const prod = products[pi];
     const perPrompt = (promptMode==='individual' && prod.prompt) ? prod.prompt : globalPrompt;
     const prodModelUrl = prod.savedModelUrl || savedModelUrl || null;
+    const prodHasModel = prod.productHasModel || false;
     const productKey = `p${pi}`;
     // Extract product names for smart prompt building
     const productNames = prod.componentNames || [];
@@ -393,6 +435,7 @@ app.post('/api/batch/create', async(req, res) => {
             gender: prod.gender || gender,
             realism, modelDesc: prod.modelDesc || modelDesc || '',
             isLocked, productNames,
+            productHasModel: prod.productHasModel || false,
           });
 
       items.push({
@@ -407,6 +450,8 @@ app.post('/api/batch/create', async(req, res) => {
         prompt, aspectRatio: shot.aspectRatio || aspectRatio || '3:4',
         resolution: shot.resolution || resolution || '1K',
         aiModel: aiModel || 'nb2',
+        productHasModel: prod.productHasModel || false,
+        modelDesc: prod.modelDesc || modelDesc || '',
         status: 'queued', requestId: null, resultUrl: null, error: null,
       });
     }
@@ -414,7 +459,7 @@ app.post('/api/batch/create', async(req, res) => {
 
   jobs[batchId] = { type, status:'processing', created:Date.now(), completedCount:0, items };
   res.json({ batchId, total: items.length });
-  runBatch(batchId, auth, 3);
+  runBatch(batchId, auth, 5);
 });
 
 app.get('/api/batch/:id/status', (req,res) => {

@@ -599,7 +599,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div id="st2" style="display:none">
         <div class="card">
           <div class="chd">Model Description <span class="bdg bdg-g">Optional</span></div>
-          <div class="csub">Describe the model for Shot 1. Shots 2+ auto-use Shot 1's output as visual anchor for consistency.</div>
+          <div class="csub">Describe the model you want. If your product images already have a model — <strong>go back to your groups and tick "My product image has a model"</strong> on each one, so AI ignores that model.</div>
           <textarea id="model-desc" rows="3" placeholder="E.g: tall slim woman, olive skin, long straight dark brown hair, barefoot, early 30s, Mediterranean look, confident posture"></textarea>
         </div>
         <div class="card">
@@ -1254,7 +1254,32 @@ function getBgOpt(){
 // ════ POOL ════
 function setupDZ(){const dz=document.getElementById('dz'),fi=document.getElementById('fi');fi.addEventListener('change',e=>{addPool(Array.from(e.target.files));fi.value='';});dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');addPool(Array.from(e.dataTransfer.files));});}
 function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
-async function addPool(files){for(const f of files.filter(f=>f.type.startsWith('image/'))){const b64=await toB64(f);pool.push({id:'p'+Math.random().toString(36).slice(2,9),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});}renderPool();}
+
+// Compress image before upload — resize to max 1200px, quality 0.88
+// Cuts upload time by 60-80% for large photos
+function compressImage(file, maxPx=1200, quality=0.88) {
+  return new Promise((res) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        const r2 = new FileReader();
+        r2.onload = () => res(r2.result.split(',')[1]);
+        r2.readAsDataURL(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { toB64(file).then(res); }; // fallback
+    img.src = url;
+  });
+}
+async function addPool(files){for(const f of files.filter(f=>f.type.startsWith('image/'))){const b64=await compressImage(f);pool.push({id:'p'+Math.random().toString(36).slice(2,9),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});}renderPool();}
 function renderPool(){
   const grid=document.getElementById('pgrid'),wrap=document.getElementById('pool-wrap');
   document.getElementById('pool-bdg').textContent=pool.length+' in pool';
@@ -1319,6 +1344,13 @@ function renderGroups(){
       <div class="gcbody">
         <div class="gcimgs">${imgs}</div>
         <div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
+        <div onclick="togglePHM('${g.id}',${gi})" style="display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1.5px solid ${g.productHasModel?'var(--bl)':'var(--br2)'};background:${g.productHasModel?'var(--bll)':'var(--bg)'}">
+          <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${g.productHasModel?'var(--bl)':'var(--br2)'};background:${g.productHasModel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:#fff">${g.productHasModel?'✓':''}</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:700;color:${g.productHasModel?'var(--bl)':'var(--tx)'};line-height:1.3">My product image has a model in it</div>
+            <div style="font-size:10px;color:var(--t2);line-height:1.3">${g.productHasModel?'✅ AI will ignore that model — using your description instead':'Tick this so AI ignores the model in your photo'}</div>
+          </div>
+        </div>
         ${mrow}
       </div>
     </div>`;
@@ -1422,6 +1454,7 @@ async function startGen(){
       prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
       savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
       componentNames:selCat==='outfit'?activeGroups.map(gg=>gg.name):[],
+      productHasModel:g.productHasModel||false,
     }));
     const{bgOption,bgCustom}=getBgOpt();
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
@@ -1475,7 +1508,7 @@ function renderFiltered(){
 }
 
 // ════ POLL / RESULTS ════
-function startPoll(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(doPoll,3500);doPoll();}
+function startPoll(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(doPoll,2000);doPoll();}
 async function doPoll(){
   if(!batchId)return;
   try{
@@ -2393,6 +2426,14 @@ async function doSwapModel() {
   } finally {
     btn.disabled = false; btn.textContent = 'Swap Model';
   }
+}
+
+
+function togglePHM(gId, gi) {
+  const g = groups.find(x => x.id === gId);
+  if(!g) return;
+  g.productHasModel = !g.productHasModel;
+  renderGroups(); // re-render to show updated state
 }
 
 </script>
