@@ -538,8 +538,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       </div>
     </div>
     <div class="card">
-      <div class="chd">Product Groups <span class="bdg" id="grps-bdg">0 groups</span></div>
-      <div class="csub">Each group = one product. Rename, manage images, and assign a per-group model from your library.</div>
+      <div class="chd" style="justify-content:space-between">
+        <span>Product Groups <span class="bdg" id="grps-bdg">0 groups</span></span>
+        <button class="btn bpri bsm" id="grp-shot-btn" onclick="openGroupShot()" disabled style="background:linear-gradient(135deg,var(--pur),var(--bl));border:none">⊞ Group Shot</button>
+      </div>
+      <div class="csub">Each group = one product. Select groups → click "Group Shot" to generate all in one image (banner, campaign, group photo).</div>
       <div id="grps-con"><div class="no-grps">No products grouped yet — select images above and click "Group as Product"</div></div>
     </div>
   </div>
@@ -779,6 +782,78 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 </div>
 </div><!-- /video-tab -->
 
+
+
+<!-- GROUP SHOT MODAL -->
+<div class="mbg" id="m-groupshot"><div class="modal" style="max-width:680px">
+  <div class="mt">⊞ Group Shot</div>
+  <div class="ms">Combine multiple products and models into ONE wide image — banner, campaign, group photo, runway shot</div>
+
+  <div style="background:var(--pbg);border:1px solid rgba(139,92,246,.2);border-radius:var(--r);padding:10px 12px;margin-bottom:1rem;font-size:12px;color:var(--pur)">
+    <strong>How it works:</strong> All selected product images get sent together in one AI call. You get one wide image with everything — multiple models wearing different outfits, or the same product on multiple models, or a product collage.
+  </div>
+
+  <div class="fld"><label class="lbl">Selected Products <span id="gs-prod-count" style="color:var(--bl)">0 selected</span></label>
+    <div id="gs-product-list" style="display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;padding:2px"></div>
+  </div>
+
+  <div class="fld" style="margin-top:.75rem"><label class="lbl">Scene Description *</label>
+    <textarea id="gs-prompt" rows="4" placeholder="E.g: Three models standing together on a white marble runway, each wearing a different outfit, full body, wide editorial banner shot, Vogue fashion week style&#10;&#10;Or: Two models side by side in luxury setting, Model 1 in the red dress, Model 2 in the white jumpsuit, 16:9 campaign banner"></textarea>
+  </div>
+
+  <div class="m2c" style="margin-top:.75rem">
+    <div class="fld"><label class="lbl">Aspect Ratio</label>
+      <select id="gs-ar">
+        <option value="16:9">16:9 — Wide Banner / Campaign</option>
+        <option value="3:2">3:2 — Landscape</option>
+        <option value="1:1">1:1 — Square</option>
+        <option value="4:5">4:5 — Portrait</option>
+        <option value="21:9">21:9 — Ultra Wide</option>
+      </select>
+    </div>
+    <div class="fld"><label class="lbl">Quality</label>
+      <select id="gs-res"><option value="1K">1K — $0.08</option><option value="2K">2K — $0.12</option></select>
+    </div>
+  </div>
+
+  <div class="fld"><label class="lbl">Style</label>
+    <select id="gs-style">
+      <option value="">AI Chooses</option>
+      <option value="editorial">Editorial / Vogue</option>
+      <option value="campaign">Campaign / Bold</option>
+      <option value="luxury">Luxury</option>
+      <option value="street">Street Style</option>
+      <option value="catalog">Catalog Clean</option>
+      <option value="lookbook">Lookbook</option>
+    </select>
+  </div>
+
+  <div class="fld"><label class="lbl">Background</label>
+    <select id="gs-bg">
+      <option value="white">Pure White Studio</option>
+      <option value="lightgrey">Light Grey Studio</option>
+      <option value="black">Black Studio</option>
+      <option value="luxury">Luxury Interior</option>
+      <option value="outdoor">Outdoor / Natural</option>
+      <option value="street">Urban Street</option>
+      <option value="ai">AI Decides</option>
+      <option value="custom">Custom description</option>
+    </select>
+    <div id="gs-bgcw" style="display:none;margin-top:4px">
+      <input type="text" id="gs-bgc" placeholder="Describe your background..."/>
+    </div>
+  </div>
+
+  <div style="background:var(--ybg);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:8px 12px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:12px;color:var(--t2)">Estimated cost</span>
+    <span id="gs-cost" style="font-size:16px;font-weight:700;color:var(--ylw)">$0.08</span>
+  </div>
+
+  <div class="macts">
+    <button class="btn bout" onclick="closeM('m-groupshot')">Cancel</button>
+    <button class="btn bpri" style="background:linear-gradient(135deg,var(--pur),var(--bl));border:none" id="gs-gen-btn" onclick="startGroupShot()">Generate Group Shot</button>
+  </div>
+</div></div>
 
 <!-- MODALS -->
 <div class="mbg" id="m-grpname"><div class="modal">
@@ -1178,6 +1253,9 @@ function updateGrpToolbar(){
   }
   if(btn)btn.disabled=n===0;
   document.getElementById('continue-btn').disabled=n===0;
+  // Group Shot button — needs 2+ selected
+  const gsBtn=document.getElementById('grp-shot-btn');
+  if(gsBtn)gsBtn.disabled=n<1;
 }
 function delG(i){const id=groups[i].id;groups.splice(i,1);selGroups.delete(id);renderGroups();updContinue();}
 function rmGI(gi,ii){groups[gi].images.splice(ii,1);if(!groups[gi].images.length)groups.splice(gi,1);renderGroups();updContinue();}
@@ -1912,6 +1990,118 @@ async function downloadAllClips() {
     document.getElementById('key-wrap').style.display = 'flex';
   }
 })();
+
+
+// ════ GROUP SHOT ════
+function openGroupShot() {
+  const selected = groups.filter(g => selGroups.has(g.id));
+  if(!selected.length) { toast('Select at least 2 product groups first', 'warn'); return; }
+
+  // Populate product list in modal
+  document.getElementById('gs-prod-count').textContent = selected.length + ' selected';
+  document.getElementById('gs-product-list').innerHTML = selected.map((g,i) => {
+    const thumb = g.images[0] ? `<img src="data:${g.images[0].mimeType};base64,${g.images[0].b64}" style="width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--br)"/>` : `<div style="width:38px;height:38px;background:var(--bg);border-radius:6px;flex-shrink:0;border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:16px">📦</div>`;
+    const modelBadge = g.modelUrl ? `<span style="font-size:10px;background:var(--gbg);color:var(--grn);padding:2px 6px;border-radius:100px">🔒 ${g.modelName}</span>` : `<span style="font-size:10px;color:var(--t3)">No model assigned</span>`;
+    return `<div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--br);border-radius:var(--r);background:var(--w)">
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600">${g.name}</div>
+        <div style="font-size:11px;color:var(--t2)">${g.images.length} angle${g.images.length!==1?'s':''} · ${modelBadge}</div>
+      </div>
+      <span style="font-size:10px;background:var(--bll);color:var(--bl);padding:2px 7px;border-radius:100px">Product ${i+1}</span>
+    </div>`;
+  }).join('');
+
+  // Auto-generate a smart prompt suggestion
+  const names = selected.map(g => g.name).join(', ');
+  const modelCount = selected.filter(g => g.modelUrl).length || selected.length;
+  const suggested = `${modelCount > 1 ? modelCount + ' models together' : 'Model'} wearing ${names} — group fashion shot, all products clearly visible, wide editorial composition`;
+  if(!document.getElementById('gs-prompt').value) {
+    document.getElementById('gs-prompt').value = suggested;
+  }
+
+  document.getElementById('gs-bg').addEventListener('change', function() {
+    document.getElementById('gs-bgcw').style.display = this.value === 'custom' ? 'block' : 'none';
+  });
+  document.getElementById('gs-res').addEventListener('change', updateGSCost);
+  updateGSCost();
+  openM('m-groupshot');
+}
+
+function updateGSCost() {
+  const r = document.getElementById('gs-res')?.value === '2K' ? 0.12 : 0.08;
+  document.getElementById('gs-cost').textContent = '$' + r.toFixed(2);
+}
+
+async function startGroupShot() {
+  const selected = groups.filter(g => selGroups.has(g.id));
+  if(!selected.length) return;
+  const prompt = document.getElementById('gs-prompt').value.trim();
+  if(!prompt) { toast('Write a scene description first', 'err'); return; }
+
+  const btn = document.getElementById('gs-gen-btn');
+  btn.disabled = true; btn.textContent = 'Preparing...';
+
+  try {
+    const products = selected.map(g => ({
+      name: g.name,
+      images: g.images.map(im => ({ base64: im.b64, mimeType: im.mimeType })),
+      savedModelUrl: g.modelUrl || null,
+    }));
+
+    // Build groupShotModels array from per-group saved models
+    const groupShotModels = selected.map(g => ({
+      name: g.modelName || g.name,
+      imageUrl: g.modelUrl || null,
+    })).filter(m => m.imageUrl);
+
+    const bgOpt = document.getElementById('gs-bg').value;
+    const bgCustom = bgOpt === 'custom' ? document.getElementById('gs-bgc').value.trim() : '';
+
+    const resp = await fetch('/api/batch/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': falKey === 'SERVER' ? 'Key SERVER' : `Key ${falKey}` },
+      body: JSON.stringify({
+        type: 'model',
+        products,
+        globalPrompt: prompt,
+        promptMode: 'global',
+        category: selCat || 'outfit',
+        styleKey: document.getElementById('gs-style').value,
+        bgOption: bgOpt,
+        bgCustom,
+        gender: document.getElementById('gender-sel').value,
+        realism: document.getElementById('real-sel').value,
+        resolution: document.getElementById('gs-res').value,
+        aspectRatio: document.getElementById('gs-ar').value,
+        savedModelUrl: activeModel?.imageUrl || null,
+        // GROUP SHOT flags
+        groupShot: true,
+        groupShotModels,
+        groupShotPrompt: prompt,
+      })
+    });
+
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+
+    closeM('m-groupshot');
+    batchId = data.batchId; allItems = [];
+    showResults();
+    document.getElementById('prog').style.display = 'block';
+    document.getElementById('zip-btn').disabled = true;
+    document.getElementById('rgrid').innerHTML = '';
+    buildProductFilterChips();
+    saveHist(data.batchId, prompt, selected.length, data.total);
+    startPoll();
+    toast('Group shot queued — ' + data.total + ' image(s)', 'ok');
+  } catch(e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate Group Shot';
+  }
+}
 
 </script>
 </body>

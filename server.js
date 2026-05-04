@@ -65,10 +65,21 @@ const CAT = {
   other: 'wearing or holding the product, product clearly visible',
 };
 
-// Smart multi-product prompt builder for outfit groups
-function buildSmartCategoryHint(category, productNames) {
+// Smart prompt builder — handles single product, multi-product, and multi-model scenes
+function buildSmartCategoryHint(category, productNames, modelCount) {
+  if(modelCount && modelCount > 1) {
+    // Multi-model scene
+    const modelsDesc = `${modelCount} models together in one scene`;
+    if(productNames && productNames.length > 1) {
+      return `${modelsDesc}, each wearing different outfits: ${productNames.join(', ')} — all models visible in one wide shot, styled group scene`;
+    }
+    return `${modelsDesc}, all wearing the product, group fashion shot, all models clearly visible`;
+  }
   if(category === 'outfit' && productNames && productNames.length > 1) {
     return `wearing the complete look: ${productNames.join(', ')} — all pieces worn together simultaneously, full body styled outfit shot`;
+  }
+  if(productNames && productNames.length > 1 && category !== 'outfit') {
+    return `scene featuring all products together: ${productNames.join(', ')} — all items visible in one composition`;
   }
   return CAT[category] || CAT.other;
 }
@@ -154,11 +165,11 @@ const LOCK_HINT = 'same exact model as in the reference photo — identical face
 function buildPrompt(userPrompt, shot, opts={}) {
   const { category='other', styleKey='', bgOption='ai', bgCustom='',
           gender='female', realism='ultra', modelDesc='', isLocked=false,
-          productNames=[] } = opts;
-  const catHint = buildSmartCategoryHint(category, productNames);
+          productNames=[], modelCount=1, multiModelDesc='' } = opts;
+  const catHint = buildSmartCategoryHint(category, productNames, modelCount);
   const parts = [
     userPrompt || '',
-    isLocked ? LOCK_HINT : (modelDesc || (GENDER[gender] || GENDER.female)),
+    isLocked ? LOCK_HINT : (multiModelDesc || modelDesc || (GENDER[gender] || GENDER.female)),
     catHint,
     SHOT[shot] || SHOT.front,
     STYLE[styleKey] || '',
@@ -244,9 +255,10 @@ async function processItem(batchId, itemId, auth) {
   try {
     let anchorUrls = [];
 
-    // Priority 1: per-product or batch-level saved model
-    if(item.savedModelUrl && batch.type !== 'website') {
-      anchorUrls = [item.savedModelUrl];
+    // Priority 1: per-product or batch-level saved model(s)
+    if((item.savedModelUrls?.length || item.savedModelUrl) && batch.type !== 'website') {
+      // Support multiple model anchors for group shots
+      anchorUrls = item.savedModelUrls?.length ? item.savedModelUrls : [item.savedModelUrl];
       if(!item.prompt.includes(LOCK_HINT)) item.prompt = LOCK_HINT + ', ' + item.prompt;
     }
     // Priority 2: auto-lock — shots 2+ wait for shot 1 of same product
@@ -292,13 +304,65 @@ app.post('/api/batch/create', async(req, res) => {
   const { type='model', products, globalPrompt, promptMode,
           category, styleKey, bgOption, bgCustom,
           gender, realism, resolution, aspectRatio,
-          modelDesc, shots, savedModelUrl, aiModel='nb2' } = req.body;
+          modelDesc, shots, savedModelUrl, aiModel='nb2',
+          // Group shot: combine multiple product groups into ONE image
+          groupShot=false,        // true = all products in one image
+          groupShotModels=[],     // [{name, imageUrl}] — one per group/model
+          groupShotPrompt=''      // custom scene desc for the group
+        } = req.body;
 
   if(!products?.length) return res.status(400).json({error:'No products'});
   if(products.length > 100) return res.status(400).json({error:'Max 100 products'});
 
   const batchId = uuidv4();
   const items = [];
+
+  // ── GROUP SHOT: combine ALL product images into ONE generation ──────────
+  if(groupShot && products.length > 0) {
+    const shotList = (shots && shots.length) ? shots : [{
+      shotType: 'group', label: 'Group Shot',
+      bg: bgOption||'ai', bgCustom: bgCustom||'',
+      aspectRatio: aspectRatio||'16:9', styleKey: '', customPrompt: '',
+    }];
+    // Merge ALL product images into one array
+    const allProductImages = products.flatMap(p => p.images);
+    const productNames = products.map(p => p.name);
+    const modelCount = groupShotModels.length || products.length;
+    const multiModelDesc = groupShotModels.length
+      ? groupShotModels.map((m,i) => `Model ${i+1}: ${m.name||'model'}`).join(', ')
+      : `${modelCount} models`;
+    const savedModelUrls = groupShotModels.map(m => m.imageUrl).filter(Boolean);
+
+    for(let si = 0; si < shotList.length; si++) {
+      const shot = shotList[si];
+      const prompt = buildPrompt(groupShotPrompt || globalPrompt || '', shot.shotType||'group', {
+        category, styleKey: shot.styleKey||styleKey,
+        bgOption: shot.bg||bgOption||'ai', bgCustom: shot.bgCustom||bgCustom||'',
+        gender, realism, modelDesc, isLocked: false,
+        productNames, modelCount, multiModelDesc,
+      });
+      items.push({
+        id: uuidv4(),
+        name: shotList.length>1 ? `Group Shot — ${shot.label||shot.shotType}` : 'Group Shot',
+        productName: 'Group Shot', productKey: 'gs',
+        shotLabel: shot.label||shot.shotType,
+        shotIndex: si,
+        savedModelUrl: savedModelUrls[0] || savedModelUrl || null,
+        savedModelUrls, // multiple model anchors
+        productImages: allProductImages,
+        styleRefImages: [],
+        prompt, aspectRatio: shot.aspectRatio||aspectRatio||'16:9',
+        resolution: shot.resolution||resolution||'1K',
+        aiModel: aiModel||'nb2',
+        status: 'queued', requestId: null, resultUrl: null, error: null,
+      });
+    }
+    jobs[batchId] = { type, status:'processing', created:Date.now(), completedCount:0, items };
+    res.json({ batchId, total: items.length });
+    runBatch(batchId, auth, 3);
+    return; // skip per-product loop
+  }
+  // ── END GROUP SHOT ──────────────────────────────────────────────────────
 
   for(let pi = 0; pi < products.length; pi++) {
     const prod = products[pi];
