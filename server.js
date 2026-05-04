@@ -553,9 +553,15 @@ app.post('/api/video/create', async(req, res) => {
     if(!clip) return;
     try {
       clip.status = 'generating';
+      // If clip has base64 image (uploaded/product photo), upload to fal storage first
+      let imageUrl = clip.imageUrl;
+      if(!imageUrl && clip.imageBase64 && clip.imageMime) {
+        imageUrl = await uploadToFal(clip.imageBase64, clip.imageMime, auth);
+      }
+      if(!imageUrl) throw new Error('No image URL for clip: ' + clip.name);
       // Kling 3.0 Pro image-to-video endpoint
       const sub = await falQ('/fal-ai/kling-video/v3/pro/image-to-video', {
-        image_url: clip.imageUrl,
+        image_url: imageUrl,
         prompt: clip.prompt || 'fashion model walking, professional fashion video, cinematic movement',
         duration: clip.duration || '5',
         aspect_ratio: clip.aspectRatio || '9:16',
@@ -564,7 +570,7 @@ app.post('/api/video/create', async(req, res) => {
       if(!sub.request_id) {
         // Try standard kling endpoint as fallback
         const sub2 = await falQ('/fal-ai/kling-video/v1.6/pro/image-to-video', {
-          image_url: clip.imageUrl,
+          image_url: imageUrl,
           prompt: clip.prompt || 'fashion model, cinematic movement, professional video',
           duration: clip.duration || '5',
           aspect_ratio: clip.aspectRatio || '9:16',

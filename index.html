@@ -374,6 +374,16 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .tl-add{width:60px;height:60px;border-radius:7px;border:2px dashed var(--br2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;color:var(--t3);flex-shrink:0;transition:all .12s}
 .tl-add:hover{border-color:var(--bl);color:var(--bl)}
 
+
+/* Video picker cards */
+.v-pick-card{border:2px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .12s}
+.v-pick-card:hover{border-color:var(--bl)}.v-pick-card.v-pick-on{border-color:var(--bl)}
+.v-pick-img{position:relative;aspect-ratio:1;background:var(--bg);overflow:hidden}
+.v-pick-img img{width:100%;height:100%;object-fit:cover;display:block}
+.v-pick-ck{position:absolute;top:4px;right:4px;background:var(--bl);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.v-pick-label{font-size:10px;font-weight:600;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--w)}
+.v-pick-card.v-pick-on .v-pick-label{background:var(--bll);color:var(--bl)}
+
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
 @media(max-width:860px){.wrap{flex-direction:column}.sb{width:100%;height:auto}.rgrid{grid-template-columns:repeat(2,1fr)}}
@@ -681,19 +691,23 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 <!-- Video Sidebar -->
 <div class="sb" style="height:calc(100vh - 88px)">
   <div class="sbs">
-    <div class="sbh">Video Source</div>
-    <div class="src-tabs">
-      <button class="src-tab on" id="vsrc-img" onclick="setVSrc('img')">From Image</button>
-      <button class="src-tab" id="vsrc-txt" onclick="setVSrc('txt')">Text Only</button>
+    <div class="sbh">Add Source Images</div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+      <!-- Upload own images -->
+      <button class="btn bout bsm bfull" onclick="document.getElementById('v-upload-fi').click()" style="text-align:left;justify-content:flex-start;gap:8px">
+        <span>📁</span> Upload my own images
+      </button>
+      <input type="file" id="v-upload-fi" multiple accept="image/*" style="display:none"/>
+      <!-- From generated results -->
+      <button class="btn bout bsm bfull" onclick="openVFromGenerated()" style="text-align:left;justify-content:flex-start;gap:8px">
+        <span>🖼️</span> From generated images
+      </button>
+      <!-- From product groups -->
+      <button class="btn bout bsm bfull" onclick="openVFromGroups()" style="text-align:left;justify-content:flex-start;gap:8px">
+        <span>📦</span> From product groups
+      </button>
     </div>
-    <div id="vsrc-img-opts">
-      <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Pick images from your generated results or upload new ones</div>
-      <button class="btn bout bsm bfull" onclick="openVImgPicker()">+ Pick Source Images</button>
-      <div id="v-source-list" style="display:flex;flex-direction:column;gap:4px;margin-top:8px"></div>
-    </div>
-    <div id="vsrc-txt-opts" style="display:none">
-      <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Generate video purely from text description</div>
-    </div>
+    <div id="v-source-list" style="display:flex;flex-direction:column;gap:4px;margin-top:10px"></div>
   </div>
 
   <div class="sbs">
@@ -1703,62 +1717,132 @@ function setVAR(btn) {
 }
 
 // ── Pick source images ──
-function openVImgPicker() {
-  // Build picker from generated image results
+// ── Video source pickers ──
+
+// 1. Upload own images from disk
+(function(){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const fi = document.getElementById('v-upload-fi');
+    if(fi) fi.addEventListener('change', async e => {
+      for(const f of Array.from(e.target.files).filter(f=>f.type.startsWith('image/'))) {
+        const b64 = await toB64(f);
+        const dataUrl = 'data:' + (f.type||'image/jpeg') + ';base64,' + b64;
+        addToVQueue('up'+Math.random().toString(36).slice(2,7), f.name.replace(/\.[^.]+$/,''), dataUrl);
+      }
+      fi.value = '';
+    });
+  });
+})();
+
+// 2. From generated images
+function openVFromGenerated() {
   const done = allItems.filter(i => i.status === 'done' && i.resultUrl);
-  if(!done.length) { toast('Generate some images first — then use them as video sources', 'warn'); return; }
-  
+  // Also pull from all history items
+  const histItems = [];
+  history.forEach(h => { if(h.items) h.items.filter(i=>i.resultUrl).forEach(i=>{ if(!done.find(d=>d.resultUrl===i.resultUrl)) histItems.push(i); }); });
+  const all = [...done, ...histItems];
+  if(!all.length) { toast('No generated images yet — generate images first or upload your own', 'warn'); return; }
+  showVPicker('Generated Images', all.map(it => ({
+    id: it.id, name: it.productName||it.name, imageUrl: it.resultUrl,
+    thumb: it.resultUrl, label: it.shotLabel && it.shotLabel !== 'Photo' ? it.shotLabel : ''
+  })));
+}
+
+// 3. From product groups (raw product photos)
+function openVFromGroups() {
+  if(!groups.length) { toast('No product groups yet — go to Images tab and create groups first', 'warn'); return; }
+  const items = [];
+  groups.forEach(g => {
+    g.images.forEach((im, ii) => {
+      items.push({
+        id: g.id+'_'+ii,
+        name: g.name + (g.images.length > 1 ? ' (angle '+(ii+1)+')' : ''),
+        imageUrl: 'data:'+im.mimeType+';base64,'+im.b64,
+        thumb: 'data:'+im.mimeType+';base64,'+im.b64,
+        label: g.name,
+      });
+    });
+  });
+  if(!items.length) { toast('No product images in groups', 'warn'); return; }
+  showVPicker('Product Groups', items);
+}
+
+// Generic picker modal
+function showVPicker(title, items) {
   const existing = new Set(vQueue.map(c => c.imageUrl));
-  const pickerHtml = done.map(it => {
-    const ar = it.aspectRatio || '3:4';
-    const [aw,ah] = ar.split(':').map(Number);
-    const pp = Math.round(ah/aw*100);
-    const inQueue = existing.has(it.resultUrl);
-    return `<div style="cursor:pointer;border:2px solid ${inQueue?'var(--bl)':'var(--br)'};border-radius:var(--r);overflow:hidden;position:relative" onclick="toggleVSource('${it.id}','${it.productName||it.name}','${it.resultUrl}',this)">
-      <div style="padding-bottom:${pp}%;position:relative;background:var(--bg)">
-        <img src="${it.resultUrl}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
-        ${inQueue ? '<div style="position:absolute;top:4px;right:4px;background:var(--bl);color:#fff;border-radius:100px;font-size:10px;font-weight:700;padding:2px 6px">✓ Added</div>' : ''}
-      </div>
-      <div style="padding:5px 7px;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.productName||it.name}</div>
+  const grid = items.map(it => {
+    const inQ = existing.has(it.imageUrl);
+    return `<div class="v-pick-card${inQ?' v-pick-on':''}" data-url="${it.imageUrl}" data-id="${it.id}" data-name="${it.name.replace(/"/g,'&quot;')}" onclick="toggleVPickCard(this)">
+      <div class="v-pick-img"><img src="${it.thumb}" loading="lazy"/>${inQ?'<div class="v-pick-ck">✓</div>':''}</div>
+      <div class="v-pick-label">${it.name}${it.label?' · '+it.label:''}</div>
     </div>`;
   }).join('');
 
-  // Create a quick picker modal-like overlay
+  removePicker();
   const picker = document.createElement('div');
-  picker.id = 'v-img-picker';
-  picker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
-  picker.innerHTML = `<div style="background:var(--w);border-radius:var(--rxl);padding:1.4rem;width:90%;max-width:680px;max-height:80vh;overflow-y:auto;box-shadow:var(--sh3)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-      <div style="font-size:16px;font-weight:700">Select Source Images</div>
-      <button onclick="document.getElementById('v-img-picker').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--t2)">✕</button>
+  picker.id = 'v-picker-overlay';
+  picker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
+  picker.innerHTML = `<div style="background:var(--w);border-radius:var(--rxl);padding:1.4rem;width:92%;max-width:720px;max-height:82vh;display:flex;flex-direction:column;box-shadow:var(--sh3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0">
+      <div style="font-size:16px;font-weight:700">${title}</div>
+      <button onclick="removePicker()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--t2);padding:0 4px">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem">Click images to add/remove from video queue. Selected images = one clip each.</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:1rem">${pickerHtml}</div>
-    <div style="display:flex;justify-content:flex-end;gap:8px">
-      <button class="btn bout" onclick="document.getElementById('v-img-picker').remove()">Done</button>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:12px;flex-shrink:0">Click images to add them to your video queue. Each image becomes one clip.</div>
+    <div style="overflow-y:auto;flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:2px">${grid}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:12px;flex-shrink:0;align-items:center">
+      <span id="v-pick-count" style="font-size:12px;color:var(--t2)">0 selected</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn bout bsm" onclick="selectAllVPicker()">Select All</button>
+        <button class="btn bpri bsm" onclick="confirmVPicker()">Add to Queue</button>
+      </div>
     </div>
   </div>`;
   document.body.appendChild(picker);
-  picker.addEventListener('click', e => { if(e.target === picker) picker.remove(); });
+  picker.addEventListener('click', e => { if(e.target === picker) removePicker(); });
+  updateVPickCount();
+}
+
+function toggleVPickCard(el) {
+  el.classList.toggle('v-pick-on');
+  const img = el.querySelector('.v-pick-img');
+  let ck = img.querySelector('.v-pick-ck');
+  if(el.classList.contains('v-pick-on')) {
+    if(!ck) { ck = document.createElement('div'); ck.className = 'v-pick-ck'; ck.textContent = '✓'; img.appendChild(ck); }
+  } else { ck?.remove(); }
+  updateVPickCount();
+}
+function selectAllVPicker() {
+  document.querySelectorAll('#v-picker-overlay .v-pick-card').forEach(el => {
+    if(!el.classList.contains('v-pick-on')) toggleVPickCard(el);
+  });
+}
+function updateVPickCount() {
+  const n = document.querySelectorAll('#v-picker-overlay .v-pick-card.v-pick-on').length;
+  const el = document.getElementById('v-pick-count');
+  if(el) el.textContent = n + ' selected';
+}
+function confirmVPicker() {
+  document.querySelectorAll('#v-picker-overlay .v-pick-card.v-pick-on').forEach(el => {
+    const url = el.dataset.url, id = el.dataset.id, name = el.dataset.name;
+    if(!vQueue.find(c => c.imageUrl === url)) addToVQueue(id, name, url);
+  });
+  removePicker();
+}
+function removePicker() {
+  document.getElementById('v-picker-overlay')?.remove();
+}
+
+function addToVQueue(id, name, imageUrl) {
+  if(vQueue.find(c => c.imageUrl === imageUrl)) return; // no dupes
+  vQueue.push({ id:'vc'+Math.random().toString(36).slice(2,8), srcId:id, name, imageUrl, prompt:'', duration:'5', aspectRatio:vAR });
+  renderVQueue();
+  toast(`"${name}" added to queue`, 'ok');
 }
 
 function toggleVSource(id, name, imageUrl, el) {
   const existing = vQueue.findIndex(c => c.imageUrl === imageUrl);
-  if(existing >= 0) {
-    vQueue.splice(existing, 1);
-    el.style.borderColor = 'var(--br)';
-    el.querySelector('[style*="Added"]')?.remove();
-  } else {
-    vQueue.push({ id: 'vc'+Math.random().toString(36).slice(2,8), srcId: id, name, imageUrl, prompt: '', duration: '5', aspectRatio: vAR });
-    el.style.borderColor = 'var(--bl)';
-    const img = el.querySelector('img');
-    if(img && !el.querySelector('[style*="Added"]')) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'position:absolute;top:4px;right:4px;background:var(--bl);color:#fff;border-radius:100px;font-size:10px;font-weight:700;padding:2px 6px';
-      badge.textContent = '✓ Added';
-      img.parentNode.appendChild(badge);
-    }
-  }
+  if(existing >= 0) { vQueue.splice(existing, 1); }
+  else { addToVQueue(id, name, imageUrl); }
   renderVQueue();
 }
 
@@ -1779,12 +1863,13 @@ function renderVQueue() {
     updateVideoCost(); return;
   }
   const globalPrompt = document.getElementById('v-prompt')?.value?.trim() || '';
+  const globalP = document.getElementById('v-prompt')?.value?.trim()||'';
   el.innerHTML = '<div style="display:flex;flex-direction:column;gap:5px">' + vQueue.map((c,i) => `
     <div class="vq-item">
       ${c.imageUrl ? `<img class="vq-thumb" src="${c.imageUrl}" onerror="this.style.display='none'"/>` : `<div class="vq-thumb-placeholder">🎬</div>`}
       <div class="vq-info">
         <div class="vq-name">${c.name}</div>
-        <div class="vq-meta">${c.duration}s · ${c.aspectRatio}</div>
+        <div class="vq-meta">${c.duration||'5'}s · ${c.aspectRatio||'9:16'}</div>
       </div>
       <div class="vq-acts">
         <button class="ibt d" onclick="removeVClip(${i})" title="Remove">✕</button>
@@ -1822,12 +1907,18 @@ async function startVideoGen() {
   const globalPrompt = document.getElementById('v-prompt')?.value?.trim() || 'fashion model, cinematic movement, professional fashion video';
   const dur = document.getElementById('v-duration')?.value || '5';
 
-  const clips = vQueue.map(c => ({
-    id: c.id, imageUrl: c.imageUrl, name: c.name,
-    prompt: c.prompt || globalPrompt,
-    duration: dur,
-    aspectRatio: vAR,
-  }));
+  const clips = vQueue.map(c => {
+    let imageUrl = c.imageUrl;
+    let imageBase64 = null, imageMime = null;
+    if(imageUrl && imageUrl.startsWith('data:')) {
+      const [meta, b64] = imageUrl.split(',');
+      imageMime = meta.replace('data:','').replace(';base64','');
+      imageBase64 = b64;
+      imageUrl = null;
+    }
+    return { id: c.id, imageUrl, imageBase64, imageMime, name: c.name,
+             prompt: c.prompt || globalPrompt, duration: dur, aspectRatio: vAR };
+  });
 
   document.getElementById('v-gen-btn').disabled = true;
   document.getElementById('v-gen-btn').textContent = 'Preparing...';
