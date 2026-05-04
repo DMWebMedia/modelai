@@ -3,1361 +3,1295 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Fashion AI Studio</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f4f8;--w:#fff;--bl:#2563eb;--bld:#1d4ed8;--bll:#eff6ff;--blm:#dbeafe;
-  --tx:#111827;--t2:#6b7280;--t3:#9ca3af;--br:#e5e7eb;--br2:#d1d5db;
-  --red:#dc2626;--rbg:#fef2f2;--grn:#16a34a;--gbg:#f0fdf4;
-  --ylw:#d97706;--ybg:#fffbeb;--pur:#7c3aed;--pbg:#f5f3ff;--org:#ea580c;--obg:#fff7ed;
-  --sh:0 1px 3px rgba(0,0,0,.08);--sh2:0 4px 12px rgba(0,0,0,.1);
-  --r:8px;--rl:12px;--rxl:16px;
+  --bg:#f4f4f6;--w:#fff;--bl:#2563eb;--bld:#1d4ed8;--bll:#eff6ff;
+  --tx:#0f172a;--t2:#64748b;--t3:#94a3b8;--br:#e2e8f0;--br2:#cbd5e1;
+  --red:#ef4444;--rbg:#fff1f2;--grn:#22c55e;--gbg:#f0fdf4;
+  --ylw:#f59e0b;--ybg:#fffbeb;--pur:#8b5cf6;--pbg:#f5f3ff;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --sh2:0 4px 12px rgba(0,0,0,.1);--sh3:0 20px 40px rgba(0,0,0,.15);
+  --r:9px;--rl:13px;--rxl:18px;
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5}
-.topbar{background:var(--w);border-bottom:1px solid var(--br);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
-.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;color:var(--bl);text-decoration:none}
-.lm{width:28px;height:28px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:7px;display:flex;align-items:center;justify-content:center}
-.lm svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.ntabs{display:flex;gap:2px;background:var(--bg);border-radius:9px;padding:3px;border:1px solid var(--br)}
-.ntab{padding:5px 13px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--t2);font-family:'Inter',sans-serif;transition:all .14s}
-.ntab.on{background:var(--w);color:var(--bl);box-shadow:var(--sh)}
-.cpill{background:var(--bll);color:var(--bl);font-size:12px;font-weight:600;padding:4px 11px;border-radius:100px;border:1px solid var(--blm)}
-.page{display:none}.page.on{display:flex;min-height:calc(100vh - 56px)}
-.sb{width:262px;flex-shrink:0;background:var(--w);border-right:1px solid var(--br);padding:1rem;overflow-y:auto;height:calc(100vh - 56px);position:sticky;top:56px}
-.main{flex:1;padding:1.5rem;overflow-y:auto;min-width:0}
-.sbs{margin-bottom:1.3rem}
-.sbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
-.kr{display:flex;gap:5px}
-.kr input{flex:1;min-width:0;font-size:12px;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
-.kr input:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.ksv{padding:7px 11px;background:var(--bl);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0}
-.kst{font-size:11px;margin-top:4px;color:var(--t3)}.kst.ok{color:var(--grn)}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.hdr{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--br);padding:0 1.25rem;height:50px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:12px}
+.logo{font-size:15px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.logo-mark{width:24px;height:24px;background:linear-gradient(135deg,var(--bl),var(--pur));border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.hdr-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.key-wrap{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--br);border-radius:100px;padding:3px 10px 3px 8px}
+.key-wrap input{border:none;background:none;font-size:12px;font-family:'Inter',sans-serif;width:130px;color:var(--tx);outline:none}
+.ksb{padding:3px 10px;background:var(--bl);color:#fff;border:none;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.kst{font-size:11px;font-weight:600;color:var(--t3)}.kst.ok{color:var(--grn)}
+.spend{font-size:12px;font-weight:600;color:var(--t2);background:var(--bg);border:1px solid var(--br);padding:3px 10px;border-radius:100px}
+
+/* LAYOUT */
+.wrap{display:flex;height:calc(100vh - 50px)}
+.sb{width:276px;flex-shrink:0;background:var(--w);border-right:1px solid var(--br);overflow-y:auto;height:100%}
+.main{flex:1;overflow-y:auto;height:100%}
+
+/* SIDEBAR */
+.sbs{border-bottom:1px solid var(--br);padding:.85rem 1rem}
+.sbh{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.sb-link{font-size:11px;color:var(--bl);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
+.sb-link:hover{text-decoration:underline}
+
+/* INPUTS */
+.fld{margin-bottom:9px}
+.lbl{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:4px;display:block}
+input[type=text],input[type=password],textarea,select{width:100%;padding:7px 10px;border:1px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w);outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea{resize:vertical;line-height:1.5}
+input::placeholder,textarea::placeholder{color:var(--t3)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2364748b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+
+/* CHIPS */
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.chip{padding:6px 4px;border:1px solid var(--br);border-radius:var(--r);background:var(--w);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;transition:all .12s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip:hover{border-color:var(--bl);color:var(--bl);background:var(--bll)}
-.chip.on{border-color:var(--bl);background:var(--bl);color:#fff}
-select{width:100%;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b7280' d='M5 7L0 2h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
-select:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.sbi{width:100%;padding:7px 9px;border:1px solid var(--br2);border-radius:var(--r);font-size:12px;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
-.sbi:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.fr{margin-bottom:7px}.fl{font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px;display:block}
-.argrid{display:flex;flex-wrap:wrap;gap:4px}
-.arb{padding:5px 9px;border:1px solid var(--br2);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
-.arb:hover,.arb.on{border-color:var(--bl);color:var(--bl)}
-.arb.on{background:var(--bl);color:#fff}
-.bgpills{display:flex;flex-wrap:wrap;gap:4px}
+.chip{padding:5px 8px;border:1px solid var(--br2);border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip:hover{border-color:var(--bl);color:var(--bl)}.chip.on{border-color:var(--bl);background:var(--bl);color:#fff}
+.cgrid .chip{border-radius:var(--r)}
+.mode-chip{border-radius:var(--r);text-align:left;padding:7px 10px;font-size:12px}
+
+/* AR */
+.ar-wrap{display:flex;flex-wrap:wrap;gap:4px}
+.arb{padding:4px 8px;border:1px solid var(--br2);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
+.arb:hover,.arb.on{border-color:var(--bl);color:var(--bl)}.arb.on{background:var(--bl);color:#fff}
+
+/* BG PILLS */
+.bgps{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .bgp{padding:4px 9px;border:1px solid var(--br2);border-radius:100px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--t2);background:var(--w);transition:all .12s}
-.bgp:hover,.bgp.on{border-color:var(--bl);color:var(--bl)}
-.bgp.on{background:var(--bl);color:#fff}
-textarea{width:100%;border:1px solid var(--br2);border-radius:var(--r);padding:8px 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--tx);resize:vertical;line-height:1.55;background:var(--w)}
-textarea:focus{outline:none;border-color:var(--bl);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-textarea::placeholder{color:var(--t3)}
-/* Saved Models */
-.mlib{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto}
-.mcard{border:1.5px solid var(--br);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .14s;background:var(--w)}
-.mcard:hover{border-color:var(--bl)}
-.mcard.on{border-color:var(--bl);background:var(--bll)}
-.mcard-bar{background:var(--bl);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;text-align:center}
-.mcard-inner{display:flex;align-items:center;gap:8px;padding:6px 8px}
-.mthumb{width:36px;height:44px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--bg)}
-.minfo{flex:1;min-width:0}
-.mname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mdesc{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mdel{background:none;border:none;cursor:pointer;opacity:.4;font-size:13px;line-height:1;padding:2px 4px;color:var(--tx);flex-shrink:0}
-.mdel:hover{opacity:1;color:var(--red)}
-.mclr{width:100%;margin-top:4px;padding:5px;border:1px dashed rgba(37,99,235,.3);border-radius:var(--r);background:none;color:var(--bl);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:none}
-.mclr.vis{display:block}
-.mclr:hover{background:var(--bll)}
-/* Style lib */
-.slib-list{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto}
-.sli{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;font-size:11px;transition:all .12s}
-.sli:hover{border-color:var(--bl);background:var(--bll)}
-.sld{background:none;border:none;cursor:pointer;opacity:.45;font-size:14px;line-height:1;padding:0 3px}
-.sld:hover{opacity:1}
-.sla{width:100%;margin-top:5px;padding:6px;border:1px dashed var(--br2);border-radius:var(--r);background:none;color:var(--t2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
-.sla:hover{border-color:var(--bl);color:var(--bl)}
-/* Cards */
-.card{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1.1rem;margin-bottom:1.1rem;box-shadow:var(--sh)}
-.chd{font-size:15px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:8px}
-.csub{font-size:12px;color:var(--t2);margin-bottom:.9rem}
+.bgp:hover,.bgp.on{border-color:var(--bl);color:var(--bl)}.bgp.on{background:var(--bl);color:#fff}
+
+/* LIB */
+.lib{display:flex;flex-direction:column;gap:3px;max-height:185px;overflow-y:auto}
+.lrow{display:flex;align-items:center;gap:7px;padding:5px 7px;border:1.5px solid var(--br);border-radius:var(--r);cursor:pointer;transition:all .12s;background:var(--w)}
+.lrow:hover{border-color:var(--bl);background:var(--bll,#eff6ff)}.lrow.on{border-color:var(--bl);background:var(--bl);color:#fff}
+.lrow.on .lsub{color:rgba(255,255,255,.7)}
+.lthumb{width:28px;height:36px;border-radius:5px;object-fit:cover;flex-shrink:0;background:var(--bg);border:1px solid var(--br)}
+.licon{width:28px;height:36px;border-radius:5px;flex-shrink:0;background:var(--bg);border:1px solid var(--br);display:flex;align-items:center;justify-content:center;font-size:15px}
+.linfo{flex:1;min-width:0}
+.lname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsub{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ldel{background:none;border:none;cursor:pointer;opacity:.35;font-size:13px;color:inherit;flex-shrink:0;padding:2px 4px}
+.ldel:hover{opacity:1;color:var(--red)}.lrow.on .ldel:hover{color:#fca5a5}
+.lib-empty{font-size:11px;color:var(--t3);text-align:center;padding:12px 6px;line-height:1.5}
+.lclr{width:100%;margin-top:4px;padding:4px;border:none;background:none;color:var(--red);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:none;border-radius:var(--r)}
+.lclr.vis{display:block}.lclr:hover{background:var(--rbg)}
+
+/* TEMPLATE LIB */
+.tlib{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto}
+.trow{display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;transition:all .12s;background:var(--w)}
+.trow:hover{border-color:var(--bl);background:var(--bll,#eff6ff)}
+.tinfo{flex:1;min-width:0}
+.tname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmeta{font-size:10px;color:var(--t2)}
+.tdel{background:none;border:none;cursor:pointer;opacity:.35;font-size:13px;color:var(--tx);padding:2px 4px}
+.tdel:hover{opacity:1;color:var(--red)}
+
+/* HIST */
+.hist{display:flex;flex-direction:column;gap:3px}
+.hrow{display:flex;align-items:center;gap:7px;padding:6px 7px;border:1px solid var(--br);border-radius:var(--r);cursor:pointer;transition:all .12s;background:var(--w)}
+.hrow:hover{border-color:var(--bl);background:var(--bll,#eff6ff)}
+.hthumbs{display:flex;gap:2px}
+.hthumb{width:22px;height:28px;object-fit:cover;border-radius:4px;border:1px solid var(--br)}
+.hinfo{flex:1;min-width:0}
+.hname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hmeta{font-size:10px;color:var(--t2)}
+.hbdg{font-size:10px;font-weight:600;padding:2px 6px;border-radius:100px;background:var(--gbg);color:var(--grn);flex-shrink:0}
+.hdel{background:none;border:none;cursor:pointer;color:var(--t3);font-size:13px;padding:2px 5px;flex-shrink:0}
+.hdel:hover{color:var(--red)}
+
+/* CONTENT */
+.content{padding:1.5rem}
+.card{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1.2rem;margin-bottom:1.2rem;box-shadow:var(--sh)}
+.chd{font-size:15px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.csub{font-size:12px;color:var(--t2);margin-bottom:1rem}
 .bdg{display:inline-flex;align-items:center;background:var(--bll);color:var(--bl);font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px}
-.bdg-g{background:var(--gbg);color:var(--grn)}.bdg-p{background:var(--pbg);color:var(--pur)}.bdg-o{background:var(--obg);color:var(--org)}
-/* Dropzone */
-.dz{border:2px dashed var(--br2);border-radius:var(--rl);padding:1.8rem 1rem;text-align:center;cursor:pointer;background:var(--bg);transition:all .18s}
+.bdg-g{background:var(--gbg);color:var(--grn)}.bdg-p{background:var(--pbg);color:var(--pur)}
+
+/* DROP ZONE */
+.dz{border:2px dashed var(--br2);border-radius:var(--rl);padding:1.5rem 1rem;text-align:center;cursor:pointer;background:var(--bg);transition:all .18s}
 .dz:hover,.dz.ov{border-color:var(--bl);background:var(--bll)}
 .dz input[type=file]{display:none}
-.dzi{width:40px;height:40px;background:var(--bll);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
-.dzi svg{width:18px;height:18px;stroke:var(--bl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dzi{width:34px;height:34px;background:var(--bll);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+.dzi svg{width:15px;height:15px;stroke:var(--bl);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dzt{font-size:13px;font-weight:600;margin-bottom:2px}.dzs{font-size:11px;color:var(--t2)}
-/* Pool */
-.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:7px;margin-top:.9rem}
-.pi{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg);border:2px solid var(--br);cursor:pointer;aspect-ratio:1;transition:border-color .12s}
+
+/* POOL */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:5px;margin-top:10px}
+.pi{position:relative;border-radius:var(--r);overflow:hidden;border:2px solid var(--br);cursor:pointer;aspect-ratio:1;transition:border-color .12s}
 .pi img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.pi .pck{position:absolute;inset:0;background:rgba(37,99,235,.4);display:none;align-items:center;justify-content:center}
-.pi.sel{border-color:var(--bl);box-shadow:0 0 0 2px var(--bl)}
-.pi.sel .pck{display:flex}
-.pck-ic{width:22px;height:22px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.pck-ic svg{width:12px;height:12px;stroke:var(--bl);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.pi .pdel{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:10px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2}
-.pi:hover .pdel{display:flex}
-.pname{position:absolute;bottom:0;left:0;right:0;padding:8px 2px 2px;background:linear-gradient(transparent,rgba(0,0,0,.7));font-size:8px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-.ptoolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--br)}
-.pselinfo{font-size:12px;color:var(--t2);flex:1}
-.pselinfo strong{color:var(--bl)}
-/* Groups */
-.groups-wrap{display:flex;flex-direction:column;gap:8px}
+.pi .pck{position:absolute;inset:0;background:rgba(37,99,235,.35);display:none;align-items:center;justify-content:center}
+.pi.sel{border-color:var(--bl);box-shadow:0 0 0 2px var(--bl)}.pi.sel .pck{display:flex}
+.pci{width:20px;height:20px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.pci svg{width:11px;height:11px;stroke:var(--bl);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pi .xd{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2}
+.pi:hover .xd{display:flex}
+.pn{position:absolute;bottom:0;left:0;right:0;padding:7px 2px 2px;background:linear-gradient(transparent,rgba(0,0,0,.7));font-size:8px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.ptb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--br)}
+.pinfo{font-size:12px;color:var(--t2);flex:1}
+.pinfo strong{color:var(--bl)}
+
+/* GROUPS */
+.gstack{display:flex;flex-direction:column;gap:8px}
 .gc{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden}
-.gc-hd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--br)}
-.gc-num{width:22px;height:22px;background:var(--bl);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.gc-name{flex:1;border:1px solid var(--br2);border-radius:6px;padding:5px 9px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--tx);background:var(--w)}
-.gc-name:focus{outline:none;border-color:var(--bl)}
-.gc-del{width:26px;height:26px;border:1px solid rgba(220,38,38,.3);border-radius:6px;background:var(--w);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .12s}
-.gc-del:hover{background:var(--rbg)}
-.gc-body{padding:9px 12px}
-.gc-imgs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
-.gi{position:relative;width:48px;height:48px;border-radius:6px;overflow:hidden;border:1px solid var(--br)}
-.gi img{width:100%;height:100%;object-fit:cover}
-.gi .gidel{position:absolute;top:1px;right:1px;width:15px;height:15px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
-.gi:hover .gidel{display:flex}
-.gc-info{font-size:11px;color:var(--t2)}
-.no-groups{text-align:center;padding:2rem;color:var(--t3);font-size:13px;border:2px dashed var(--br);border-radius:var(--rl)}
-/* Steps */
-.stbar{display:flex;gap:2px;background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:3px;margin-bottom:1.3rem}
-.stab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:var(--t2);border:none;background:none;font-family:'Inter',sans-serif;transition:all .12s}
-.stab.on{background:var(--bl);color:#fff;box-shadow:var(--sh)}
-.stab.done{color:var(--grn)}
-/* Mode toggle */
-.mtog{display:flex;gap:4px;margin-bottom:.9rem}
-.mbtn{flex:1;padding:7px;border:1px solid var(--br2);border-radius:var(--r);background:var(--w);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;text-align:center}
-.mbtn.on{border-color:var(--bl);background:var(--bll);color:var(--bl)}
-/* Cost bar */
-.cbar{background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.camt{font-size:20px;font-weight:700;color:var(--ylw)}
-/* Buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all .12s;line-height:1;white-space:nowrap}
-.bpri{background:var(--bl);color:#fff;border-color:var(--bl)}.bpri:hover:not(:disabled){background:var(--bld)}.bpri:disabled{background:var(--t3);border-color:var(--t3);cursor:not-allowed}
+.gchd{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--br)}
+.gcnum{width:20px;height:20px;background:var(--bl);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gcname{flex:1;border:1px solid transparent;border-radius:6px;padding:4px 7px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--tx);background:transparent;outline:none;transition:all .12s}
+.gcname:hover{background:var(--w);border-color:var(--br2)}.gcname:focus{background:var(--w);border-color:var(--bl)}
+.gcdel{width:22px;height:22px;border:1px solid rgba(239,68,68,.3);border-radius:6px;background:var(--w);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.gcdel:hover{background:var(--rbg)}
+.gcbody{padding:9px 12px}
+.gcimgs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px}
+.gci{position:relative;width:40px;height:40px;border-radius:6px;overflow:hidden;border:1px solid var(--br)}
+.gci img{width:100%;height:100%;object-fit:cover}
+.gci .gd{position:absolute;top:1px;right:1px;width:13px;height:13px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:50%;font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.gci:hover .gd{display:flex}
+.gcmeta{font-size:11px;color:var(--t2);margin-bottom:7px}
+.gcmrow{display:flex;align-items:center;gap:6px;padding-top:7px;border-top:1px solid var(--br)}
+.gcmthumb{width:22px;height:28px;object-fit:cover;border-radius:4px;border:1px solid var(--br);flex-shrink:0}
+.gcminfo{flex:1;min-width:0}
+.gcmname{font-size:11px;font-weight:600}
+.gcmsub{font-size:10px;color:var(--t2)}
+.no-grps{text-align:center;padding:20px;color:var(--t3);font-size:12px;border:2px dashed var(--br);border-radius:var(--rl)}
+
+/* SHOTS */
+.sqwrap{display:flex;flex-direction:column;gap:4px}
+.srow{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--br);border-radius:var(--r);background:var(--w);transition:background .12s}
+.srow:hover{background:var(--bg)}
+.sicon{font-size:14px;flex-shrink:0;width:18px;text-align:center}
+.sinfo{flex:1;min-width:0}
+.sname{font-size:12px;font-weight:600}
+.smeta{font-size:10px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sacts{display:flex;gap:3px;flex-shrink:0}
+.semp{text-align:center;padding:18px;color:var(--t3);font-size:12px;border:2px dashed var(--br);border-radius:var(--r)}
+.pkgrid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.pkbtn{padding:4px 10px;border:1px solid var(--br2);border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
+.pkbtn:hover{border-color:var(--bl);color:var(--bl);background:var(--bll)}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:5px}
+.stc{border:1.5px solid var(--br);border-radius:var(--r);padding:7px;cursor:pointer;transition:all .14s;background:var(--w);position:relative}
+.stc:hover,.stc.on{border-color:var(--bl);background:var(--bll)}
+.stci{font-size:14px;margin-bottom:2px;display:block}.stcn{font-size:11px;font-weight:600;display:block;margin-bottom:1px}.stcd{font-size:10px;color:var(--t2);line-height:1.3}
+.stck{position:absolute;top:4px;right:4px;width:13px;height:13px;background:var(--bl);border-radius:50%;display:none;align-items:center;justify-content:center}
+.stc.on .stck{display:flex}
+.stck svg{width:7px;height:7px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+
+/* STEPS */
+.steps{display:flex;gap:2px;background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:3px;margin-bottom:1.25rem}
+.stab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:500;border-radius:9px;cursor:pointer;color:var(--t2);border:none;background:none;font-family:'Inter',sans-serif;transition:all .12s}
+.stab.on{background:var(--bl);color:#fff;box-shadow:var(--sh)}.stab.done{color:var(--grn)}
+
+/* COST */
+.cbar{background:var(--ybg);border:1px solid rgba(245,158,11,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cnum{font-size:22px;font-weight:800;color:var(--ylw);letter-spacing:-.5px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:'Inter',sans-serif;transition:all .12s;line-height:1;white-space:nowrap}
+.bpri{background:var(--bl);color:#fff;border-color:var(--bl)}.bpri:hover:not(:disabled){background:var(--bld)}
+.bpri:disabled{background:var(--t3);border-color:var(--t3);cursor:not-allowed;opacity:.7}
 .bout{background:var(--w);color:var(--tx);border-color:var(--br2)}.bout:hover{border-color:var(--bl);color:var(--bl)}
-.bpur{background:var(--pur);color:#fff;border-color:var(--pur)}.bpur:hover{background:#6d28d9}
-.bsm{padding:5px 10px;font-size:12px}.bxs{padding:3px 8px;font-size:11px}.bfull{width:100%}.bxl{padding:13px;font-size:15px}
-.ibt{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--t2);flex-shrink:0;transition:all .12s}
-.ibt:hover{border-color:var(--bl);color:var(--bl)}.ibt.danger:hover{border-color:var(--red);color:var(--red)}
-/* Progress */
-.pwrap{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1rem;margin-bottom:1rem}
-.phd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.pbar{background:var(--bg);border-radius:100px;height:8px;overflow:hidden;margin-bottom:5px}
-.pfil{height:100%;background:linear-gradient(90deg,var(--bl),var(--pur));border-radius:100px;transition:width .5s ease}
-.pst{display:flex;justify-content:space-between;font-size:12px;color:var(--t2)}
-/* Results */
-.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px}
+.bghost{background:none;border:none;color:var(--t2);cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;padding:4px 8px;border-radius:7px}
+.bghost:hover{background:var(--bg);color:var(--tx)}
+.bsm{padding:5px 10px;font-size:12px}.bxs{padding:3px 8px;font-size:11px}
+.bfull{width:100%}.bxl{padding:14px;font-size:15px}
+.ibt{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--br);background:var(--w);cursor:pointer;color:var(--t2);flex-shrink:0;transition:all .12s}
+.ibt:hover{border-color:var(--bl);color:var(--bl)}.ibt.d:hover{border-color:var(--red);color:var(--red)}
+.smb{background:linear-gradient(135deg,#8b5cf6,#2563eb);color:#fff;border:none;font-size:10px;font-weight:700;padding:4px 7px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif}
+.smb:hover{opacity:.9}
+
+/* TOGGLE */
+.tog{display:flex;gap:4px;margin-bottom:1rem}
+.tgb{flex:1;padding:7px;border:1px solid var(--br2);border-radius:var(--r);background:var(--w);color:var(--t2);font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;text-align:center}
+.tgb.on{border-color:var(--bl);background:var(--bll);color:var(--bl)}
+
+/* LOCK BAR */
+.lkbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r);margin-bottom:1rem;border:1.5px solid #86efac;background:var(--gbg)}
+.lkbar img{width:26px;height:34px;object-fit:cover;border-radius:5px;flex-shrink:0;border:1px solid var(--br)}
+.lkname{font-size:12px;font-weight:600;color:var(--grn)}
+.lksub{font-size:10px;color:var(--t2)}
+.lkdel{background:none;border:none;cursor:pointer;color:var(--t3);font-size:14px;padding:2px 6px;border-radius:5px;margin-left:auto}
+.lkdel:hover{color:var(--red);background:var(--rbg)}
+
+/* PROGRESS */
+.prog{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);padding:1rem;margin-bottom:1rem}
+.proghd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.progbg{background:var(--bg);border-radius:100px;height:6px;overflow:hidden;margin-bottom:5px}
+.progfil{height:100%;background:linear-gradient(90deg,var(--bl),var(--pur));border-radius:100px;transition:width .5s}
+.progst{display:flex;justify-content:space-between;font-size:11px;color:var(--t2)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:1rem;padding:.75rem 1rem;background:var(--w);border:1px solid var(--br);border-radius:var(--rl)}
+.filter-bar-label{font-size:11px;font-weight:600;color:var(--t2);flex-shrink:0}
+.fb-chip{padding:4px 10px;border:1px solid var(--br2);border-radius:100px;font-size:11px;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s;white-space:nowrap}
+.fb-chip:hover{border-color:var(--bl);color:var(--bl)}.fb-chip.on{border-color:var(--bl);background:var(--bl);color:#fff}
+.fb-spacer{flex:1}
+.view-toggle{display:flex;gap:4px}
+.vbtn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid var(--br);border-radius:7px;background:var(--w);cursor:pointer;color:var(--t2);transition:all .12s;font-size:14px}
+.vbtn.on{border-color:var(--bl);color:var(--bl);background:var(--bll)}
+
+/* RESULTS GRID */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(182px,1fr));gap:12px}
+.rgrid.compact{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.rgrid.list{grid-template-columns:1fr}
 .rc{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
 .rc:hover{box-shadow:var(--sh2)}
 .rcimg{position:relative;background:var(--bg)}
 .rcimg img{width:100%;object-fit:cover;display:block}
-.rcov{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;padding:7px;gap:4px;transition:background .18s}
-.rcimg:hover .rcov{background:rgba(0,0,0,.52)}
-.rcov button,.rcov a{flex:1;opacity:0;transform:translateY(3px);transition:all .18s;background:rgba(255,255,255,.93);color:var(--tx);font-size:11px;font-weight:600;padding:5px 3px;border-radius:6px;border:none;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;text-decoration:none}
+.rcov{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:flex-end;padding:6px;gap:4px;transition:background .18s}
+.rcimg:hover .rcov{background:rgba(0,0,0,.5)}
+.rcov button,.rcov a{flex:1;opacity:0;transform:translateY(4px);transition:all .18s;background:rgba(255,255,255,.92);color:var(--tx);font-size:11px;font-weight:600;padding:5px 3px;border-radius:6px;border:none;cursor:pointer;text-align:center;font-family:'Inter',sans-serif;text-decoration:none}
 .rcimg:hover .rcov button,.rcimg:hover .rcov a{opacity:1;transform:translateY(0)}
 .rcm{padding:8px 10px 10px}
 .rcn{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .rcshot{font-size:10px;color:var(--t2);margin-bottom:5px}
 .rcacts{display:flex;gap:4px;flex-wrap:wrap}
-.smb{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;font-size:10px;font-weight:700;padding:4px 7px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif}
-.smb:hover{opacity:.9}
 .rcst{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t2)}
 .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .dq{background:var(--t3)}.du,.dg,.dw{background:var(--bl);animation:pulse 1s infinite}.dd{background:var(--grn)}.de{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.lc{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;background:var(--bg)}
-.spin{width:22px;height:22px;border:2.5px solid var(--br2);border-top-color:var(--bl);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.slbl{font-size:10px;color:var(--t3);text-align:center;line-height:1.4;padding:0 8px}
-.ebox{padding:10px;background:var(--rbg);margin:8px;border-radius:var(--r);font-size:11px;color:var(--red);line-height:1.5}
-/* Shot planner */
-.spl{background:var(--w);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;margin-bottom:1.1rem;box-shadow:var(--sh)}
-.sph{padding:.9rem 1.1rem;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between}
-.sph h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
-.spb{padding:1.1rem}
-.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;margin-bottom:1rem}
-.stc{border:1.5px solid var(--br);border-radius:var(--r);padding:8px;cursor:pointer;transition:all .14s;background:var(--w);position:relative}
-.stc:hover,.stc.on{border-color:var(--bl);background:var(--bll)}
-.stci{font-size:17px;margin-bottom:2px;display:block}
-.stcn{font-size:11px;font-weight:600;color:var(--tx);display:block;margin-bottom:1px}
-.stcd{font-size:10px;color:var(--t2);line-height:1.3}
-.stck{position:absolute;top:5px;right:5px;width:16px;height:16px;background:var(--bl);border-radius:50%;display:none;align-items:center;justify-content:center}
-.stc.on .stck{display:flex}
-.stck svg{width:8px;height:8px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.qgbtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
-.qgb{padding:5px 11px;border:1px solid var(--br2);border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;background:var(--w);color:var(--t2);font-family:'Inter',sans-serif;transition:all .12s}
-.qgb:hover{border-color:var(--bl);color:var(--bl);background:var(--bll)}
-.sq{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
-.si{border:1px solid var(--br);border-radius:var(--r);background:var(--w);overflow:hidden}
-.sihd{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;cursor:pointer;gap:7px}
-.sihd:hover{background:var(--bg)}.si.open .sihd{background:var(--bll)}
-.sil{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.sinb{width:20px;height:20px;background:var(--bl);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sii{font-size:16px;flex-shrink:0}.siinfo{min-width:0}
-.sinn{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sinm{font-size:10px;color:var(--t2)}
-.siacts{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.sibody{padding:9px 11px;border-top:1px solid var(--br);background:var(--bg);display:none}
-.si.open .sibody{display:block}
-.r2{display:flex;gap:10px}.r2>*{flex:1}
-.hd{border:none;border-top:1px solid var(--br);margin:.9rem 0}
-/* Modals */
-.mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.rcspin{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg)}
+.spin{width:20px;height:20px;border:2.5px solid var(--br2);border-top-color:var(--bl);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.splbl{font-size:10px;color:var(--t3);text-align:center;line-height:1.4;padding:0 8px}
+.errbox{padding:10px;background:var(--rbg);margin:8px;border-radius:var(--r);font-size:11px;color:var(--red);line-height:1.5}
+/* List view card */
+.rgrid.list .rc{display:flex;border-radius:var(--r)}
+.rgrid.list .rcimg{width:80px;flex-shrink:0;min-height:80px}
+.rgrid.list .rcimg img{height:100%;object-fit:cover}
+.rgrid.list .rcm{flex:1;padding:10px 12px;display:flex;flex-direction:column;justify-content:center}
+
+/* SEC HEADER */
+.sechd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
+.sectitle{font-size:19px;font-weight:800;letter-spacing:-.4px}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .mbg.open{display:flex}
-.modal{background:var(--w);border-radius:var(--rxl);padding:1.3rem;width:90%;max-width:520px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.13)}
-.mt{font-size:16px;font-weight:700;margin-bottom:3px}.ms{font-size:12px;color:var(--t2);margin-bottom:1rem}
-.macts{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
-.toast{background:#1f2937;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease;position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:none}
-.toast.ok{background:var(--grn)}.toast.err{background:var(--red)}
+.modal{background:var(--w);border-radius:var(--rxl);padding:1.4rem;width:90%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:var(--sh3)}
+.modal.wide{max-width:860px}
+.mt{font-size:17px;font-weight:700;margin-bottom:3px}
+.ms{font-size:12px;color:var(--t2);margin-bottom:1.2rem}
+.macts{display:flex;gap:8px;justify-content:flex-end;margin-top:1.2rem}
+.mdiv{border:none;border-top:1px solid var(--br);margin:.9rem 0}
+.m2c{display:flex;gap:10px}.m2c>*{flex:1}
+
+/* LIGHTBOX */
+.lightbox-bg{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:none;flex-direction:column}
+.lightbox-bg.open{display:flex}
+.lb-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;flex-shrink:0}
+.lb-name{color:#fff;font-size:13px;font-weight:600}
+.lb-close{color:#fff;background:rgba(255,255,255,.15);border:none;border-radius:7px;padding:6px 12px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px}
+.lb-close:hover{background:rgba(255,255,255,.25)}
+.lb-imgs{flex:1;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;overflow-x:auto;min-height:0}
+.lb-img-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;max-height:100%}
+.lb-img-wrap img{max-height:calc(100% - 30px);max-width:400px;object-fit:contain;border-radius:var(--r);box-shadow:var(--sh3)}
+.lb-img-label{color:rgba(255,255,255,.7);font-size:11px;text-align:center;white-space:nowrap}
+.lb-nav{display:flex;gap:8px;padding:12px 16px;justify-content:center;flex-shrink:0}
+.lb-nav button{color:#fff;background:rgba(255,255,255,.15);border:none;border-radius:7px;padding:6px 14px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500}
+.lb-nav button:hover{background:rgba(255,255,255,.25)}
+.lb-actions{display:flex;gap:8px;padding:0 16px 14px;justify-content:center;flex-wrap:wrap}
+.lb-actions button,.lb-actions a{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+
+/* CANVAS EDITOR */
+.canvas-editor-bg{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:600;display:none;flex-direction:column}
+.canvas-editor-bg.open{display:flex}
+.ce-top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,.07);flex-shrink:0;gap:10px}
+.ce-title{color:#fff;font-size:13px;font-weight:600}
+.ce-body{flex:1;display:flex;min-height:0}
+.ce-tools{width:220px;flex-shrink:0;background:rgba(0,0,0,.4);padding:14px;overflow-y:auto;border-right:1px solid rgba(255,255,255,.1)}
+.ce-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+.ce-canvas-wrap canvas{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r);box-shadow:0 4px 40px rgba(0,0,0,.6)}
+.ce-lbl{color:rgba(255,255,255,.6);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;margin-top:12px;display:block}
+.ce-lbl:first-child{margin-top:0}
+.ce-range{width:100%;accent-color:var(--bl)}
+.ce-input{width:100%;padding:6px 8px;border:1px solid rgba(255,255,255,.2);border-radius:7px;background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-family:'Inter',sans-serif;outline:none}
+.ce-input:focus{border-color:var(--bl)}
+.ce-btn{width:100%;margin-bottom:6px;padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;text-align:left}
+.ce-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
+.ce-btn.active{background:rgba(37,99,235,.4);border-color:var(--bl)}
+.ce-actions{display:flex;gap:8px;flex-shrink:0;padding:10px 14px;background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.1)}
+
+/* TOASTS */
+.toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column-reverse;gap:5px;pointer-events:none}
+.ti{background:#1e293b;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease;pointer-events:all}
+.ti.ok{background:var(--grn)}.ti.err{background:var(--red)}.ti.warn{background:var(--ylw)}
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:999;display:flex;flex-direction:column-reverse;gap:6px}
-.ti{background:#1f2937;color:#fff;padding:10px 15px;border-radius:var(--r);font-size:13px;box-shadow:var(--sh2);animation:tup .2s ease}
-.ti.ok{background:var(--grn)}.ti.err{background:var(--red)}
-@media(max-width:768px){.page.on{flex-direction:column}.sb{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--br)}.rgrid{grid-template-columns:repeat(2,1fr)}.stgrid{grid-template-columns:repeat(2,1fr)}}
+
+@media(max-width:860px){.wrap{flex-direction:column}.sb{width:100%;height:auto}.rgrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <a class="logo" href="#"><div class="lm"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.7z"/></svg></div>Fashion AI Studio</a>
-  <div class="ntabs">
-    <button class="ntab on" onclick="switchPage('model')">Model Images</button>
-    <button class="ntab" onclick="switchPage('website')">Website Photos</button>
-    <button class="ntab" onclick="switchPage('planner')">Shot Planner</button>
+
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7-.7z"/></svg></div>
+    Fashion AI
   </div>
-  <div class="cpill" id="cpill">$0.00 used</div>
+  <div class="hdr-r">
+    <div class="key-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input type="password" id="fal-key" placeholder="fal-ai API key..." autocomplete="off"/>
+      <button class="ksb" onclick="saveKey()">Save</button>
+      <span class="kst" id="kst">—</span>
+    </div>
+    <span class="spend" id="spend">$0.00</span>
+  </div>
 </div>
 
-<!-- ═══ MODEL IMAGES ═══ -->
-<div class="page on" id="pg-model">
+<div class="wrap">
 <div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk0" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(0)">Save</button></div><div class="kst" id="kst0">Enter your key</div></div>
-  <div class="sbs"><div class="sbl">Category *</div>
-    <div class="cgrid" id="cat-m">
-      <button class="chip" data-v="shirts">Shirts</button><button class="chip" data-v="dresses">Dresses</button>
-      <button class="chip" data-v="sunglasses">Sunglasses</button><button class="chip" data-v="bags">Bags</button>
-      <button class="chip" data-v="shoes">Shoes</button><button class="chip" data-v="jackets">Jackets</button>
-      <button class="chip" data-v="watches">Watches</button><button class="chip" data-v="pants">Pants</button>
-      <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
-      <button class="chip" data-v="other">Other</button>
-      <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Style & Quality</div>
-    <div class="fr"><select id="m-style"><option value="">AI Chooses</option><optgroup label="Fashion"><option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option><option value="luxury">Luxury</option><option value="formal">Formal</option><option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option><option value="bohemian">Bohemian</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></optgroup><optgroup label="Commercial"><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option></optgroup></select></div>
-    <div class="fr"><select id="m-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Gender Neutral</option></select></div>
-    <div class="fr"><select id="m-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select></div>
-    <div class="fr"><select id="m-res" onchange="updCost('m')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div>
-  </div>
-  <div class="sbs"><div class="sbl">Aspect Ratio</div>
-    <div class="argrid" id="ar-m">
-      <button class="arb" data-r="1:1">1:1</button><button class="arb on" data-r="3:4">3:4</button>
-      <button class="arb" data-r="4:5">4:5</button><button class="arb" data-r="2:3">2:3</button>
-      <button class="arb" data-r="9:16">9:16</button><button class="arb" data-r="4:3">4:3</button>
-      <button class="arb" data-r="3:2">3:2</button><button class="arb" data-r="16:9">16:9</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Background</div>
-    <div class="fr"><select id="m-bgmode" onchange="onBgMode('m')"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
-    <div id="m-bgpick"><div class="bgpills" id="bgp-m">
-      <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
-      <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
-      <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
-      <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
-      <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
-      <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
-    </div></div>
-    <div id="m-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="m-bgc" type="text" placeholder="Describe background..."/></div>
-  </div>
-  <div class="sbs"><div class="sbl">🔒 Saved Models</div>
-    <div class="mlib" id="mlib-m"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → click "Save Model"</div></div>
-    <button class="mclr" id="mclr-m" onclick="clearModel('m')">✕ Remove model lock</button>
-  </div>
-  <div class="sbs"><div class="sbl">Style Library</div>
-    <div class="slib-list" id="slib"></div>
-    <button class="sla" onclick="openM('ms-style')">+ Save current style</button>
-  </div>
-</div>
-<div class="main">
-  <div style="font-size:20px;font-weight:700;margin-bottom:3px">Model Images</div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Upload → group by product → generate consistent model photos with auto model lock</div>
-  <div class="stbar">
-    <button class="stab on" id="st1" onclick="goStep(1)">1 · Upload & Group</button>
-    <button class="stab" id="st2" onclick="goStep(2)">2 · Prompts</button>
-    <button class="stab" id="st3" onclick="goStep(3)">3 · Review</button>
-    <button class="stab" id="st4" onclick="goStep(4)">4 · Results</button>
-  </div>
 
-  <!-- Step 1 -->
-  <div id="ms1">
-    <div class="card">
-      <div class="chd">Upload All Images <span class="bdg">Up to 200</span></div>
-      <div class="csub">Upload everything, then group images by product below. Each group = one product.</div>
-      <div class="dz" id="dz-m" onclick="document.getElementById('fi-m').click()">
-        <input type="file" id="fi-m" multiple accept="image/*"/>
-        <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-        <div class="dzt">Drop all product images</div><div class="dzs">Any order — group them below</div>
-      </div>
-      <div id="m-pool-wrap" style="display:none">
-        <div class="ptoolbar">
-          <div class="pselinfo" id="m-psi">Click images to select</div>
-          <button class="btn bout bsm" onclick="selAll('m')">All</button>
-          <button class="btn bout bsm" onclick="clrSel('m')">None</button>
-          <button class="btn bpri bsm" id="m-gbtn" onclick="grpSel('m')" disabled>Group as Product →</button>
-        </div>
-        <div class="pool" id="pool-m"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="chd">Product Groups <span class="bdg" id="m-gcnt">0 products</span></div>
-      <div class="csub">All images in a group are sent together to AI — it sees the full product from every angle.</div>
-      <div id="m-groups"><div class="no-groups" id="m-nogrp">No products yet — select images above and click "Group as Product"</div></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
-      <div style="font-size:12px;color:var(--t2)">Style ref images (optional)</div>
-      <button class="btn bout bsm" onclick="document.getElementById('fi-sref').click()">+ Add style refs</button>
-      <input type="file" id="fi-sref" multiple accept="image/*" style="display:none"/>
-    </div>
-    <div class="pool" id="pool-sref" style="margin-top:6px"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
-      <button class="btn bpri" id="m-next1" onclick="goStep(2)" disabled>Next: Prompts →</button>
-    </div>
-  </div>
-
-  <!-- Step 2 -->
-  <div id="ms2" style="display:none">
-    <div class="card">
-      <div class="chd">Scene Prompt</div>
-      <div class="csub">Describe the setting, vibe, lighting. Model description goes in the sidebar.</div>
-      <div class="mtog"><button class="mbtn on" id="pm-g" onclick="setPM('g')">One for all</button><button class="mbtn" id="pm-i" onclick="setPM('i')">Per product</button></div>
-      <div id="gw"><textarea id="gprompt" rows="4" placeholder="E.g: Standing in a bright minimalist white studio, soft natural light, full body fashion editorial shot"></textarea></div>
-      <div id="iw" style="display:none"><div id="pplist"></div></div>
-    </div>
-    <div class="card">
-      <div class="chd">Model Description <span class="bdg bdg-g">Optional — improves consistency</span></div>
-      <textarea id="m-mdesc" rows="3" placeholder="E.g: tall slim woman, olive skin, long straight dark brown hair, barefoot, early 30s, Mediterranean look"></textarea>
-      <div style="font-size:10px;color:var(--t3);margin-top:4px">Injected into every shot. Shot 2+ also automatically uses Shot 1's output as a visual anchor.</div>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <button class="btn bout" onclick="goStep(1)">← Back</button>
-      <button class="btn bpri" onclick="goStep(3)">Next: Review →</button>
-    </div>
-  </div>
-
-  <!-- Step 3 -->
-  <div id="ms3" style="display:none">
-    <div class="card">
-      <div class="chd">Review & Generate</div>
-      <div class="cbar">
-        <div><div class="camt" id="m-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="m-cmeta">—</div></div>
-        <div style="text-align:right"><div style="font-size:13px;font-weight:600" id="rev-n">—</div><div style="font-size:11px;color:var(--t2)" id="rev-m">—</div></div>
-      </div>
-      <div id="m-lock-row" style="background:var(--gbg);border:1px solid #86efac;border-radius:var(--r);padding:8px 12px;margin-bottom:1rem;display:none">
-        <div style="font-size:12px;font-weight:600;color:var(--grn)">🔒 Model locked: <span id="m-lock-name"></span></div>
-        <div style="font-size:11px;color:var(--t2)">Her image will be sent as visual anchor for every shot</div>
-      </div>
-      <div id="rev-w"></div>
-      <button class="btn bpri bxl bfull" id="gen-btn" onclick="startModelGen()" disabled>Generate Images</button>
-    </div>
-    <div style="display:flex;justify-content:space-between"><button class="btn bout" onclick="goStep(2)">← Back</button></div>
-  </div>
-
-  <!-- Step 4 -->
-  <div id="ms4" style="display:none">
-    <div class="pwrap" id="mprog" style="display:none">
-      <div class="phd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--bl)" id="mpct">0%</div></div>
-      <div class="pbar"><div class="pfil" id="mfil" style="width:0%"></div></div>
-      <div class="pst"><span id="mdn">0 done</span><span id="mtot">of 0</span></div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn bout bsm" onclick="openM('m-batch-edit')">Edit all</button>
-        <button class="btn bout bsm" id="mzip" onclick="doZip('m')" disabled>↓ ZIP</button>
-        <button class="btn bout bsm" onclick="resetM()">New batch</button>
-      </div>
-      <div id="mrc" style="font-size:12px;color:var(--t2)"></div>
-    </div>
-    <div class="rgrid" id="rg-m"><div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--t3)">Results appear here</div></div>
-  </div>
-</div>
-</div>
-
-<!-- ═══ WEBSITE PHOTOS ═══ -->
-<div class="page" id="pg-website">
-<div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk1" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(1)">Save</button></div><div class="kst" id="kst1">Enter your key</div></div>
-  <div class="sbs"><div class="sbl">Quality</div><div class="fr"><select id="w-res" onchange="updCost('w')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div></div>
-  <div class="sbs"><div class="sbl">Aspect Ratio</div>
-    <div class="argrid" id="ar-w">
-      <button class="arb on" data-r="1:1">1:1</button><button class="arb" data-r="3:4">3:4</button>
-      <button class="arb" data-r="4:5">4:5</button><button class="arb" data-r="4:3">4:3</button>
-      <button class="arb" data-r="16:9">16:9</button><button class="arb" data-r="2:3">2:3</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Shots per Product</div>
-    <div class="argrid">
-      <button class="arb on" data-wn="1" onclick="selWN(this)">1</button>
-      <button class="arb" data-wn="2" onclick="selWN(this)">2</button>
-      <button class="arb" data-wn="3" onclick="selWN(this)">3</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Background</div>
-    <div class="bgpills" id="bgp-w">
-      <span class="bgp on" data-b="white">Pure White</span><span class="bgp" data-b="lightgrey">Lt.Grey</span>
-      <span class="bgp" data-b="grey">Grey</span><span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="custom">Custom</span>
-    </div>
-    <div id="w-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="w-bgc" type="text" placeholder="Describe background..."/></div>
-  </div>
-</div>
-<div class="main">
-  <div style="font-size:20px;font-weight:700;margin-bottom:3px">Website Photos <span class="bdg bdg-p">E-Commerce</span></div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Product-only shots — group multiple angles per product, pure white background</div>
-  <div class="card">
-    <div class="chd">Upload & Group Products</div>
-    <div class="dz" id="dz-w" onclick="document.getElementById('fi-w').click()">
-      <input type="file" id="fi-w" multiple accept="image/*"/>
-      <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-      <div class="dzt">Drop product images</div><div class="dzs">Group by product below</div>
-    </div>
-    <div id="w-pool-wrap" style="display:none">
-      <div class="ptoolbar">
-        <div class="pselinfo" id="w-psi">Click to select</div>
-        <button class="btn bout bsm" onclick="selAll('w')">All</button>
-        <button class="btn bout bsm" onclick="clrSel('w')">None</button>
-        <button class="btn bpri bsm" id="w-gbtn" onclick="grpSel('w')" disabled>Group →</button>
-      </div>
-      <div class="pool" id="pool-w"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="chd">Product Groups <span class="bdg" id="w-gcnt">0 products</span></div>
-    <div id="w-groups"><div class="no-groups" id="w-nogrp">No products grouped yet</div></div>
-  </div>
-  <div class="card">
-    <div class="chd">Scene Details <span class="bdg">Optional</span></div>
-    <textarea id="wprompt" rows="3" placeholder="E.g: Flat lay, 45-degree angle, soft shadows, minimalist composition..."></textarea>
-  </div>
-  <div class="cbar"><div><div class="camt" id="w-camt">$0.00</div><div style="font-size:12px;color:var(--t2)" id="w-cmeta">—</div></div></div>
-  <button class="btn bpur bxl bfull" id="wgen" onclick="startWebGen()">Generate Product Photos</button>
-  <div class="pwrap" id="wprog" style="display:none;margin-top:1rem">
-    <div class="phd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--pur)" id="wpct">0%</div></div>
-    <div class="pbar"><div class="pfil" id="wfil" style="background:linear-gradient(90deg,var(--pur),var(--bl));width:0%"></div></div>
-    <div class="pst"><span id="wdn">0</span><span id="wtot">of 0</span></div>
-  </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
-    <button class="btn bout bsm" id="wzip" onclick="doZip('w')" disabled style="display:none">↓ ZIP</button>
-  </div>
-  <div class="rgrid" id="rg-w" style="margin-top:1rem"></div>
-</div>
-</div>
-
-<!-- ═══ SHOT PLANNER ═══ -->
-<div class="page" id="pg-planner">
-<div class="sb">
-  <div class="sbs"><div class="sbl">fal.ai Key</div><div class="kr"><input type="password" id="fk2" placeholder="fal-..." autocomplete="off"/><button class="ksv" onclick="saveKey(2)">Save</button></div><div class="kst" id="kst2">Enter your key</div></div>
-  <div class="sbs"><div class="sbl">Category *</div>
-    <div class="cgrid" id="cat-p">
-      <button class="chip" data-v="shirts">Shirts</button><button class="chip" data-v="dresses">Dresses</button>
-      <button class="chip" data-v="sunglasses">Sunglasses</button><button class="chip" data-v="bags">Bags</button>
-      <button class="chip" data-v="shoes">Shoes</button><button class="chip" data-v="jackets">Jackets</button>
-      <button class="chip" data-v="watches">Watches</button><button class="chip" data-v="pants">Pants</button>
-      <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
-      <button class="chip" data-v="other">Other</button>
-      <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Style & Quality</div>
-    <div class="fr"><select id="p-style"><option value="">AI Chooses</option><optgroup label="Fashion"><option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option><option value="luxury">Luxury</option><option value="formal">Formal</option><option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option><option value="bohemian">Bohemian</option><option value="athletic">Athletic</option><option value="vintage">Vintage</option></optgroup><optgroup label="Commercial"><option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option><option value="lifestyle">Lifestyle</option></optgroup></select></div>
-    <div class="fr"><select id="p-gender"><option value="female">Female Model</option><option value="male">Male Model</option><option value="neutral">Gender Neutral</option></select></div>
-    <div class="fr"><select id="p-realism"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select></div>
-    <div class="fr"><select id="p-res" onchange="updCost('p')"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select></div>
-  </div>
-  <div class="sbs"><div class="sbl">Default Aspect Ratio</div>
-    <div class="argrid" id="ar-p">
-      <button class="arb" data-r="1:1">1:1</button><button class="arb on" data-r="3:4">3:4</button>
-      <button class="arb" data-r="4:5">4:5</button><button class="arb" data-r="2:3">2:3</button>
-      <button class="arb" data-r="9:16">9:16</button><button class="arb" data-r="4:3">4:3</button>
-      <button class="arb" data-r="3:2">3:2</button><button class="arb" data-r="16:9">16:9</button>
-    </div>
-  </div>
-  <div class="sbs"><div class="sbl">Default Background</div>
-    <div class="fr"><select id="p-bgmode" onchange="onBgMode('p')"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
-    <div id="p-bgpick"><div class="bgpills" id="bgp-p">
-      <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
-      <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="black">Black</span>
-      <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
-      <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
-      <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
-      <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
-    </div></div>
-    <div id="p-bgcw" style="display:none;margin-top:5px"><input class="sbi" id="p-bgc" type="text" placeholder="Describe background..."/></div>
-  </div>
-  <div class="sbs"><div class="sbl">Global Prompt</div><textarea id="pprompt" rows="3" placeholder="E.g: Tall model, dark hair, confident look..."></textarea></div>
-  <div class="sbs"><div class="sbl">Model Description</div><textarea id="p-mdesc" rows="3" placeholder="E.g: olive skin, long dark hair, barefoot, slim..."></textarea></div>
-  <div class="sbs"><div class="sbl">🔒 Saved Models</div>
-    <div class="mlib" id="mlib-p"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet</div></div>
-    <button class="mclr" id="mclr-p" onclick="clearModel('p')">✕ Remove model lock</button>
-  </div>
   <div class="sbs">
-    <div style="background:var(--ybg);border:1px solid rgba(217,119,6,.2);border-radius:var(--r);padding:10px 12px">
-      <div style="font-size:11px;color:var(--t2);margin-bottom:2px">Estimated cost</div>
-      <div class="camt" id="p-camt" style="font-size:18px">$0.00</div>
-      <div style="font-size:11px;color:var(--t2)" id="p-cmeta">—</div>
+    <div class="sbh">Mode</div>
+    <div style="display:flex;flex-direction:column;gap:4px" id="mode-btns">
+      <button class="chip mode-chip on" data-m="model" onclick="setMode(this)">🧍 On Model</button>
+      <button class="chip mode-chip" data-m="product" onclick="setMode(this)">📦 Product Only</button>
+      <button class="chip mode-chip" data-m="planner" onclick="setMode(this)">🎬 Shot Planner</button>
     </div>
   </div>
-</div>
+
+  <div class="sbs">
+    <div class="sbh">Category *</div>
+    <div class="cgrid" id="cat-grid">
+      <button class="chip" data-v="shirts">Shirts</button><button class="chip" data-v="dresses">Dresses</button>
+      <button class="chip" data-v="sunglasses">Sunglasses</button><button class="chip" data-v="bags">Bags</button>
+      <button class="chip" data-v="shoes">Shoes</button><button class="chip" data-v="jackets">Jackets</button>
+      <button class="chip" data-v="watches">Watches</button><button class="chip" data-v="pants">Pants</button>
+      <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
+      <button class="chip" data-v="other">Other</button>
+      <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
+    </div>
+  </div>
+
+  <div class="sbs" id="sb-style">
+    <div class="sbh">Style & Look</div>
+    <div class="fld"><label class="lbl">Visual Style</label>
+      <select id="style-sel">
+        <option value="">AI Chooses</option>
+        <optgroup label="Fashion">
+          <option value="editorial">Editorial / Vogue</option><option value="street">Street Style</option>
+          <option value="luxury">Luxury</option><option value="formal">Formal</option>
+          <option value="haute">Haute Couture</option><option value="streetwear">Streetwear</option>
+          <option value="bohemian">Bohemian</option><option value="athletic">Athletic</option>
+          <option value="vintage">Vintage</option><option value="resort">Resort</option>
+          <option value="campaign">Campaign / Bold</option><option value="beauty">Beauty Focus</option>
+          <option value="catalog">Catalog Clean</option>
+        </optgroup>
+        <optgroup label="Commercial">
+          <option value="ecommerce">E-commerce</option><option value="minimal">Minimalist</option>
+          <option value="lifestyle">Lifestyle</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="fld"><label class="lbl">Model Gender</label>
+      <select id="gender-sel"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Neutral</option></select>
+    </div>
+    <div class="fld"><label class="lbl">Realism</label>
+      <select id="real-sel"><option value="ultra">Ultra Realistic</option><option value="editorial">Editorial Fashion</option><option value="cinematic">Cinematic Film</option><option value="raw">Raw Documentary</option></select>
+    </div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">Output</div>
+    <div class="fld"><label class="lbl">Quality</label>
+      <select id="res-sel" onchange="updateCost()"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select>
+    </div>
+    <div class="fld"><label class="lbl">Aspect Ratio</label>
+      <div class="ar-wrap" id="ar-grid">
+        <button class="arb" data-r="1:1">1:1</button><button class="arb on" data-r="3:4">3:4</button>
+        <button class="arb" data-r="4:5">4:5</button><button class="arb" data-r="2:3">2:3</button>
+        <button class="arb" data-r="9:16">9:16</button><button class="arb" data-r="4:3">4:3</button>
+        <button class="arb" data-r="3:2">3:2</button><button class="arb" data-r="16:9">16:9</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">Background <button class="sb-link" onclick="openM('m-savebg')">+ Save</button></div>
+    <div class="fld"><select id="bg-mode" onchange="onBgMode()"><option value="pick">Choose preset</option><option value="ai">AI decides</option><option value="custom">Custom text</option></select></div>
+    <div id="bg-preset-wrap"><div class="bgps" id="bgps">
+      <span class="bgp on" data-b="white">White</span><span class="bgp" data-b="grey">Grey</span>
+      <span class="bgp" data-b="lightgrey">Lt.Grey</span><span class="bgp" data-b="cream">Cream</span>
+      <span class="bgp" data-b="pink">Pink</span><span class="bgp" data-b="black">Black</span>
+      <span class="bgp" data-b="outdoor">Outdoor</span><span class="bgp" data-b="street">Street</span>
+      <span class="bgp" data-b="luxury">Luxury</span><span class="bgp" data-b="beach">Beach</span>
+      <span class="bgp" data-b="forest">Forest</span><span class="bgp" data-b="studio">Studio</span>
+      <span class="bgp" data-b="minimal_bg">Minimal</span><span class="bgp" data-b="ai">AI Picks</span>
+    </div></div>
+    <div id="bg-cust-wrap" style="display:none"><input type="text" id="bg-cust" placeholder="Describe background in detail..."/></div>
+    <div style="margin-top:8px">
+      <div class="lib" id="bg-lib"><div class="lib-empty">No saved backgrounds</div></div>
+      <button class="lclr" id="bg-clr" onclick="clearBgLock()">✕ Remove background lock</button>
+    </div>
+  </div>
+
+  <div class="sbs" id="sb-lock">
+    <div class="sbh">🔒 Model Lock</div>
+    <div class="lib" id="model-lib"><div class="lib-empty">No saved models.<br/>Generate → Save Model</div></div>
+    <button class="lclr" id="model-clr" onclick="clearModelLock()">✕ Remove model lock</button>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">📋 Prompt Templates <button class="sb-link" onclick="openSaveTemplate()">+ Save</button></div>
+    <div class="tlib" id="tlib"><div class="lib-empty">No templates saved</div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbh">Recent Batches <button class="sb-link" onclick="clearHist()">Clear</button></div>
+    <div class="hist" id="hist-list"><div class="lib-empty">No history yet</div></div>
+  </div>
+
+</div><!-- /sidebar -->
+
 <div class="main">
-  <div style="font-size:20px;font-weight:700;margin-bottom:3px">Shot Planner <span class="bdg bdg-o">Advanced</span></div>
-  <div style="font-size:12px;color:var(--t2);margin-bottom:1.2rem">Group products → plan every shot with full per-shot control → generate all at once with auto model lock</div>
-  <div class="card">
-    <div class="chd">Upload & Group Products</div>
-    <div class="dz" id="dz-p" onclick="document.getElementById('fi-p').click()">
-      <input type="file" id="fi-p" multiple accept="image/*"/>
-      <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-      <div class="dzt">Drop all product images</div><div class="dzs">Any order</div>
+<div class="content">
+
+  <!-- UPLOAD VIEW -->
+  <div id="v-upload">
+    <div class="sechd">
+      <div class="sectitle">Upload & Group</div>
+      <button class="btn bpri" id="continue-btn" onclick="showGen()" disabled>Continue →</button>
     </div>
-    <div id="p-pool-wrap" style="display:none">
-      <div class="ptoolbar">
-        <div class="pselinfo" id="p-psi">Click to select</div>
-        <button class="btn bout bsm" onclick="selAll('p')">All</button>
-        <button class="btn bout bsm" onclick="clrSel('p')">None</button>
-        <button class="btn bpri bsm" id="p-gbtn" onclick="grpSel('p')" disabled>Group →</button>
+    <div class="card">
+      <div class="chd">Product Images <span class="bdg" id="pool-bdg">0 in pool</span></div>
+      <div class="csub">Upload all images at once — then group below by product. Multiple angles per product get sent together to AI for complete context.</div>
+      <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
+        <input type="file" id="fi" multiple accept="image/*"/>
+        <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
+        <div class="dzt">Drop product images here</div><div class="dzs">JPG · PNG · WEBP — any number, any order</div>
       </div>
-      <div class="pool" id="pool-p"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="chd">Product Groups <span class="bdg" id="p-gcnt">0 products</span></div>
-    <div id="p-groups"><div class="no-groups" id="p-nogrp">No products grouped yet</div></div>
-  </div>
-  <div class="spl">
-    <div class="sph"><h3>Shot Plan <span class="bdg" id="sqbdg">0 shots</span></h3>
-      <div style="display:flex;gap:6px"><button class="btn bout bsm" onclick="clearSQ()">Clear</button><button class="btn bpri bsm" onclick="openAddShot()">+ Add Shot</button></div>
-    </div>
-    <div class="spb">
-      <div style="margin-bottom:1rem">
-        <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Quick Add</div>
-        <div class="qgbtns">
-          <button class="qgb" onclick="addShotGroup('onmodel')">📸 On-Model</button>
-          <button class="qgb" onclick="addShotGroup('product')">🧺 Product Only</button>
-          <button class="qgb" onclick="addShotGroup('angles')">🔄 All Angles</button>
-          <button class="qgb" onclick="addShotGroup('ecommerce')">🛒 E-Commerce</button>
-          <button class="qgb" onclick="addShotGroup('lookbook')">📖 Lookbook</button>
-          <button class="qgb" onclick="addShotGroup('full')">⭐ Full Pack</button>
+      <div id="pool-wrap" style="display:none">
+        <div class="ptb">
+          <div class="pinfo" id="pinfo">Click images to select</div>
+          <button class="btn bout bsm" onclick="selAll()">All</button>
+          <button class="btn bout bsm" onclick="clrSel()">None</button>
+          <button class="btn bpri bsm" id="grp-btn" onclick="startGrp()" disabled>Group as Product →</button>
         </div>
-      </div>
-      <div class="sq" id="sq"><div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px" id="sqempty">No shots yet — use Quick Add or + Add Shot</div></div>
-      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:.75rem">
-        <div style="font-size:12px;color:var(--t2)" id="spsumm">—</div>
-        <button class="btn bpri" id="spgen" onclick="startPlanGen()" disabled>Generate All Shots</button>
+        <div class="pgrid" id="pgrid"></div>
       </div>
     </div>
+    <div class="card">
+      <div class="chd">Product Groups <span class="bdg" id="grps-bdg">0 groups</span></div>
+      <div class="csub">Each group = one product. Rename, manage images, and assign a per-group model from your library.</div>
+      <div id="grps-con"><div class="no-grps">No products grouped yet — select images above and click "Group as Product"</div></div>
+    </div>
   </div>
-  <div class="pwrap" id="pprog" style="display:none;margin-top:1rem">
-    <div class="phd"><div style="font-size:13px;font-weight:600">Generating shots...</div><div style="font-size:13px;font-weight:700;color:var(--bl)" id="ppct">0%</div></div>
-    <div class="pbar"><div class="pfil" id="pfil" style="width:0%"></div></div>
-    <div class="pst"><span id="pdn">0</span><span id="ptot">of 0</span></div>
+
+  <!-- GENERATE VIEW -->
+  <div id="v-gen" style="display:none">
+    <div class="sechd">
+      <div class="sectitle" id="gen-title">Generate</div>
+      <button class="btn bout bsm" onclick="showUpload()">← Back</button>
+    </div>
+
+    <!-- Model mode -->
+    <div id="cfg-model">
+      <div class="steps">
+        <button class="stab on" id="s1" onclick="goStep(1)">1 · Prompt</button>
+        <button class="stab" id="s2" onclick="goStep(2)">2 · Model</button>
+        <button class="stab" id="s3" onclick="goStep(3)">3 · Generate</button>
+      </div>
+      <div id="st1">
+        <div class="card">
+          <div class="chd">Scene Prompt</div>
+          <div class="csub">Describe the setting, vibe, and lighting. Model description goes in Step 2.</div>
+          <div class="tog"><button class="tgb on" id="pm-g" onclick="setPM('g')">One for all</button><button class="tgb" id="pm-i" onclick="setPM('i')">Per product</button></div>
+          <div id="pmg-wrap"><textarea id="global-prompt" rows="4" placeholder="E.g: Standing in a bright minimalist white studio, soft natural light from the left, full body fashion editorial shot, complete outfit clearly visible, professional Vogue quality"></textarea></div>
+          <div id="pmi-wrap" style="display:none"><div id="per-prod"></div></div>
+        </div>
+        <div class="card">
+          <div class="chd">Shot Plan <span class="bdg">Optional — multiple images per product</span></div>
+          <div class="pkgrid" id="pkgrid"></div>
+          <div id="sq-list"><div class="semp">No shots planned — add shots above or leave empty for one front-view per product.</div></div>
+          <div style="display:flex;gap:7px;margin-top:8px;align-items:center">
+            <button class="btn bout bsm" onclick="openM('m-addshot')">+ Add Shot</button>
+            <button class="bghost bsm" onclick="clearShots()">Clear shots</button>
+            <span style="flex:1"></span><span id="sq-cnt" style="font-size:12px;color:var(--t2)">0 shots</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn bpri" onclick="goStep(2)">Next →</button></div>
+      </div>
+      <div id="st2" style="display:none">
+        <div class="card">
+          <div class="chd">Model Description <span class="bdg bdg-g">Optional</span></div>
+          <div class="csub">Describe the model for Shot 1. Shots 2+ auto-use Shot 1's output as visual anchor for consistency.</div>
+          <textarea id="model-desc" rows="3" placeholder="E.g: tall slim woman, olive skin, long straight dark brown hair, barefoot, early 30s, Mediterranean look, confident posture"></textarea>
+        </div>
+        <div class="card">
+          <div class="chd">Saved Model Lock <span class="bdg bdg-g">Optional</span></div>
+          <div class="csub">Select a saved model — her image gets sent as a visual anchor for every shot in this batch.</div>
+          <div id="gen-model-active"></div>
+          <div class="lib" id="gen-model-lib"><div class="lib-empty">No saved models — generate then click Save Model</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between"><button class="btn bout" onclick="goStep(1)">← Back</button><button class="btn bpri" onclick="goStep(3)">Next →</button></div>
+      </div>
+      <div id="st3" style="display:none">
+        <div class="card">
+          <div id="lock-disp"></div>
+          <div class="cbar">
+            <div><div class="cnum" id="cost-num">$0.00</div><div style="font-size:12px;color:var(--t2)" id="cost-meta">—</div></div>
+            <div style="text-align:right"><div style="font-size:13px;font-weight:600" id="rev-n">—</div><div style="font-size:11px;color:var(--t2)" id="rev-d">—</div></div>
+          </div>
+          <div id="gen-warns"></div>
+          <button class="btn bpri bxl bfull" id="gen-btn" onclick="startGen()" disabled>Generate Images</button>
+        </div>
+        <div style="display:flex;justify-content:space-between"><button class="btn bout" onclick="goStep(2)">← Back</button></div>
+      </div>
+    </div>
+
+    <!-- Product only mode -->
+    <div id="cfg-product" style="display:none">
+      <div class="card">
+        <div class="chd">Scene Details <span class="bdg">Optional</span></div>
+        <textarea id="prod-prompt" rows="3" placeholder="E.g: Flat lay, soft shadows, minimalist..."></textarea>
+      </div>
+      <div class="cbar"><div><div class="cnum" id="w-cost-num">$0.00</div><div style="font-size:12px;color:var(--t2)" id="w-cost-meta">—</div></div></div>
+      <button class="btn bpri bxl bfull" id="w-gen-btn" onclick="startWebGen()">Generate Product Photos</button>
+    </div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
-    <button class="btn bout bsm" id="pzip" onclick="doZip('p')" disabled style="display:none">↓ ZIP</button>
+
+  <!-- RESULTS VIEW -->
+  <div id="v-results" style="display:none">
+    <div class="sechd">
+      <div class="sectitle">Results</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bout bsm" onclick="openM('m-editbatch')">Edit All</button>
+        <button class="btn bout bsm" id="zip-btn" onclick="doZip()" disabled>↓ ZIP</button>
+        <button class="btn bout bsm" onclick="openCompare()">⊞ Compare</button>
+        <button class="btn bout bsm" onclick="newBatch()">New Batch</button>
+      </div>
+    </div>
+    <div class="prog" id="prog" style="display:none">
+      <div class="proghd"><div style="font-size:13px;font-weight:600">Generating...</div><div style="font-size:13px;font-weight:700;color:var(--bl)" id="ppct">0%</div></div>
+      <div class="progbg"><div class="progfil" id="pfil" style="width:0%"></div></div>
+      <div class="progst"><span id="pdn">0 done</span><span id="ptot">of 0</span></div>
+    </div>
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-bar-label">Filter:</span>
+      <button class="fb-chip on" data-f="all" onclick="setFilter(this,'all')">All</button>
+      <button class="fb-chip" data-f="done" onclick="setFilter(this,'done')">✓ Done</button>
+      <button class="fb-chip" data-f="generating" onclick="setFilter(this,'generating')">⟳ In Progress</button>
+      <button class="fb-chip" data-f="error" onclick="setFilter(this,'error')">✕ Errors</button>
+      <div id="product-filter-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+      <div class="fb-spacer"></div>
+      <div class="view-toggle">
+        <button class="vbtn on" onclick="setView('grid',this)" title="Grid">⊞</button>
+        <button class="vbtn" onclick="setView('compact',this)" title="Compact">⊟</button>
+        <button class="vbtn" onclick="setView('list',this)" title="List">☰</button>
+      </div>
+    </div>
+    <div class="rgrid" id="rgrid"></div>
   </div>
-  <div class="rgrid" id="rg-p" style="margin-top:1rem"></div>
+
+</div>
 </div>
 </div>
 
-<!-- ═══ MODALS ═══ -->
-<div class="mbg" id="m-grp-name"><div class="modal">
+<!-- MODALS -->
+<div class="mbg" id="m-grpname"><div class="modal">
   <div class="mt">Name This Product</div><div class="ms" id="gn-sub">—</div>
-  <div class="fr"><label class="fl">Product name</label><input class="sbi" type="text" id="gn-inp" placeholder="E.g: Blue Denim Jacket..." style="width:100%"/></div>
-  <div class="macts"><button class="btn bout" onclick="closeM('m-grp-name')">Cancel</button><button class="btn bpri" onclick="confirmGrp()">Create Group</button></div>
+  <div class="fld"><label class="lbl">Product Name</label><input type="text" id="gn-inp" placeholder="E.g: Blue Denim Jacket..."/></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-grpname')">Cancel</button><button class="btn bpri" onclick="confirmGrp()">Create Group</button></div>
 </div></div>
 
-<div class="mbg" id="m-add-shot"><div class="modal">
-  <div class="mt">Add Shot</div><div class="ms">Select type and configure</div>
-  <div class="stgrid" id="stpicker"></div>
-  <div class="hd"></div>
-  <div class="r2">
-    <div class="fr"><label class="fl">Background</label>
-      <select id="as-bg"><option value="ai">AI Decides</option><option value="white">White Studio</option><option value="grey">Grey Studio</option><option value="lightgrey">Light Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury Interior</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="minimal_bg">Minimal</option><option value="custom">Custom</option></select>
-      <div id="as-bgcw" style="display:none;margin-top:4px"><input class="sbi" id="as-bgc" placeholder="Describe..."/></div>
+<div class="mbg" id="m-addshot"><div class="modal" style="max-width:640px">
+  <div class="mt">Add Shot</div><div class="ms">Select type and configure settings</div>
+  <div class="fld"><label class="lbl">Shot Type *</label>
+    <div class="stgrid" id="stgrid"></div>
+    <div id="st-err" style="color:var(--red);font-size:12px;display:none;margin-top:4px">⚠ Select a shot type first</div>
+  </div>
+  <div class="mdiv"></div>
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Background</label>
+      <select id="as-bg" onchange="document.getElementById('as-bgcw').style.display=this.value==='custom'?'block':'none'">
+        <option value="ai">AI Decides</option><option value="white">White Studio</option><option value="grey">Grey Studio</option>
+        <option value="lightgrey">Light Grey</option><option value="cream">Cream</option><option value="pink">Pink</option>
+        <option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option>
+        <option value="luxury">Luxury Interior</option><option value="beach">Beach</option><option value="forest">Forest</option>
+        <option value="studio">Studio</option><option value="minimal_bg">Minimal</option><option value="custom">Custom...</option>
+      </select>
+      <div id="as-bgcw" style="display:none;margin-top:4px"><input type="text" id="as-bgc" placeholder="Describe background..."/></div>
     </div>
-    <div class="fr"><label class="fl">Aspect Ratio</label>
-      <select id="as-ar"><option value="3:4">3:4 — Portrait</option><option value="1:1">1:1 — Square</option><option value="4:5">4:5 — Instagram</option><option value="2:3">2:3 — Tall</option><option value="9:16">9:16 — Story</option><option value="4:3">4:3 — Landscape</option><option value="3:2">3:2 — Wide</option><option value="16:9">16:9 — Cinematic</option></select>
+    <div class="fld"><label class="lbl">Aspect Ratio</label>
+      <select id="as-ar"><option value="3:4">3:4 — Portrait</option><option value="1:1">1:1 — Square</option><option value="4:5">4:5 — Instagram</option><option value="2:3">2:3 — Tall</option><option value="9:16">9:16 — Story</option><option value="4:3">4:3 — Wide</option><option value="3:2">3:2 — Landscape</option><option value="16:9">16:9 — Cinematic</option></select>
     </div>
   </div>
-  <div class="fr"><label class="fl">Style Override</label>
-    <select id="as-style"><option value="">Use global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-commerce</option><option value="minimal">Minimal</option><option value="lifestyle">Lifestyle</option><option value="streetwear">Streetwear</option><option value="athletic">Athletic</option></select>
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Style Override</label>
+      <select id="as-style"><option value="">Use global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-commerce</option><option value="minimal">Minimal</option><option value="lifestyle">Lifestyle</option><option value="campaign">Campaign</option></select>
+    </div>
+    <div class="fld"><label class="lbl">Quality Override</label>
+      <select id="as-res"><option value="">Use global</option><option value="1K">1K</option><option value="2K">2K</option></select>
+    </div>
   </div>
-  <div class="fr"><label class="fl">Extra prompt for this shot (optional)</label><textarea id="as-prompt" rows="2" placeholder="Extra details for this shot only..."></textarea></div>
-  <div id="as-err" style="color:var(--red);font-size:12px;display:none;margin-top:4px">⚠ Select a shot type first</div>
-  <div class="macts"><button class="btn bout" onclick="closeM('m-add-shot')">Cancel</button><button class="btn bpri" onclick="confirmShot()">Add Shot</button></div>
+  <div class="fld"><label class="lbl">Extra prompt for this shot only (optional)</label><textarea id="as-prompt" rows="2" placeholder="Additional details specific to this shot only..."></textarea></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-addshot')">Cancel</button><button class="btn bpri" onclick="confirmAddShot()">Add Shot</button></div>
 </div></div>
 
-<div class="mbg" id="m-edit-shot"><div class="modal">
+<div class="mbg" id="m-editshot"><div class="modal">
   <div class="mt">Edit Shot</div><input type="hidden" id="esi"/>
-  <div class="r2">
-    <div class="fr"><label class="fl">Background</label>
-      <select id="es-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Studio</option><option value="custom">Custom</option></select>
-      <div id="es-bgcw" style="display:none;margin-top:4px"><input class="sbi" id="es-bgc" placeholder="Describe..."/></div>
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Background</label>
+      <select id="es-bg" onchange="document.getElementById('es-bgcw').style.display=this.value==='custom'?'block':'none'">
+        <option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option>
+        <option value="cream">Cream</option><option value="black">Black</option><option value="outdoor">Outdoor</option>
+        <option value="street">Street</option><option value="luxury">Luxury</option><option value="custom">Custom</option>
+      </select>
+      <div id="es-bgcw" style="display:none;margin-top:4px"><input type="text" id="es-bgc" placeholder="Describe..."/></div>
     </div>
-    <div class="fr"><label class="fl">Aspect Ratio</label>
+    <div class="fld"><label class="lbl">Aspect Ratio</label>
       <select id="es-ar"><option value="3:4">3:4</option><option value="1:1">1:1</option><option value="4:5">4:5</option><option value="2:3">2:3</option><option value="9:16">9:16</option><option value="4:3">4:3</option><option value="3:2">3:2</option><option value="16:9">16:9</option></select>
     </div>
   </div>
-  <div class="fr"><label class="fl">Style</label><select id="es-style"><option value="">Global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-com</option><option value="minimal">Minimal</option></select></div>
-  <div class="fr"><label class="fl">Extra Prompt</label><textarea id="es-prompt" rows="2" placeholder="Extra details..."></textarea></div>
-  <div class="macts"><button class="btn bout" onclick="closeM('m-edit-shot')">Cancel</button><button class="btn bpri" onclick="saveEditShot()">Save</button></div>
-</div></div>
-
-<div class="mbg" id="m-edit-item"><div class="modal">
-  <div class="mt">Edit & Regenerate</div><div class="ms" id="ei-name">—</div>
-  <input type="hidden" id="ei-bid"/><input type="hidden" id="ei-iid"/>
-  <div class="fr"><label class="fl">Prompt</label><textarea id="ei-prompt" rows="4"></textarea></div>
-  <div class="r2">
-    <div class="fr"><label class="fl">Background</label><select id="ei-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option></select></div>
-    <div class="fr"><label class="fl">Quality</label><select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select></div>
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Style</label><select id="es-style"><option value="">Global</option><option value="editorial">Editorial</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="ecommerce">E-com</option><option value="minimal">Minimal</option></select></div>
+    <div class="fld"><label class="lbl">Quality</label><select id="es-res"><option value="">Global</option><option value="1K">1K</option><option value="2K">2K</option></select></div>
   </div>
-  <div class="macts"><button class="btn bout" onclick="closeM('m-edit-item')">Cancel</button><button class="btn bpri" onclick="doRegen()">Regenerate</button></div>
+  <div class="fld"><label class="lbl">Extra Prompt</label><textarea id="es-prompt" rows="2" placeholder="Extra details..."></textarea></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-editshot')">Cancel</button><button class="btn bpri" onclick="saveEditShot()">Save</button></div>
 </div></div>
 
-<div class="mbg" id="m-batch-edit"><div class="modal">
-  <div class="mt">Edit All & Regenerate</div><div class="ms">Apply new prompt to entire batch</div>
-  <div class="fr"><label class="fl">New Prompt</label><textarea id="be-prompt" rows="4"></textarea></div>
-  <div class="fr"><label class="fl">Background</label><select id="be-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option></select></div>
-  <div class="macts"><button class="btn bout" onclick="closeM('m-batch-edit')">Cancel</button><button class="btn bpri" onclick="doEditBatch()">Regen All</button></div>
-</div></div>
-
-<div class="mbg" id="ms-style"><div class="modal">
-  <div class="mt">Save Style</div>
-  <div class="fr"><label class="fl">Style Name</label><input class="sbi" type="text" id="ssn" placeholder="E.g: Luxury Summer" style="width:100%"/></div>
-  <div class="macts"><button class="btn bout" onclick="closeM('ms-style')">Cancel</button><button class="btn bpri" onclick="doSaveStyle()">Save</button></div>
-</div></div>
-
-<div class="mbg" id="ms-model"><div class="modal">
-  <div class="mt">🔒 Save This Model</div>
-  <div class="ms">Give her a name — she'll appear in your Model Library for future batches</div>
+<div class="mbg" id="m-savemodel"><div class="modal">
+  <div class="mt">🔒 Save This Model</div><div class="ms">Saved permanently — reuse in any future batch</div>
   <input type="hidden" id="sm-url"/>
-  <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:1rem">
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:1rem">
     <img id="sm-prev" src="" alt="" style="width:70px;height:88px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);flex-shrink:0;background:var(--bg)"/>
     <div style="flex:1">
-      <div class="fr"><label class="fl">Name *</label><input class="sbi" type="text" id="sm-name" placeholder="E.g: Tall Brunette, Model A..." style="width:100%"/></div>
-      <div class="fr" style="margin-top:6px"><label class="fl">Notes (optional)</label><input class="sbi" type="text" id="sm-desc" placeholder="E.g: olive skin, long hair..." style="width:100%"/></div>
+      <div class="fld"><label class="lbl">Name *</label><input type="text" id="sm-name" placeholder="E.g: Tall Brunette, Sara..."/></div>
+      <div class="fld"><label class="lbl">Gender</label><select id="sm-gender"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Neutral</option></select></div>
+      <div class="fld"><label class="lbl">Notes</label><input type="text" id="sm-notes" placeholder="E.g: olive skin, long dark hair..."/></div>
     </div>
   </div>
-  <div class="macts"><button class="btn bout" onclick="closeM('ms-model')">Cancel</button><button class="btn bpri" style="background:linear-gradient(135deg,#7c3aed,#2563eb);border:none" onclick="confirmSaveModel()">Save Model</button></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-savemodel')">Cancel</button><button class="btn bpri" style="background:linear-gradient(135deg,#8b5cf6,#2563eb);border:none" onclick="confirmSaveModel()">Save to Library</button></div>
 </div></div>
+
+<div class="mbg" id="m-savebg"><div class="modal">
+  <div class="mt">🎨 Save Background</div><div class="ms">Reuse on any batch from your library</div>
+  <div class="fld"><label class="lbl">Name *</label><input type="text" id="sb-name" placeholder="E.g: Pure White Studio..."/></div>
+  <div class="fld"><label class="lbl">Type</label>
+    <select id="sb-type" onchange="document.getElementById('sb-cw').style.display=this.value==='custom'?'block':'none'">
+      <option value="white">Pure White</option><option value="grey">Grey Studio</option><option value="lightgrey">Light Grey</option>
+      <option value="cream">Cream</option><option value="pink">Soft Pink</option><option value="black">Black</option>
+      <option value="outdoor">Outdoor</option><option value="street">Urban Street</option><option value="luxury">Luxury Interior</option>
+      <option value="beach">Beach</option><option value="forest">Forest</option><option value="studio">Photography Studio</option>
+      <option value="minimal_bg">Minimal Gradient</option><option value="ai">AI Decides</option><option value="custom">Custom text</option>
+    </select>
+  </div>
+  <div id="sb-cw" style="display:none"><div class="fld"><label class="lbl">Description</label><textarea id="sb-custom" rows="2" placeholder="Describe your background..."></textarea></div></div>
+  <div class="fld"><label class="lbl">Notes</label><input type="text" id="sb-notes" placeholder="Optional notes..."/></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-savebg')">Cancel</button><button class="btn bpri" onclick="confirmSaveBg()">Save to Library</button></div>
+</div></div>
+
+<div class="mbg" id="m-savetemplate"><div class="modal">
+  <div class="mt">📋 Save Prompt Template</div><div class="ms">Save current prompt, style, and background as a reusable template</div>
+  <div class="fld"><label class="lbl">Template Name *</label><input type="text" id="tp-name" placeholder="E.g: Summer Campaign, Babyboo Style..."/></div>
+  <div class="fld"><label class="lbl">Description</label><input type="text" id="tp-desc" placeholder="Optional description..."/></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-savetemplate')">Cancel</button><button class="btn bpri" onclick="confirmSaveTemplate()">Save Template</button></div>
+</div></div>
+
+<div class="mbg" id="m-edititem"><div class="modal">
+  <div class="mt">Edit & Regenerate</div><div class="ms" id="ei-name">—</div>
+  <input type="hidden" id="ei-id"/>
+  <div class="fld"><label class="lbl">Prompt</label><textarea id="ei-prompt" rows="4"></textarea></div>
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Background</label><select id="ei-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option></select></div>
+    <div class="fld"><label class="lbl">Quality</label><select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select></div>
+  </div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-edititem')">Cancel</button><button class="btn bpri" onclick="doRegenItem()">Regenerate</button></div>
+</div></div>
+
+<div class="mbg" id="m-editbatch"><div class="modal">
+  <div class="mt">Edit All & Regenerate</div><div class="ms">Apply to entire batch</div>
+  <div class="fld"><label class="lbl">New Prompt</label><textarea id="be-prompt" rows="4"></textarea></div>
+  <div class="fld"><label class="lbl">Background</label><select id="be-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option></select></div>
+  <div class="macts"><button class="btn bout" onclick="closeM('m-editbatch')">Cancel</button><button class="btn bpri" onclick="doEditBatch()">Regenerate All</button></div>
+</div></div>
+
+<!-- LIGHTBOX / COMPARE -->
+<div class="lightbox-bg" id="lightbox">
+  <div class="lb-top">
+    <div class="lb-name" id="lb-name">—</div>
+    <div style="display:flex;gap:8px">
+      <button class="lb-close" onclick="closeLightbox()">✕ Close</button>
+    </div>
+  </div>
+  <div class="lb-imgs" id="lb-imgs"></div>
+  <div class="lb-actions" id="lb-actions"></div>
+</div>
+
+<!-- CANVAS EDITOR -->
+<div class="canvas-editor-bg" id="canvas-editor">
+  <div class="ce-top">
+    <div class="ce-title" id="ce-title">Image Editor</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="ceApply()" style="padding:6px 14px;border-radius:7px;border:none;background:var(--bl);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Apply & Download</button>
+      <button onclick="closeCanvas()" style="padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">✕ Close</button>
+    </div>
+  </div>
+  <div class="ce-body">
+    <div class="ce-tools">
+      <span class="ce-lbl">Brightness</span>
+      <input class="ce-range" type="range" id="ce-brightness" min="-100" max="100" value="0" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Contrast</span>
+      <input class="ce-range" type="range" id="ce-contrast" min="-100" max="100" value="0" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Saturation</span>
+      <input class="ce-range" type="range" id="ce-saturation" min="-100" max="100" value="0" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Sharpen</span>
+      <input class="ce-range" type="range" id="ce-sharpen" min="0" max="10" value="0" step="1" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Vignette</span>
+      <input class="ce-range" type="range" id="ce-vignette" min="0" max="100" value="0" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Text Overlay</span>
+      <input class="ce-input" type="text" id="ce-text" placeholder="Add text..." oninput="ceUpdate()"/>
+      <span class="ce-lbl" style="margin-top:6px">Text Color</span>
+      <input type="color" id="ce-text-color" value="#ffffff" oninput="ceUpdate()" style="width:100%;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:none;cursor:pointer"/>
+      <span class="ce-lbl">Text Size</span>
+      <input class="ce-range" type="range" id="ce-text-size" min="12" max="120" value="40" oninput="ceUpdate()"/>
+      <span class="ce-lbl">Text Position</span>
+      <select class="ce-input" id="ce-text-pos" onchange="ceUpdate()">
+        <option value="bottom">Bottom Center</option>
+        <option value="top">Top Center</option>
+        <option value="center">Center</option>
+        <option value="topleft">Top Left</option>
+        <option value="bottomleft">Bottom Left</option>
+      </select>
+      <span class="ce-lbl" style="margin-top:12px">Reset</span>
+      <button class="ce-btn" onclick="ceReset()">↺ Reset all adjustments</button>
+    </div>
+    <div class="ce-canvas-wrap">
+      <canvas id="ce-canvas"></canvas>
+    </div>
+  </div>
+</div>
 
 <div class="toasts" id="toasts"></div>
 
 <script>
-// ════════ SHOT TYPES ════════
+// ════ SHOT TYPES ════
 const ST=[
   {id:'front',icon:'🧍',name:'Front View',desc:'Full body, facing camera'},
-  {id:'back',icon:'🔙',name:'Back View',desc:'Full body rear shot'},
-  {id:'side',icon:'↔️',name:'Side Profile',desc:'Side view, full body'},
-  {id:'detail',icon:'🔍',name:'Close-up',desc:'Extreme product detail'},
+  {id:'back',icon:'🔙',name:'Back View',desc:'Full body rear'},
+  {id:'side',icon:'↔️',name:'Side Profile',desc:'Side, full body'},
+  {id:'threeq',icon:'↗️',name:'3/4 Angle',desc:'Three-quarter view'},
+  {id:'detail',icon:'🔍',name:'Close-up',desc:'Product detail'},
   {id:'face',icon:'🤳',name:'Portrait',desc:'Head & shoulders'},
   {id:'sitting',icon:'🪑',name:'Sitting',desc:'Seated pose'},
-  {id:'walking',icon:'🚶',name:'Walking',desc:'Mid-stride dynamic'},
-  {id:'dynamic',icon:'💃',name:'Dynamic',desc:'Action, movement'},
-  {id:'hands',icon:'✋',name:'Hands',desc:'Wrist/hands close-up'},
+  {id:'walking',icon:'🚶',name:'Walking',desc:'Mid-stride'},
+  {id:'dynamic',icon:'💃',name:'Dynamic',desc:'Action, energy'},
+  {id:'hands',icon:'✋',name:'Hands',desc:'Wrist close-up'},
   {id:'flat_lay',icon:'🗃️',name:'Flat Lay',desc:'Overhead, no model'},
-  {id:'mannequin',icon:'👗',name:'Mannequin',desc:'Floating, no model'},
+  {id:'mannequin',icon:'👗',name:'Mannequin',desc:'Ghost mannequin'},
   {id:'alone_white',icon:'⬜',name:'White BG',desc:'Product on white'},
   {id:'alone_grey',icon:'◻️',name:'Grey BG',desc:'Product on grey'},
   {id:'alone_natural',icon:'🪵',name:'Natural',desc:'Product on wood'},
-  {id:'lookbook',icon:'📖',name:'Lookbook',desc:'Editorial storytelling'},
-  {id:'street_life',icon:'🌆',name:'Street Life',desc:'Real urban, candid'},
+  {id:'lookbook',icon:'📖',name:'Lookbook',desc:'Editorial story'},
+  {id:'street_life',icon:'🌆',name:'Street Life',desc:'Urban candid'},
+  {id:'banner',icon:'🖼️',name:'Banner',desc:'Wide hero shot'},
+  {id:'group',icon:'👥',name:'Group Shot',desc:'Multi-product'},
 ];
-const SG={
-  onmodel:['front','back','side','dynamic'],
-  product:['flat_lay','alone_white','alone_grey','mannequin'],
-  angles:['front','back','side','detail','face'],
-  ecommerce:['alone_white','flat_lay','detail','front'],
-  lookbook:['lookbook','street_life','dynamic','walking'],
-  full:['front','back','side','detail','flat_lay','alone_white','lookbook','dynamic'],
+const PACKS={
+  '📸 On-Model':['front','back','side','dynamic'],
+  '🧺 Product Only':['flat_lay','alone_white','alone_grey','mannequin'],
+  '🔄 All Angles':['front','back','side','threeq','detail'],
+  '🛒 E-Commerce':['alone_white','flat_lay','detail','front'],
+  '📖 Lookbook':['lookbook','street_life','dynamic','walking'],
+  '🖼️ Banner+Group':['banner','group'],
+  '⭐ Full Pack':['front','back','side','detail','flat_lay','alone_white','lookbook','dynamic'],
 };
 
-// ════════ STATE ════════
-let falKey='';
-let cats={m:'',p:''};
-let ARs={m:'3:4',w:'1:1',p:'3:4'};
-let BGs={m:'white',w:'white',p:'white'};
-let bgModes={m:'pick',w:'pick',p:'pick'};
-let wCount=1, pm='g';
-let step=1;
-let bids={m:null,w:null,p:null};
-let ptimers={m:null,w:null,p:null};
-let spent=0;
-let SQ=[], pickedST=null;
-let pools={m:[],w:[],p:[]};
-let poolSel={m:new Set(),w:new Set(),p:new Set()};
-let groups={m:[],w:[],p:[]};
-let pendingCtx='m';
-let savedModels=[];
-let activeModel={m:null,p:null}; // {id,name,imageUrl}
-let srefFiles={m:[],w:[],p:[]};
+// ════ STATE ════
+let falKey='',selCat='',selAR='3:4',selBg='white',bgMode='pick';
+let curMode='model',promptMode='g',curStep=1,curView='upload';
+let batchId=null,pollTimer=null,totalSpent=0;
+let pool=[],poolSel=new Set(),groups=[],pendingImgs=[];
+let shots=[],pickedST=null;
+let savedModels=[],savedBgs=[],savedTemplates=[];
+let activeModel=null,activeBg=null;
+let allItems=[];
+let curFilter='all',curProdFilter='',curGridView='grid';
+let history=JSON.parse(localStorage.getItem('fai_hist')||'[]');
 
-// ════════ INIT ════════
-(function init(){
-  buildSTPicker();
-  setupAllDZ();
-  setupCatClicks();
-  setupARClicks();
-  setupBGPillClicks();
-  ['fk0','fk1','fk2'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    el.addEventListener('focus',function(){if(this.value.startsWith('•'))this.value='';});
-    el.addEventListener('keydown',e=>{if(e.key==='Enter')saveKey(i);});
-  });
-  document.getElementById('as-bg').addEventListener('change',function(){
-    document.getElementById('as-bgcw').style.display=this.value==='custom'?'block':'none';
-  });
-  document.getElementById('es-bg').addEventListener('change',function(){
-    document.getElementById('es-bgcw').style.display=this.value==='custom'?'block':'none';
-  });
-  document.getElementById('gprompt').addEventListener('input',updateRev);
-  document.getElementById('m-res').addEventListener('change',()=>{updCost('m');updateRev();});
+// Canvas editor state
+let ceImg=null,ceImgName='',ceOriginal=null;
+
+// ════ INIT ════
+(function(){
+  buildSTPicker();buildPacks();setupDZ();setupCatClicks();setupARClicks();setupBgClicks();
   document.getElementById('gn-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmGrp();});
   document.getElementById('sm-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSaveModel();});
-  updCost('m');updCost('w');updCost('p');
+  document.getElementById('sb-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSaveBg();});
+  document.getElementById('global-prompt').addEventListener('input',updateReview);
+  document.getElementById('res-sel').addEventListener('change',()=>{updateCost();updateWebCost();});
+  document.getElementById('fal-key').addEventListener('focus',function(){if(this.value.startsWith('•'))this.value='';});
+  document.getElementById('fal-key').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey();});
+  const k=sessionStorage.getItem('fai_k');
+  if(k){falKey=k;document.getElementById('fal-key').value='••••••••••••';setKeyUI(true);loadLib();}
+  renderHist();
 })();
 
-function buildSTPicker(){
-  document.getElementById('stpicker').innerHTML=ST.map(s=>`
-    <div class="stc" data-sid="${s.id}" onclick="pickST(this,'${s.id}')">
-      <span class="stci">${s.icon}</span><span class="stcn">${s.name}</span><span class="stcd">${s.desc}</span>
-      <span class="stck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></span>
-    </div>`).join('');
-}
-function pickST(el,id){document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));el.classList.add('on');pickedST=id;document.getElementById('as-err').style.display='none';}
+function buildSTPicker(){document.getElementById('stgrid').innerHTML=ST.map(s=>`<div class="stc" data-id="${s.id}" onclick="pickST(this,'${s.id}')"><span class="stci">${s.icon}</span><span class="stcn">${s.name}</span><span class="stcd">${s.desc}</span><span class="stck"><svg viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></span></div>`).join('');}
+function buildPacks(){document.getElementById('pkgrid').innerHTML=Object.keys(PACKS).map(n=>`<button class="pkbtn" onclick="addPack('${n}')">${n}</button>`).join('');}
+function pickST(el,id){document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));el.classList.add('on');pickedST=id;document.getElementById('st-err').style.display='none';}
 
-// ════════ KEY ════════
-function saveKey(n){
-  const ids=['fk0','fk1','fk2'];
-  const v=document.getElementById(ids[n]).value.trim();
+// ════ KEY ════
+function saveKey(){
+  const v=document.getElementById('fal-key').value.trim();
   if(v&&!v.startsWith('•'))falKey=v;
-  if(falKey) ids.forEach(id=>document.getElementById(id).value='••••••••••••');
-  ['kst0','kst1','kst2'].forEach(id=>{
-    const e=document.getElementById(id);
-    e.textContent=falKey?'✓ Key saved':'Enter your key';
-    e.className=falKey?'kst ok':'kst';
-  });
-  if(falKey){loadModels();loadStyles();}
-  updateRev();updCost('p');
+  if(falKey){sessionStorage.setItem('fai_k',falKey);document.getElementById('fal-key').value='••••••••••••';setKeyUI(true);loadLib();}
+  updateReview();
 }
+function setKeyUI(ok){const e=document.getElementById('kst');e.textContent=ok?'✓':'—';e.className=ok?'kst ok':'kst';}
 
-// ════════ NAV ════════
-function switchPage(p){
-  document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
-  document.getElementById('pg-'+p).classList.add('on');
-  document.querySelectorAll('.ntab').forEach((t,i)=>t.classList.toggle('on',['model','website','planner'][i]===p));
+// ════ MODE / NAV ════
+function setMode(btn){
+  document.querySelectorAll('#mode-btns .chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');curMode=btn.dataset.m;
+  document.getElementById('sb-style').style.display=curMode==='product'?'none':'block';
+  document.getElementById('sb-lock').style.display=curMode==='product'?'none':'block';
+  updateReview();
 }
+function showUpload(){curView='upload';document.getElementById('v-upload').style.display='block';document.getElementById('v-gen').style.display='none';document.getElementById('v-results').style.display='none';}
+function showGen(){
+  curView='gen';document.getElementById('v-upload').style.display='none';document.getElementById('v-gen').style.display='block';document.getElementById('v-results').style.display='none';
+  document.getElementById('gen-title').textContent={model:'Generate Model Images',product:'Generate Product Photos',planner:'Shot Planner'}[curMode]||'Generate';
+  document.getElementById('cfg-model').style.display=curMode!=='product'?'block':'none';
+  document.getElementById('cfg-product').style.display=curMode==='product'?'block':'none';
+  if(curMode!=='product')goStep(1);else updateWebCost();
+  syncGenModelLib();
+}
+function showResults(){curView='results';document.getElementById('v-upload').style.display='none';document.getElementById('v-gen').style.display='none';document.getElementById('v-results').style.display='block';}
+function newBatch(){if(pollTimer)clearInterval(pollTimer);batchId=null;allItems=[];showUpload();}
+
 function goStep(n){
-  step=n;
-  [1,2,3,4].forEach(i=>{
-    const s=document.getElementById('ms'+i);if(s)s.style.display=i===n?'block':'none';
-    const t=document.getElementById('st'+i);
-    if(t){t.classList.toggle('on',i===n);if(i<n)t.classList.add('done');else t.classList.remove('done');}
-  });
-  if(n===2&&pm==='i')renderPP();
-  if(n===3)updateRev();
+  curStep=n;
+  [1,2,3].forEach(i=>{const s=document.getElementById('st'+i);if(s)s.style.display=i===n?'block':'none';const t=document.getElementById('s'+i);if(t){t.classList.toggle('on',i===n);if(i<n)t.classList.add('done');else t.classList.remove('done');}});
+  if(n===2)syncGenModelLib();if(n===3)updateReview();
 }
 function setPM(m){
-  pm=m;
-  document.getElementById('pm-g').classList.toggle('on',m==='g');
-  document.getElementById('pm-i').classList.toggle('on',m==='i');
-  document.getElementById('gw').style.display=m==='g'?'block':'none';
-  document.getElementById('iw').style.display=m==='i'?'block':'none';
-  if(m==='i')renderPP();
+  promptMode=m;
+  document.getElementById('pm-g').classList.toggle('on',m==='g');document.getElementById('pm-i').classList.toggle('on',m==='i');
+  document.getElementById('pmg-wrap').style.display=m==='g'?'block':'none';document.getElementById('pmi-wrap').style.display=m==='i'?'block':'none';
+  if(m==='i')renderPerProd();
 }
-function renderPP(){
-  const list=document.getElementById('pplist');list.innerHTML='';
-  groups.m.forEach((g,i)=>{
-    const d=document.createElement('div');
-    d.style.cssText='display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--br);border-radius:var(--r);background:var(--bg);margin-bottom:7px';
-    const imgs=g.images.slice(0,3).map(im=>`<img src="data:${im.mimeType};base64,${im.b64}" style="width:36px;height:36px;object-fit:cover;border-radius:5px;flex-shrink:0"/>`).join('');
-    d.innerHTML=`<div style="display:flex;gap:3px">${imgs}</div><div style="flex:1"><div style="font-size:11px;font-weight:600;margin-bottom:3px">${g.name}</div><textarea id="pp${i}" rows="2" style="font-size:12px" placeholder="Prompt for ${g.name}..."></textarea></div>`;
-    list.appendChild(d);
-  });
-}
-
-// ════════ CAT / AR / BG ════════
-function setupCatClicks(){
-  [['cat-m','m'],['cat-p','p']].forEach(([gid,ctx])=>{
-    document.getElementById(gid).querySelectorAll('.chip').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        document.getElementById(gid).querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));
-        btn.classList.add('on');cats[ctx]=btn.dataset.v;
-        if(ctx==='m')updateRev();else updCost('p');
-      });
-    });
-  });
-}
-function setupARClicks(){
-  ['ar-m','ar-w','ar-p'].forEach(gid=>{
-    const el=document.getElementById(gid);if(!el)return;
-    const ctx=gid.split('-')[1];
-    el.querySelectorAll('.arb').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        el.querySelectorAll('.arb').forEach(b=>b.classList.remove('on'));
-        btn.classList.add('on');ARs[ctx]=btn.dataset.r;
-      });
-    });
-  });
-}
-function setupBGPillClicks(){
-  [['bgp-m','m'],['bgp-w','w'],['bgp-p','p']].forEach(([gid,ctx])=>{
-    const el=document.getElementById(gid);if(!el)return;
-    el.querySelectorAll('.bgp').forEach(p=>{
-      p.addEventListener('click',()=>{
-        el.querySelectorAll('.bgp').forEach(x=>x.classList.remove('on'));
-        p.classList.add('on');BGs[ctx]=p.dataset.b;
-        if(ctx==='w'){document.getElementById('w-bgcw').style.display=p.dataset.b==='custom'?'block':'none';}
-      });
-    });
-  });
-}
-function onBgMode(ctx){
-  const mode=document.getElementById(`${ctx}-bgmode`).value;
-  bgModes[ctx]=mode;
-  const pickEl=document.getElementById(`${ctx}-bgpick`);
-  const custEl=document.getElementById(`${ctx}-bgcw`);
-  if(pickEl)pickEl.style.display=mode==='pick'?'block':'none';
-  if(custEl)custEl.style.display=mode==='custom'?'block':'none';
-}
-function selWN(btn){document.querySelectorAll('[data-wn]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');wCount=parseInt(btn.dataset.wn);updCost('w');}
-
-// ════════ DROPZONES ════════
-function setupAllDZ(){
-  setupPoolDZ('dz-m','fi-m','m');
-  setupPoolDZ('dz-w','fi-w','w');
-  setupPoolDZ('dz-p','fi-p','p');
-  // Style ref for model page
-  document.getElementById('fi-sref').addEventListener('change',e=>{
-    addSrefFiles('m',Array.from(e.target.files));e.target.value='';
-  });
-}
-function setupPoolDZ(dzId,fiId,ctx){
-  const dz=document.getElementById(dzId),fi=document.getElementById(fiId);
-  fi.addEventListener('change',e=>{addToPool(ctx,Array.from(e.target.files));fi.value='';});
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');addToPool(ctx,Array.from(e.dataTransfer.files));});
-}
-
-function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
-
-async function addToPool(ctx,files){
-  for(const f of files.filter(f=>f.type.startsWith('image/'))){
-    const b64=await toB64(f);
-    pools[ctx].push({id:'pi'+Math.random().toString(36).slice(2),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});
-  }
-  renderPool(ctx);
-}
-
-async function addSrefFiles(ctx,files){
-  for(const f of files.filter(f=>f.type.startsWith('image/'))){
-    if(srefFiles[ctx].length>=3)break;
-    const b64=await toB64(f);
-    srefFiles[ctx].push({b64,mimeType:f.type||'image/jpeg',name:f.name});
-  }
-  renderSref(ctx);
-}
-
-function renderSref(ctx){
-  const el=document.getElementById('pool-sref');if(!el)return;
-  el.innerHTML='';
-  srefFiles[ctx].forEach((f,i)=>{
-    const d=document.createElement('div');d.className='pi';d.style.cursor='default';
-    d.innerHTML=`<img src="data:${f.mimeType};base64,${f.b64}"/><button class="pdel" style="display:flex" onclick="srefFiles['${ctx}'].splice(${i},1);renderSref('${ctx}')">×</button><div class="pname">${f.name}</div>`;
-    el.appendChild(d);
-  });
-}
-
-function renderPool(ctx){
-  const poolId={m:'pool-m',w:'pool-w',p:'pool-p'}[ctx];
-  const wrapId={m:'m-pool-wrap',w:'w-pool-wrap',p:'p-pool-wrap'}[ctx];
-  const el=document.getElementById(poolId);if(!el)return;
-  document.getElementById(wrapId).style.display=pools[ctx].length?'block':'none';
-  el.innerHTML='';
-  pools[ctx].forEach(pi=>{
-    const sel=poolSel[ctx].has(pi.id);
-    const d=document.createElement('div');
-    d.className='pi'+(sel?' sel':'');d.id='pi-'+pi.id;
-    d.innerHTML=`<img src="data:${pi.mimeType};base64,${pi.b64}"/>
-      <div class="pck"><div class="pck-ic"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div>
-      <button class="pdel" onclick="event.stopPropagation();delPoolImg('${ctx}','${pi.id}')">×</button>
-      <div class="pname">${pi.name}</div>`;
-    d.addEventListener('click',()=>toggleSel(ctx,pi.id));
-    el.appendChild(d);
-  });
-  updateSelUI(ctx);
-}
-
-function toggleSel(ctx,id){
-  if(poolSel[ctx].has(id))poolSel[ctx].delete(id);else poolSel[ctx].add(id);
-  const el=document.getElementById('pi-'+id);
-  if(el)el.classList.toggle('sel',poolSel[ctx].has(id));
-  updateSelUI(ctx);
-}
-function updateSelUI(ctx){
-  const n=poolSel[ctx].size;
-  const infoId={m:'m-psi',w:'w-psi',p:'p-psi'}[ctx];
-  const btnId={m:'m-gbtn',w:'w-gbtn',p:'p-gbtn'}[ctx];
-  const el=document.getElementById(infoId);
-  if(el)el.innerHTML=n>0?`<strong>${n} selected</strong> — ready to group`:'Click images to select, then group';
-  const btn=document.getElementById(btnId);
-  if(btn)btn.disabled=n===0;
-}
-function selAll(ctx){pools[ctx].forEach(pi=>poolSel[ctx].add(pi.id));renderPool(ctx);}
-function clrSel(ctx){poolSel[ctx].clear();renderPool(ctx);}
-function delPoolImg(ctx,id){pools[ctx]=pools[ctx].filter(p=>p.id!==id);poolSel[ctx].delete(id);renderPool(ctx);afterGrpChange(ctx);}
-
-function grpSel(ctx){
-  const sel=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
-  if(!sel.length)return;
-  pendingCtx=ctx;
-  document.getElementById('gn-sub').textContent=`${sel.length} image${sel.length!==1?'s':''} selected`;
-  const auto=sel[0].name.replace(/_?\d+$/,'').replace(/[-_]/g,' ').trim();
-  document.getElementById('gn-inp').value=auto||'Product '+(groups[ctx].length+1);
-  openM('m-grp-name');
-  setTimeout(()=>document.getElementById('gn-inp').select(),50);
-}
-
-function confirmGrp(){
-  const ctx=pendingCtx;
-  const name=document.getElementById('gn-inp').value.trim()||('Product '+(groups[ctx].length+1));
-  const sel=pools[ctx].filter(pi=>poolSel[ctx].has(pi.id));
-  if(!sel.length)return;
-  groups[ctx].push({id:'g'+Math.random().toString(36).slice(2),name,images:sel.map(pi=>({b64:pi.b64,mimeType:pi.mimeType}))});
-  const selIds=new Set(poolSel[ctx]);
-  pools[ctx]=pools[ctx].filter(pi=>!selIds.has(pi.id));
-  poolSel[ctx].clear();
-  closeM('m-grp-name');
-  renderPool(ctx);
-  renderGroups(ctx);
-  afterGrpChange(ctx);
-  toast(`"${name}" created with ${sel.length} image${sel.length!==1?'s':''}!`,'ok');
-}
-
-function renderGroups(ctx){
-  const listId={m:'m-groups',w:'w-groups',p:'p-groups'}[ctx];
-  const cntId={m:'m-gcnt',w:'w-gcnt',p:'p-gcnt'}[ctx];
-  const list=document.getElementById(listId);
-  if(!list)return;
-  if(!groups[ctx].length){
-    list.innerHTML='<div class="no-groups">No products yet — select images above and click "Group as Product"</div>';
-    return;
-  }
-  const cntEl=document.getElementById(cntId);
-  if(cntEl)cntEl.textContent=groups[ctx].length+' products';
-  list.innerHTML=groups[ctx].map((g,gi)=>{
-    const imgs=g.images.map((im,ii)=>`<div class="gi"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gidel" onclick="delGrpImg('${ctx}',${gi},${ii})">×</button></div>`).join('');
-    return `<div class="gc">
-      <div class="gc-hd">
-        <div class="gc-num">${gi+1}</div>
-        <input class="gc-name" value="${g.name.replace(/"/g,'&quot;')}" onchange="groups['${ctx}'][${gi}].name=this.value"/>
-        <button class="gc-del" onclick="delGrp('${ctx}',${gi})">✕</button>
-      </div>
-      <div class="gc-body">
-        <div class="gc-imgs">${imgs}</div>
-        <div class="gc-info">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
-      </div>
-    </div>`;
+function renderPerProd(){
+  document.getElementById('per-prod').innerHTML=groups.map((g,i)=>{
+    const imgs=g.images.slice(0,2).map(im=>`<img src="data:${im.mimeType};base64,${im.b64}" style="width:30px;height:30px;object-fit:cover;border-radius:5px;flex-shrink:0"/>`).join('');
+    return`<div style="display:flex;gap:8px;align-items:flex-start;padding:8px;border:1px solid var(--br);border-radius:var(--r);background:var(--bg);margin-bottom:7px"><div style="display:flex;gap:3px">${imgs}</div><div style="flex:1"><div style="font-size:11px;font-weight:600;margin-bottom:4px">${g.name}</div><textarea id="pp${i}" rows="2" style="font-size:12px" placeholder="Scene prompt for ${g.name}..."></textarea></div></div>`;
   }).join('');
-  afterGrpChange(ctx);
 }
 
-function delGrp(ctx,i){groups[ctx].splice(i,1);renderGroups(ctx);}
-function delGrpImg(ctx,gi,ii){groups[ctx][gi].images.splice(ii,1);if(!groups[ctx][gi].images.length)groups[ctx].splice(gi,1);renderGroups(ctx);}
-function afterGrpChange(ctx){
-  if(ctx==='m'){document.getElementById('m-next1').disabled=groups.m.length===0;updCost('m');updateRev();}
-  if(ctx==='w')updCost('w');
-  if(ctx==='p')updCost('p');
+// ════ CAT / AR / BG ════
+function setupCatClicks(){document.getElementById('cat-grid').querySelectorAll('.chip').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('cat-grid').querySelectorAll('.chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');selCat=btn.dataset.v;updateReview();});});}
+function setupARClicks(){document.getElementById('ar-grid').querySelectorAll('.arb').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('ar-grid').querySelectorAll('.arb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');selAR=btn.dataset.r;});});}
+function setupBgClicks(){document.getElementById('bgps').querySelectorAll('.bgp').forEach(el=>{el.addEventListener('click',()=>{document.getElementById('bgps').querySelectorAll('.bgp').forEach(p=>p.classList.remove('on'));el.classList.add('on');selBg=el.dataset.b;});});}
+function onBgMode(){bgMode=document.getElementById('bg-mode').value;document.getElementById('bg-preset-wrap').style.display=bgMode==='pick'?'block':'none';document.getElementById('bg-cust-wrap').style.display=bgMode==='custom'?'block':'none';}
+function getBgOpt(){
+  if(activeBg)return{bgOption:activeBg.bgOption,bgCustom:activeBg.bgCustom||''};
+  if(bgMode==='ai')return{bgOption:'ai',bgCustom:''};
+  if(bgMode==='custom')return{bgOption:'custom',bgCustom:document.getElementById('bg-cust').value.trim()};
+  return{bgOption:selBg||'white',bgCustom:''};
 }
 
-// ════════ COST ════════
-function rate(id){return document.getElementById(id)?.value==='2K'?0.12:0.08;}
-function updCost(ctx){
-  if(ctx==='m'){const r=rate('m-res');const n=groups.m.length;document.getElementById('m-camt').textContent=`$${(n*r).toFixed(2)}`;document.getElementById('m-cmeta').textContent=`${n} product${n!==1?'s':''} × $${r}`;}
-  if(ctx==='w'){const r=rate('w-res');const n=groups.w.length*wCount;document.getElementById('w-camt').textContent=`$${(n*r).toFixed(2)}`;document.getElementById('w-cmeta').textContent=`${n} img × $${r}`;}
-  if(ctx==='p'){
-    const r=rate('p-res');const n=groups.p.length*SQ.length;
-    document.getElementById('p-camt').textContent=`$${(n*r).toFixed(2)}`;
-    document.getElementById('p-cmeta').textContent=`${SQ.length} shots × ${groups.p.length} products = ${n} imgs`;
-    document.getElementById('sqbdg').textContent=SQ.length+' shots';
-    document.getElementById('spsumm').textContent=n>0?`${n} images · ~$${(n*r).toFixed(2)}`:'Add shots and products';
-    document.getElementById('spgen').disabled=!falKey||!cats.p||!groups.p.length||!SQ.length;
-  }
+// ════ POOL ════
+function setupDZ(){const dz=document.getElementById('dz'),fi=document.getElementById('fi');fi.addEventListener('change',e=>{addPool(Array.from(e.target.files));fi.value='';});dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');addPool(Array.from(e.dataTransfer.files));});}
+function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
+async function addPool(files){for(const f of files.filter(f=>f.type.startsWith('image/'))){const b64=await toB64(f);pool.push({id:'p'+Math.random().toString(36).slice(2,9),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});}renderPool();}
+function renderPool(){
+  const grid=document.getElementById('pgrid'),wrap=document.getElementById('pool-wrap');
+  document.getElementById('pool-bdg').textContent=pool.length+' in pool';
+  wrap.style.display=pool.length?'block':'none';grid.innerHTML='';
+  pool.forEach(pi=>{const sel=poolSel.has(pi.id);const d=document.createElement('div');d.className='pi'+(sel?' sel':'');d.id='pp'+pi.id;
+    d.innerHTML=`<img src="data:${pi.mimeType};base64,${pi.b64}"/><div class="pck"><div class="pci"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div><button class="xd" onclick="event.stopPropagation();rmPool('${pi.id}')">×</button><div class="pn">${pi.name}</div>`;
+    d.addEventListener('click',()=>togSel(pi.id));grid.appendChild(d);
+  });updateSelUI();
 }
-function updateRev(){
-  const n=groups.m.length,gp=document.getElementById('gprompt').value.trim(),r=rate('m-res');
-  document.getElementById('m-camt').textContent=`$${(n*r).toFixed(2)}`;
-  document.getElementById('m-cmeta').textContent=`${n} product${n!==1?'s':''} × $${r}`;
-  document.getElementById('rev-n').textContent=`${n} product${n!==1?'s':''}`;
-  document.getElementById('rev-m').textContent=`${cats.m||'no cat'} · ${ARs.m} · bg:${BGs.m}`;
-  const am=activeModel.m;
-  const lr=document.getElementById('m-lock-row');
-  if(lr){lr.style.display=am?'block':'none';if(am)document.getElementById('m-lock-name').textContent=am.name;}
-  const w=[];
-  if(!falKey)w.push('<div style="color:var(--red);font-size:12px;margin-bottom:4px">⚠ Key not saved</div>');
-  if(!cats.m)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No category</div>');
-  if(!n)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No products grouped</div>');
-  if(!gp&&pm==='g')w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No prompt written</div>');
-  document.getElementById('rev-w').innerHTML=w.join('');
-  document.getElementById('gen-btn').disabled=!falKey||!cats.m||!n||(!gp&&pm==='g');
-  document.getElementById('gen-btn').textContent=`Generate ${n} Image${n!==1?'s':''}`;
-}
+function togSel(id){if(poolSel.has(id))poolSel.delete(id);else poolSel.add(id);const e=document.getElementById('pp'+id);if(e)e.classList.toggle('sel',poolSel.has(id));updateSelUI();}
+function updateSelUI(){const n=poolSel.size;document.getElementById('pinfo').innerHTML=n?`<strong>${n} selected</strong> — ready to group`:'Click images to select';document.getElementById('grp-btn').disabled=n===0;}
+function selAll(){pool.forEach(p=>poolSel.add(p.id));renderPool();}
+function clrSel(){poolSel.clear();renderPool();}
+function rmPool(id){pool=pool.filter(p=>p.id!==id);poolSel.delete(id);renderPool();}
 
-// ════════ SHOT QUEUE ════════
-function openAddShot(){
-  pickedST=null;document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));
-  ['as-bg','as-ar','as-style'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='as-ar'?'3:4':id==='as-bg'?'ai':'';});
-  document.getElementById('as-bgcw').style.display='none';
-  document.getElementById('as-err').style.display='none';
-  document.getElementById('as-prompt').value='';
-  openM('m-add-shot');
+// ════ GROUPS ════
+function startGrp(){
+  const sel=pool.filter(p=>poolSel.has(p.id));if(!sel.length)return;
+  pendingImgs=sel;
+  const auto=sel[0].name.replace(/_?\d+$/,'').replace(/[-_]/g,' ').trim();
+  document.getElementById('gn-inp').value=auto||'Product '+(groups.length+1);
+  document.getElementById('gn-sub').textContent=`${sel.length} image${sel.length!==1?'s':''} will be grouped`;
+  openM('m-grpname');setTimeout(()=>document.getElementById('gn-inp').select(),50);
 }
-function confirmShot(){
-  if(!pickedST){document.getElementById('as-err').style.display='block';return;}
-  const st=ST.find(s=>s.id===pickedST);
-  const bg=document.getElementById('as-bg').value;
-  SQ.push({shotType:pickedST,label:st.name,icon:st.icon,bg,bgCustom:document.getElementById('as-bgc').value.trim(),aspectRatio:document.getElementById('as-ar').value,styleKey:document.getElementById('as-style').value,customPrompt:document.getElementById('as-prompt').value.trim()});
-  closeM('m-add-shot');renderSQ();updCost('p');toast(`"${st.name}" added`,'ok');
+function confirmGrp(){
+  if(!pendingImgs.length)return;
+  const name=document.getElementById('gn-inp').value.trim()||('Product '+(groups.length+1));
+  groups.push({id:'g'+Math.random().toString(36).slice(2,9),name,images:pendingImgs.map(p=>({b64:p.b64,mimeType:p.mimeType})),modelId:null,modelUrl:null,modelName:null});
+  const ids=new Set(pendingImgs.map(p=>p.id));pool=pool.filter(p=>!ids.has(p.id));poolSel.clear();pendingImgs=[];
+  closeM('m-grpname');renderPool();renderGroups();updContinue();toast(`"${name}" grouped`,'ok');
 }
-function addShotGroup(g){
-  (SG[g]||[]).forEach(tid=>{
-    const st=ST.find(s=>s.id===tid);if(!st)return;
-    const bg=tid.includes('white')?'white':tid.includes('grey')||tid==='flat_lay'||tid==='mannequin'?'grey':'ai';
-    const ar=tid==='flat_lay'||tid.startsWith('alone')?'1:1':'3:4';
-    SQ.push({shotType:tid,label:st.name,icon:st.icon,bg,bgCustom:'',aspectRatio:ar,styleKey:'',customPrompt:''});
-  });
-  renderSQ();updCost('p');toast('Pack added','ok');
+function renderGroups(){
+  const con=document.getElementById('grps-con');document.getElementById('grps-bdg').textContent=groups.length+' groups';
+  if(!groups.length){con.innerHTML='<div class="no-grps">No products grouped yet</div>';return;}
+  con.innerHTML='<div class="gstack">'+groups.map((g,gi)=>{
+    const imgs=g.images.map((im,ii)=>`<div class="gci"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gd" onclick="rmGI(${gi},${ii})">×</button></div>`).join('');
+    const safeName=g.name.replace(/"/g,'&quot;');
+    const mrow=g.modelUrl
+      ?`<div class="gcmrow"><img class="gcmthumb" src="${g.modelUrl}" onerror="this.style.display='none'"/><div class="gcminfo"><div class="gcmname">🔒 ${g.modelName}</div><div class="gcmsub">Per-group model</div></div><button class="bghost bxs" onclick="rmGM(${gi})">✕</button></div>`
+      :savedModels.length?`<div class="gcmrow"><div style="flex:1;font-size:11px;color:var(--t3)">No per-group model</div><select onchange="setGM(${gi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--br2);border-radius:6px"><option value="">Assign model...</option>${savedModels.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>`
+      :`<div class="gcmrow"><div style="font-size:11px;color:var(--t3)">Save a model to assign per-group</div></div>`;
+    return`<div class="gc"><div class="gchd"><div class="gcnum">${gi+1}</div><input class="gcname" value="${safeName}" onchange="groups[${gi}].name=this.value"/><button class="gcdel" onclick="delG(${gi})">✕</button></div><div class="gcbody"><div class="gcimgs">${imgs}</div><div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>${mrow}</div></div>`;
+  }).join('')+'</div>';
 }
-function clearSQ(){SQ=[];renderSQ();updCost('p');}
-function remShot(i){SQ.splice(i,1);renderSQ();updCost('p');}
+function delG(i){groups.splice(i,1);renderGroups();updContinue();}
+function rmGI(gi,ii){groups[gi].images.splice(ii,1);if(!groups[gi].images.length)groups.splice(gi,1);renderGroups();updContinue();}
+function rmGM(gi){groups[gi].modelId=null;groups[gi].modelUrl=null;groups[gi].modelName=null;renderGroups();}
+function setGM(gi,idx){if(idx==='')return;const m=savedModels[parseInt(idx)];if(!m)return;groups[gi].modelId=m.id;groups[gi].modelUrl=m.imageUrl;groups[gi].modelName=m.name;renderGroups();}
+function updContinue(){document.getElementById('continue-btn').disabled=groups.length===0;if(curView==='gen')updateReview();}
+
+// ════ SHOTS ════
+function addPack(name){
+  (PACKS[name]||[]).forEach(tid=>{const st=ST.find(s=>s.id===tid);if(!st)return;const bg=tid.includes('white')?'white':tid.includes('grey')||tid==='flat_lay'||tid==='mannequin'?'grey':'ai';const ar=tid==='flat_lay'||tid.startsWith('alone')?'1:1':tid==='banner'?'16:9':'3:4';shots.push({shotType:tid,label:st.name,icon:st.icon,bg,bgCustom:'',aspectRatio:ar,styleKey:'',resolution:'',customPrompt:''});});
+  renderSQ();toast(name+' added','ok');
+}
+function confirmAddShot(){
+  if(!pickedST){document.getElementById('st-err').style.display='block';return;}
+  const st=ST.find(s=>s.id===pickedST);const bg=document.getElementById('as-bg').value;
+  shots.push({shotType:pickedST,label:st.name,icon:st.icon,bg,bgCustom:document.getElementById('as-bgc').value.trim(),aspectRatio:document.getElementById('as-ar').value,styleKey:document.getElementById('as-style').value,resolution:document.getElementById('as-res').value,customPrompt:document.getElementById('as-prompt').value.trim()});
+  closeM('m-addshot');pickedST=null;document.querySelectorAll('.stc').forEach(c=>c.classList.remove('on'));
+  ['as-ar','as-style','as-res'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='as-ar'?'3:4':''});
+  document.getElementById('as-bg').value='ai';document.getElementById('as-bgcw').style.display='none';document.getElementById('as-prompt').value='';
+  renderSQ();toast(st.name+' added','ok');
+}
+function clearShots(){shots=[];renderSQ();}
+function rmShot(i){shots.splice(i,1);renderSQ();}
 function openEditShot(i){
-  const s=SQ[i];
-  document.getElementById('esi').value=i;
-  document.getElementById('es-bg').value=s.bg||'ai';
-  document.getElementById('es-ar').value=s.aspectRatio||'3:4';
-  document.getElementById('es-style').value=s.styleKey||'';
-  document.getElementById('es-prompt').value=s.customPrompt||'';
-  document.getElementById('es-bgcw').style.display=s.bg==='custom'?'block':'none';
-  document.getElementById('es-bgc').value=s.bgCustom||'';
-  openM('m-edit-shot');
+  const s=shots[i];document.getElementById('esi').value=i;document.getElementById('es-bg').value=s.bg||'ai';document.getElementById('es-ar').value=s.aspectRatio||'3:4';document.getElementById('es-style').value=s.styleKey||'';document.getElementById('es-res').value=s.resolution||'';document.getElementById('es-prompt').value=s.customPrompt||'';document.getElementById('es-bgcw').style.display=s.bg==='custom'?'block':'none';document.getElementById('es-bgc').value=s.bgCustom||'';
+  openM('m-editshot');
 }
 function saveEditShot(){
-  const i=parseInt(document.getElementById('esi').value);
-  SQ[i].bg=document.getElementById('es-bg').value;
-  SQ[i].bgCustom=document.getElementById('es-bgc').value.trim();
-  SQ[i].aspectRatio=document.getElementById('es-ar').value;
-  SQ[i].styleKey=document.getElementById('es-style').value;
-  SQ[i].customPrompt=document.getElementById('es-prompt').value.trim();
-  closeM('m-edit-shot');renderSQ();toast('Shot updated','ok');
+  const i=parseInt(document.getElementById('esi').value);shots[i].bg=document.getElementById('es-bg').value;shots[i].bgCustom=document.getElementById('es-bgc').value.trim();shots[i].aspectRatio=document.getElementById('es-ar').value;shots[i].styleKey=document.getElementById('es-style').value;shots[i].resolution=document.getElementById('es-res').value;shots[i].customPrompt=document.getElementById('es-prompt').value.trim();
+  closeM('m-editshot');renderSQ();toast('Shot updated','ok');
 }
-function toggleSI(i){document.getElementById('sq'+i)?.classList.toggle('open');}
 function renderSQ(){
-  const el=document.getElementById('sq'),em=document.getElementById('sqempty');
-  if(!SQ.length){el.innerHTML='';el.appendChild(em);em.style.display='block';return;}
-  em.style.display='none';
-  el.innerHTML=SQ.map((s,i)=>`
-    <div class="si" id="sq${i}">
-      <div class="sihd" onclick="toggleSI(${i})">
-        <div class="sil"><div class="sinb">${i+1}</div><div class="sii">${s.icon}</div>
-          <div class="siinfo"><div class="sinn">${s.label}</div><div class="sinm">${s.aspectRatio} · bg:${s.bg}${s.styleKey?' · '+s.styleKey:''}</div></div>
-        </div>
-        <div class="siacts"><button class="ibt" onclick="event.stopPropagation();openEditShot(${i})">✏</button><button class="ibt danger" onclick="event.stopPropagation();remShot(${i})">✕</button></div>
-      </div>
-      <div class="sibody">${s.customPrompt?`Extra: ${s.customPrompt}`:'No extra prompt'}</div>
-    </div>`).join('');
+  const el=document.getElementById('sq-list');const cnt=document.getElementById('sq-cnt');
+  if(cnt)cnt.textContent=shots.length+' shot'+(shots.length!==1?'s':'');
+  if(!shots.length){el.innerHTML='<div class="semp">No shots planned — add a pack or individual shot, or leave empty for one front-view per product.</div>';return;}
+  el.innerHTML='<div class="sqwrap">'+shots.map((s,i)=>`<div class="srow"><div class="sicon">${s.icon}</div><div class="sinfo"><div class="sname">${i+1}. ${s.label}</div><div class="smeta">${s.aspectRatio} · bg:${s.bg}${s.styleKey?' · '+s.styleKey:''}${s.customPrompt?' · extra':''}</div></div><div class="sacts"><button class="ibt" onclick="openEditShot(${i})">✏</button><button class="ibt d" onclick="rmShot(${i})">✕</button></div></div>`).join('')+'</div>';
 }
 
-// ════════ API ════════
-function getBgOpt(ctx){
-  const mode=bgModes[ctx];
-  if(mode==='ai')return{bgOption:'ai',bgCustom:''};
-  if(mode==='custom')return{bgOption:'custom',bgCustom:document.getElementById(`${ctx}-bgc`)?.value?.trim()||''};
-  return{bgOption:BGs[ctx]||'white',bgCustom:''};
+// ════ COST / REVIEW ════
+function getRate(){return document.getElementById('res-sel').value==='2K'?0.12:0.08;}
+function updateCost(){const n=groups.length*(shots.length||1),r=getRate();const ca=document.getElementById('cost-num'),cm=document.getElementById('cost-meta');if(ca)ca.textContent='$'+(n*r).toFixed(2);if(cm)cm.textContent=`${n} image${n!==1?'s':''} × $${r}`;}
+function updateWebCost(){const n=groups.length,r=getRate();const ca=document.getElementById('w-cost-num'),cm=document.getElementById('w-cost-meta');if(ca)ca.textContent='$'+(n*r).toFixed(2);if(cm)cm.textContent=`${n} image${n!==1?'s':''} × $${r}`;const btn=document.getElementById('w-gen-btn');if(btn)btn.disabled=!falKey||!selCat||!groups.length;}
+function updateReview(){
+  updateCost();
+  const n=groups.length,s=shots.length||1;
+  const rn=document.getElementById('rev-n'),rd=document.getElementById('rev-d');
+  if(rn)rn.textContent=`${n} product${n!==1?'s':''} × ${s} shot${s!==1?'s':''}`;
+  if(rd)rd.textContent=`${selCat||'no category'} · ${selAR} · ${document.getElementById('res-sel').value}`;
+  const ld=document.getElementById('lock-disp');
+  if(ld){const am=activeModel;ld.innerHTML=am?`<div class="lkbar"><img src="${am.imageUrl}" onerror="this.style.display='none'"/><div style="flex:1"><div class="lkname">🔒 ${am.name}</div><div class="lksub">Visual anchor for every shot</div></div><button class="lkdel" onclick="clearModelLock()">✕</button></div>`:''}
+  const w=[];
+  if(!falKey)w.push('<div style="color:var(--red);font-size:12px;margin-bottom:4px">⚠ API key not saved</div>');
+  if(!selCat)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No category selected</div>');
+  if(!groups.length)w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No products grouped</div>');
+  const gp=document.getElementById('global-prompt');if(gp&&!gp.value.trim()&&promptMode==='g')w.push('<div style="color:var(--ylw);font-size:12px;margin-bottom:4px">⚠ No prompt written</div>');
+  const ww=document.getElementById('gen-warns');if(ww)ww.innerHTML=w.join('');
+  const gb=document.getElementById('gen-btn');
+  if(gb){const gp2=document.getElementById('global-prompt');gb.disabled=!falKey||!selCat||!groups.length||(promptMode==='g'&&gp2&&!gp2.value.trim());const tot=n*s;gb.textContent=`Generate ${tot} Image${tot!==1?'s':''}`;}
 }
 
-async function startModelGen(){
-  const gp=document.getElementById('gprompt').value.trim();
-  if(!falKey||!cats.m||!groups.m.length||(!gp&&pm==='g'))return;
-  document.getElementById('gen-btn').disabled=true;document.getElementById('gen-btn').textContent='Preparing...';
+// ════ GENERATION ════
+async function startGen(){
+  const gp=document.getElementById('global-prompt').value.trim();
+  if(!falKey||!selCat||!groups.length)return;
+  const btn=document.getElementById('gen-btn');btn.disabled=true;btn.textContent='Preparing...';
   try{
-    const products=groups.m.map((g,i)=>({
+    // Build smart category hint from all component names if outfit
+    const products=groups.map((g,i)=>({
       name:g.name,
       images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),
-      prompt:pm==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
+      prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
+      savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
+      componentNames:selCat==='outfit'?groups.map(gg=>gg.name):[],
     }));
-    const{bgOption,bgCustom}=getBgOpt('m');
-    const r=await fetch('/api/batch/create',{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:pm==='g'?'global':'individual',
-        category:cats.m,styleKey:document.getElementById('m-style').value,
-        bgOption,bgCustom,gender:document.getElementById('m-gender').value,
-        realism:document.getElementById('m-realism').value,
-        resolution:document.getElementById('m-res').value,aspectRatio:ARs.m,
-        modelDesc:document.getElementById('m-mdesc').value.trim(),
-        styleRefImages:srefFiles.m,
-        savedModelUrl:activeModel.m?.imageUrl||null,
+    const{bgOption,bgCustom}=getBgOpt();
+    const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
+      body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:promptMode==='g'?'global':'individual',
+        category:selCat,styleKey:document.getElementById('style-sel').value,bgOption,bgCustom,
+        gender:document.getElementById('gender-sel').value,realism:document.getElementById('real-sel').value,
+        resolution:document.getElementById('res-sel').value,aspectRatio:selAR,
+        modelDesc:document.getElementById('model-desc')?.value?.trim()||'',
+        savedModelUrl:activeModel?.imageUrl||null,shots:shots.length?shots:null,
       })});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    bids.m=d.batchId;goStep(4);document.getElementById('mprog').style.display='block';startPoll('m');toast(`${d.total} images queued`,'ok');
-  }catch(e){toast(e.message,'err');document.getElementById('gen-btn').disabled=false;updateRev();}
+    const data=await resp.json();if(data.error)throw new Error(data.error);
+    batchId=data.batchId;allItems=[];showResults();
+    document.getElementById('prog').style.display='block';document.getElementById('zip-btn').disabled=true;
+    document.getElementById('rgrid').innerHTML='';
+    buildProductFilterChips();
+    saveHist(data.batchId,gp,groups.length,data.total);startPoll();toast(`${data.total} images queued`,'ok');
+  }catch(e){toast(e.message,'err');btn.disabled=false;updateReview();}
 }
-
 async function startWebGen(){
-  if(!falKey||!groups.w.length){toast('Save key + group products','err');return;}
-  document.getElementById('wgen').disabled=true;document.getElementById('wgen').textContent='Preparing...';
+  if(!falKey||!groups.length)return;
+  const btn=document.getElementById('w-gen-btn');btn.disabled=true;btn.textContent='Preparing...';
   try{
-    const gp=document.getElementById('wprompt').value.trim()||'professional product photo';
-    const wBg=BGs.w||'white';
-    const wBgC=wBg==='custom'?document.getElementById('w-bgc').value.trim():'';
-    const shotTypes=['alone_white','flat_lay','alone_grey'];
-    const shots=wCount>1?Array.from({length:wCount},(_,v)=>({shotType:shotTypes[v]||'alone_white',label:`Shot ${v+1}`,bg:wBg,bgCustom:wBgC,aspectRatio:ARs.w,styleKey:'',customPrompt:''})):null;
-    const products=groups.w.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp}));
-    const r=await fetch('/api/batch/create',{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body:JSON.stringify({type:'website',products,globalPrompt:gp,promptMode:'global',
-        category:'other',bgOption:wBg,bgCustom:wBgC,resolution:document.getElementById('w-res').value,
-        aspectRatio:ARs.w,shots:shots||undefined,
-      })});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    bids.w=d.batchId;document.getElementById('wprog').style.display='block';document.getElementById('wzip').style.display='inline-flex';startPoll('w');toast(`${d.total} photos queued`,'ok');
-  }catch(e){toast(e.message,'err');document.getElementById('wgen').disabled=false;document.getElementById('wgen').textContent='Generate Product Photos';}
+    const gp=document.getElementById('prod-prompt')?.value?.trim()||'professional product photo';
+    const{bgOption,bgCustom}=getBgOpt();
+    const products=groups.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),prompt:gp}));
+    const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({type:'website',products,globalPrompt:gp,promptMode:'global',category:'other',bgOption,bgCustom,resolution:document.getElementById('res-sel').value,aspectRatio:selAR})});
+    const data=await resp.json();if(data.error)throw new Error(data.error);
+    batchId=data.batchId;allItems=[];showResults();
+    document.getElementById('prog').style.display='block';document.getElementById('zip-btn').disabled=true;document.getElementById('rgrid').innerHTML='';
+    buildProductFilterChips();saveHist(data.batchId,gp,groups.length,data.total);startPoll();toast(`${data.total} queued`,'ok');
+  }catch(e){toast(e.message,'err');btn.disabled=false;updateWebCost();}
 }
 
-async function startPlanGen(){
-  if(!falKey||!cats.p||!groups.p.length||!SQ.length)return;
-  document.getElementById('spgen').disabled=true;document.getElementById('spgen').textContent='Preparing...';
-  try{
-    const gp=document.getElementById('pprompt').value.trim()||'professional fashion photo';
-    const{bgOption,bgCustom}=getBgOpt('p');
-    const products=groups.p.map(g=>({name:g.name,images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType}))}));
-    const r=await fetch('/api/batch/create',{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
-      body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:'global',
-        category:cats.p,styleKey:document.getElementById('p-style').value,
-        bgOption,bgCustom,gender:document.getElementById('p-gender').value,
-        realism:document.getElementById('p-realism').value,
-        resolution:document.getElementById('p-res').value,aspectRatio:ARs.p,
-        modelDesc:document.getElementById('p-mdesc').value.trim(),
-        shots:SQ,savedModelUrl:activeModel.p?.imageUrl||null,
-      })});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    bids.p=d.batchId;document.getElementById('pprog').style.display='block';document.getElementById('pzip').style.display='inline-flex';startPoll('p');toast(`${d.total} shots queued`,'ok');
-  }catch(e){toast(e.message,'err');document.getElementById('spgen').disabled=false;updCost('p');}
+// ════ FILTER / VIEW ════
+function setFilter(btn,f){document.querySelectorAll('.fb-chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');curFilter=f;renderFiltered();}
+function setProdFilter(prodName){curProdFilter=curProdFilter===prodName?'':prodName;document.querySelectorAll('.prod-filter').forEach(b=>{b.classList.toggle('on',b.dataset.prod===curProdFilter);});renderFiltered();}
+function setView(v,btn){curGridView=v;document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');const grid=document.getElementById('rgrid');grid.className='rgrid'+(v==='compact'?' compact':v==='list'?' list':'');}
+function buildProductFilterChips(){
+  const con=document.getElementById('product-filter-chips');const prods=[...new Set(groups.map(g=>g.name))];
+  con.innerHTML=prods.map(p=>`<button class="fb-chip prod-filter" data-prod="${p}" onclick="setProdFilter('${p}')">${p}</button>`).join('');
+}
+function renderFiltered(){
+  const grid=document.getElementById('rgrid');grid.innerHTML='';
+  let filtered=allItems;
+  if(curFilter==='done')filtered=filtered.filter(i=>i.status==='done');
+  else if(curFilter==='generating')filtered=filtered.filter(i=>['uploading','generating','queued','waiting'].includes(i.status));
+  else if(curFilter==='error')filtered=filtered.filter(i=>i.status==='error');
+  if(curProdFilter)filtered=filtered.filter(i=>i.productName===curProdFilter);
+  filtered.forEach(it=>renderResultCard(it));
 }
 
-// ════════ POLLING ════════
-const PC={
-  m:{prog:'mprog',pct:'mpct',fil:'mfil',dn:'mdn',tot:'mtot',grid:'rg-m',zip:'mzip',rc:'mrc'},
-  w:{prog:'wprog',pct:'wpct',fil:'wfil',dn:'wdn',tot:'wtot',grid:'rg-w',zip:'wzip'},
-  p:{prog:'pprog',pct:'ppct',fil:'pfil',dn:'pdn',tot:'ptot',grid:'rg-p',zip:'pzip'},
-};
-function startPoll(ctx){if(ptimers[ctx])clearInterval(ptimers[ctx]);ptimers[ctx]=setInterval(()=>doPoll(ctx),3500);doPoll(ctx);}
-async function doPoll(ctx){
-  const bid=bids[ctx];if(!bid)return;
+// ════ POLL / RESULTS ════
+function startPoll(){if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(doPoll,3500);doPoll();}
+async function doPoll(){
+  if(!batchId)return;
   try{
-    const resp=await fetch(`/api/batch/${bid}/status`);const data=await resp.json();if(data.error)return;
-    const{total:tot,completed:dn}=data,pct=tot?Math.round(dn/tot*100):0;
-    const cfg=PC[ctx];
-    const f=document.getElementById(cfg.fil),p=document.getElementById(cfg.pct);
-    if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';
-    const de=document.getElementById(cfg.dn),te=document.getElementById(cfg.tot);
-    if(de)de.textContent=dn+' done';if(te)te.textContent='of '+tot;
-    if(cfg.rc){const ce=document.getElementById(cfg.rc);if(ce)ce.textContent=`${dn}/${tot} complete`;}
-    renderRes(data.items,cfg.grid,ctx);
-    if(data.status==='done'){
-      clearInterval(ptimers[ctx]);
-      const pg=document.getElementById(cfg.prog);if(pg)pg.style.display='none';
-      const z=document.getElementById(cfg.zip);if(z)z.disabled=false;
-      toast('All done! ✓','ok');
-      if(ctx==='m'){document.getElementById('gen-btn').disabled=false;updateRev();}
-      if(ctx==='w'){document.getElementById('wgen').disabled=false;document.getElementById('wgen').textContent='Generate Product Photos';}
-      if(ctx==='p'){document.getElementById('spgen').disabled=false;updCost('p');}
+    const resp=await fetch('/api/batch/'+batchId+'/status');const data=await resp.json();if(data.error)return;
+    const{total,completed,status}=data,pct=total?Math.round(completed/total*100):0;
+    document.getElementById('pfil').style.width=pct+'%';document.getElementById('ppct').textContent=pct+'%';
+    document.getElementById('pdn').textContent=completed+' done';document.getElementById('ptot').textContent='of '+total;
+    allItems=data.items;renderFiltered();
+    if(status==='done'){
+      clearInterval(pollTimer);document.getElementById('prog').style.display='none';document.getElementById('zip-btn').disabled=false;
+      totalSpent+=completed*getRate();document.getElementById('spend').textContent='$'+totalSpent.toFixed(2);
+      updateHist(batchId,data.items.filter(i=>i.resultUrl).map(i=>i.resultUrl));toast('All done! ✓','ok');
     }
   }catch{}
 }
 
-function renderRes(items,gridId,ctx){
-  const grid=document.getElementById(gridId);
-  items.forEach(it=>{
-    let card=document.getElementById('rc-'+it.id);
-    if(!card){card=document.createElement('div');card.className='rc';card.id='rc-'+it.id;grid.appendChild(card);}
-    if(it.status==='done'&&it.resultUrl){
-      const ar=it.aspectRatio||'3:4';const[aw,ah]=ar.split(':').map(Number);const pp=Math.round(ah/aw*100);
-      card.innerHTML=`
-        <div class="rcimg" style="padding-bottom:${pp}%;position:relative">
-          <img src="${it.resultUrl}" alt="${it.productName||it.name}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>
-          <div class="rcov" style="position:absolute">
-            <button onclick="openEI('${it.id}','${it.name}','${ctx}')">✏ Edit</button>
-            <button onclick="doUpscale('${it.id}','${ctx}')">↑ Upscale</button>
-            <a href="${it.resultUrl}" target="_blank" download="${(it.productName||it.name).replace(/[^a-z0-9]/gi,'_')}.jpg">↓ Save</a>
-          </div>
-        </div>
-        <div class="rcm">
-          <div class="rcn">${it.productName||it.name}</div>
-          ${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}
-          <div class="rcacts">
-            <button class="btn bout bxs" onclick="openEI('${it.id}','${it.name}','${ctx}')">Edit</button>
-            <button class="btn bout bxs" onclick="doUpscale('${it.id}','${ctx}')">↑</button>
-            <a href="${it.resultUrl}" target="_blank" download="${(it.productName||it.name).replace(/[^a-z0-9]/gi,'_')}.jpg" class="btn bout bxs">↓</a>
-            ${ctx!=='w'?`<button class="smb" onclick="openSaveModel('${it.resultUrl}')">🔒 Save Model</button>`:''}
-          </div>
-        </div>`;
-    }else if(it.status==='error'){
-      card.innerHTML=`<div class="rcm"><div class="ebox">${it.error||'Failed'}<br><button onclick="openEI('${it.id}','${it.name}','${ctx}')" style="margin-top:5px;background:none;border:1px solid rgba(220,38,38,.35);color:var(--red);border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit">Retry</button></div><div class="rcn">${it.productName||it.name}</div></div>`;
-    }else{
-      const lab={queued:'Queued',uploading:'Uploading...',generating:'Generating...',waiting:'Waiting for anchor...'}[it.status]||it.status;
-      const dc={queued:'dq',uploading:'du',generating:'dg',waiting:'dw'}[it.status]||'dq';
-      card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">${lab}${it.shotLabel&&it.shotLabel!=='Photo'?'<br><span style="color:var(--bl)">'+it.shotLabel+'</span>':''}</div></div>
-        <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcst"><span class="dot ${dc}"></span>${lab}</div></div>`;
-    }
-  });
+function renderResultCard(it){
+  let card=document.getElementById('rc-'+it.id);
+  const grid=document.getElementById('rgrid');
+  if(!card){card=document.createElement('div');card.className='rc';card.id='rc-'+it.id;grid.appendChild(card);}
+  if(it.status==='done'&&it.resultUrl){
+    const ar=it.aspectRatio||'3:4';const[aw,ah]=ar.split(':').map(Number);const pp=Math.round(ah/aw*100);
+    const nm=(it.productName||it.name).replace(/"/g,'&quot;');
+    card.innerHTML=`<div class="rcimg" style="padding-bottom:${pp}%;position:relative">
+      <img src="${it.resultUrl}" alt="${nm}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onclick="openLightboxSingle('${it.resultUrl}','${nm}','${it.id}')"/>
+      <div class="rcov" style="position:absolute"><button onclick="openEditItem('${it.id}','${nm}')">✏ Edit</button><button onclick="openCanvasEditor('${it.resultUrl}','${nm}')">🎨 Edit</button><a href="${it.resultUrl}" target="_blank" download="${nm}.jpg">↓ Save</a></div>
+    </div>
+    <div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}
+    <div class="rcacts">
+      <button class="btn bout bxs" onclick="openEditItem('${it.id}','${nm}')">Edit</button>
+      <button class="btn bout bxs" onclick="doUpscale('${it.id}')">↑ 4×</button>
+      <a href="${it.resultUrl}" target="_blank" download="${nm}.jpg" class="btn bout bxs">↓</a>
+      <button class="smb" onclick="openSaveModel('${it.resultUrl}')">🔒 Save</button>
+    </div></div>`;
+  }else if(it.status==='error'){
+    card.innerHTML=`<div class="rcm"><div class="errbox">${it.error||'Failed'}<br><button onclick="openEditItem('${it.id}','${it.productName||it.name}')" style="margin-top:5px;background:none;border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:inherit">Retry</button></div><div class="rcn">${it.productName||it.name}</div></div>`;
+  }else{
+    const lab={queued:'Queued',uploading:'Uploading…',generating:'Generating…',waiting:'Waiting for anchor…'}[it.status]||it.status;
+    const dc={queued:'dq',uploading:'du',generating:'dg',waiting:'dw'}[it.status]||'dq';
+    card.innerHTML=`<div class="rcspin"><div class="spin"></div><div class="splbl">${lab}${it.shotLabel&&it.shotLabel!=='Photo'?'<br><span style="color:var(--bl)">'+it.shotLabel+'</span>':''}</div></div><div class="rcm"><div class="rcn">${it.productName||it.name}</div>${it.shotLabel&&it.shotLabel!=='Photo'?`<div class="rcshot">${it.shotLabel}</div>`:''}<div class="rcst"><span class="dot ${dc}"></span>${lab}</div></div>`;
+  }
 }
 
-// ════════ EDIT / REGEN / UPSCALE / ZIP ════════
-function openEI(iid,name,ctx){
-  const bid=bids[ctx]||bids.m||bids.p;
-  document.getElementById('ei-bid').value=bid;document.getElementById('ei-iid').value=iid;
-  document.getElementById('ei-name').textContent='Editing: '+name;
-  document.getElementById('ei-prompt').value=document.getElementById('gprompt')?.value||document.getElementById('pprompt')?.value||'';
-  openM('m-edit-item');
+// ════ LIGHTBOX / COMPARE ════
+function openLightboxSingle(url,name,id){
+  document.getElementById('lb-name').textContent=name;
+  document.getElementById('lb-imgs').innerHTML=`<div class="lb-img-wrap"><img src="${url}" alt="${name}"/><div class="lb-img-label">${name}</div></div>`;
+  document.getElementById('lb-actions').innerHTML=`<a href="${url}" target="_blank" download="${name}.jpg" style="background:rgba(255,255,255,.15);color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;text-decoration:none">↓ Download</a><button onclick="openCanvasEditor('${url}','${name}');closeLightbox()" style="background:rgba(139,92,246,.5);color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:'Inter',sans-serif">🎨 Edit Image</button><button onclick="doUpscale('${id}');closeLightbox()" style="background:rgba(37,99,235,.5);color:#fff;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:'Inter',sans-serif">↑ Upscale 4×</button>`;
+  document.getElementById('lightbox').classList.add('open');
 }
-async function doRegen(){
-  const bid=document.getElementById('ei-bid').value,iid=document.getElementById('ei-iid').value;
-  const prompt=document.getElementById('ei-prompt').value.trim(),bg=document.getElementById('ei-bg').value,res=document.getElementById('ei-res').value;
-  closeM('m-edit-item');
-  const card=document.getElementById('rc-'+iid);
-  if(card)card.innerHTML=`<div class="lc"><div class="spin"></div><div class="slbl">Regenerating...</div></div><div class="rcm"><div class="rcn">Regenerating...</div></div>`;
-  try{
-    const r=await fetch(`/api/item/${bid}/${iid}/regenerate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,category:cats.m||cats.p,bgOption:bg,resolution:res})});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    for(const ctx of['m','w','p']){if(bids[ctx]===bid&&!ptimers[ctx])startPoll(ctx);}
-    toast('Regenerating...','ok');
-  }catch(e){toast(e.message,'err');}
+function openCompare(){
+  const done=allItems.filter(i=>i.status==='done'&&i.resultUrl);
+  if(done.length<2){toast('Need at least 2 generated images to compare','warn');return;}
+  document.getElementById('lb-name').textContent='Compare All Results';
+  document.getElementById('lb-imgs').innerHTML=done.map(it=>`<div class="lb-img-wrap"><img src="${it.resultUrl}" alt="${it.name}"/><div class="lb-img-label">${it.productName||it.name}${it.shotLabel&&it.shotLabel!=='Photo'?' — '+it.shotLabel:''}</div></div>`).join('');
+  document.getElementById('lb-actions').innerHTML='<div style="color:rgba(255,255,255,.6);font-size:12px">Scroll horizontally to compare · Click individual image to edit</div>';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');}
+document.getElementById('lightbox').addEventListener('click',function(e){if(e.target===this)closeLightbox();});
+
+// ════ CANVAS EDITOR ════
+function openCanvasEditor(url,name){
+  ceImgName=name;ceReset();
+  document.getElementById('ce-title').textContent='Editing: '+name;
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{
+    ceImg=img;ceOriginal=img;
+    const canvas=document.getElementById('ce-canvas');
+    canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+    ceUpdate();
+  };
+  img.onerror=()=>toast('Could not load image for editing','err');
+  img.src=url;
+  document.getElementById('canvas-editor').classList.add('open');
+}
+function closeCanvas(){document.getElementById('canvas-editor').classList.remove('open');}
+function ceReset(){['ce-brightness','ce-contrast','ce-saturation','ce-sharpen','ce-vignette'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='ce-text-size'?'40':'0';});const t=document.getElementById('ce-text');if(t)t.value='';ceUpdate();}
+function ceUpdate(){
+  if(!ceImg)return;
+  const canvas=document.getElementById('ce-canvas');const ctx=canvas.getContext('2d');
+  const brightness=parseInt(document.getElementById('ce-brightness').value)||0;
+  const contrast=parseInt(document.getElementById('ce-contrast').value)||0;
+  const saturation=parseInt(document.getElementById('ce-saturation').value)||0;
+  const vignette=parseInt(document.getElementById('ce-vignette').value)||0;
+  const textStr=document.getElementById('ce-text').value||'';
+  const textColor=document.getElementById('ce-text-color').value||'#ffffff';
+  const textSize=parseInt(document.getElementById('ce-text-size').value)||40;
+  const textPos=document.getElementById('ce-text-pos').value||'bottom';
+
+  canvas.width=ceImg.naturalWidth;canvas.height=ceImg.naturalHeight;
+  ctx.filter=`brightness(${100+brightness}%) contrast(${100+contrast}%) saturate(${100+saturation}%)`;
+  ctx.drawImage(ceImg,0,0);ctx.filter='none';
+
+  // Vignette
+  if(vignette>0){
+    const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,canvas.height*0.4,canvas.width/2,canvas.height/2,canvas.width*0.8);
+    grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(1,`rgba(0,0,0,${vignette/100*0.85})`);
+    ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  // Text overlay
+  if(textStr){
+    ctx.font=`bold ${textSize}px Inter, sans-serif`;ctx.fillStyle=textColor;ctx.textAlign='center';
+    const padding=textSize*1.2;let x=canvas.width/2,y;
+    if(textPos==='top')y=padding;
+    else if(textPos==='center')y=canvas.height/2;
+    else if(textPos==='topleft'){ctx.textAlign='left';x=padding;y=padding;}
+    else if(textPos==='bottomleft'){ctx.textAlign='left';x=padding;y=canvas.height-padding*0.6;}
+    else y=canvas.height-padding*0.6;
+    ctx.shadowColor='rgba(0,0,0,0.7)';ctx.shadowBlur=8;ctx.fillText(textStr,x,y);ctx.shadowBlur=0;
+  }
+}
+function ceApply(){
+  const canvas=document.getElementById('ce-canvas');
+  const link=document.createElement('a');link.download=(ceImgName||'image')+'-edited.jpg';link.href=canvas.toDataURL('image/jpeg',0.92);link.click();
+  toast('Image downloaded ✓','ok');
+}
+
+// ════ EDIT / REGEN / UPSCALE / ZIP ════
+function openEditItem(id,name){
+  document.getElementById('ei-id').value=id;document.getElementById('ei-name').textContent='Editing: '+name;
+  document.getElementById('ei-prompt').value=document.getElementById('global-prompt')?.value||'';openM('m-edititem');
+}
+async function doRegenItem(){
+  const id=document.getElementById('ei-id').value,prompt=document.getElementById('ei-prompt').value.trim(),bg=document.getElementById('ei-bg').value,res=document.getElementById('ei-res').value;
+  closeM('m-edititem');
+  const card=document.getElementById('rc-'+id);if(card)card.innerHTML=`<div class="rcspin"><div class="spin"></div><div class="splbl">Regenerating…</div></div><div class="rcm"><div class="rcn">Regenerating…</div></div>`;
+  try{const r=await fetch(`/api/item/${batchId}/${id}/regenerate`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,category:selCat,bgOption:bg,resolution:res})});const d=await r.json();if(d.error)throw new Error(d.error);if(!pollTimer)startPoll();toast('Regenerating…','ok');}catch(e){toast(e.message,'err');}
 }
 async function doEditBatch(){
-  const prompt=document.getElementById('be-prompt').value.trim();
-  if(!prompt){toast('Enter prompt','err');return;}
-  closeM('m-batch-edit');
-  try{
-    const r=await fetch(`/api/batch/${bids.m}/edit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({globalPrompt:prompt,category:cats.m,bgOption:document.getElementById('be-bg').value})});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    document.getElementById('mprog').style.display='block';document.getElementById('mzip').disabled=true;startPoll('m');toast('Regenerating all...','ok');
-  }catch(e){toast(e.message,'err');}
+  const prompt=document.getElementById('be-prompt').value.trim();if(!prompt){toast('Enter a prompt','err');return;}
+  closeM('m-editbatch');
+  try{const r=await fetch(`/api/batch/${batchId}/edit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({globalPrompt:prompt,category:selCat,bgOption:document.getElementById('be-bg').value})});const d=await r.json();if(d.error)throw new Error(d.error);document.getElementById('prog').style.display='block';document.getElementById('zip-btn').disabled=true;startPoll();toast('Regenerating all…','ok');}catch(e){toast(e.message,'err');}
 }
-async function doUpscale(iid,ctx){
-  const bid=bids[ctx]||bids.m||bids.p;toast('Upscaling...');
-  try{
-    const r=await fetch(`/api/item/${bid}/${iid}/upscale`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    if(d.url){const img=document.querySelector(`#rc-${iid} img`);if(img)img.src=d.url;toast('Upscaled!','ok');}
-  }catch(e){toast(e.message,'err');}
+async function doUpscale(id){
+  toast('Upscaling…');
+  try{const r=await fetch(`/api/item/${batchId}/${id}/upscale`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`}});const d=await r.json();if(d.error)throw new Error(d.error);if(d.url){const img=document.querySelector('#rc-'+id+' img');if(img)img.src=d.url;toast('Upscaled ✓','ok');}  }catch(e){toast(e.message,'err');}
 }
-function doZip(ctx){const id=bids[ctx];if(id)window.location.href=`/api/batch/${id}/zip`;}
-function resetM(){bids.m=null;groups.m=[];pools.m=[];poolSel.m.clear();srefFiles.m=[];renderGroups('m');renderPool('m');renderSref('m');if(ptimers.m)clearInterval(ptimers.m);goStep(1);}
+function doZip(){if(batchId)window.location.href='/api/batch/'+batchId+'/zip';}
 
-// ════════ SAVED MODELS ════════
-function openSaveModel(imageUrl){
-  document.getElementById('sm-url').value=imageUrl;
-  document.getElementById('sm-prev').src=imageUrl;
-  document.getElementById('sm-name').value='';
-  document.getElementById('sm-desc').value='';
-  openM('ms-model');
-  setTimeout(()=>document.getElementById('sm-name').focus(),80);
-}
+// ════ LIBRARY — MODELS ════
+function openSaveModel(url){document.getElementById('sm-url').value=url;document.getElementById('sm-prev').src=url;document.getElementById('sm-name').value='';document.getElementById('sm-notes').value='';openM('m-savemodel');setTimeout(()=>document.getElementById('sm-name').focus(),80);}
 async function confirmSaveModel(){
-  const name=document.getElementById('sm-name').value.trim();
-  if(!name){toast('Enter a name','err');return;}
-  if(!falKey){toast('Save key first','err');return;}
-  const imageUrl=document.getElementById('sm-url').value;
-  const description=document.getElementById('sm-desc').value.trim();
-  try{
-    const r=await fetch('/api/models/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,imageUrl,description})});
-    const d=await r.json();if(d.error)throw new Error(d.error);
-    closeM('ms-model');toast(`"${name}" saved ✓`,'ok');loadModels();
-  }catch(e){toast(e.message,'err');}
+  const name=document.getElementById('sm-name').value.trim();if(!name){toast('Enter a name','err');return;}if(!falKey){toast('Save key first','err');return;}
+  try{const r=await fetch('/api/models/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,imageUrl:document.getElementById('sm-url').value,description:document.getElementById('sm-notes').value.trim(),gender:document.getElementById('sm-gender').value})});const d=await r.json();if(d.error)throw new Error(d.error);closeM('m-savemodel');toast(`"${name}" saved ✓`,'ok');await loadLib();}catch(e){toast(e.message,'err');}
 }
-async function loadModels(){
+async function loadLib(){
   if(!falKey)return;
   try{
-    const r=await fetch('/api/models',{headers:{'Authorization':`Key ${falKey}`}});
-    savedModels=await r.json();
-    renderModelLib('m');renderModelLib('p');
+    const[mr,br,tr]=await Promise.all([fetch('/api/models',{headers:{'Authorization':`Key ${falKey}`}}),fetch('/api/backgrounds',{headers:{'Authorization':`Key ${falKey}`}}),fetch('/api/templates',{headers:{'Authorization':`Key ${falKey}`}})]);
+    savedModels=await mr.json();savedBgs=await br.json();savedTemplates=await tr.json();
+    renderModelLib();renderBgLib();renderTemplateLib();syncGenModelLib();
   }catch{}
 }
-function renderModelLib(ctx){
-  const el=document.getElementById(`mlib-${ctx}`);if(!el)return;
-  const cur=activeModel[ctx];
-  if(!savedModels.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">No saved models yet.<br/>Generate → "Save Model"</div>';return;}
-  el.innerHTML=savedModels.map(m=>`
-    <div class="mcard${cur?.id===m.id?' on':''}" onclick="selectModel('${m.id}','${m.name}','${m.imageUrl}','${ctx}')">
-      ${cur?.id===m.id?'<div class="mcard-bar">✓ ACTIVE</div>':''}
-      <div class="mcard-inner">
-        <img class="mthumb" src="${m.imageUrl}" onerror="this.style.display='none'" alt="${m.name}"/>
-        <div class="minfo"><div class="mname">${m.name}</div>${m.description?`<div class="mdesc">${m.description}</div>`:''}</div>
-        <button class="mdel" onclick="event.stopPropagation();delModel('${m.id}')" title="Delete">×</button>
-      </div>
-    </div>`).join('');
-  const cb=document.getElementById(`mclr-${ctx}`);
-  if(cb)cb.className=cur?'mclr vis':'mclr';
+function renderModelLib(){
+  const el=document.getElementById('model-lib');const cur=activeModel;
+  if(!savedModels.length){el.innerHTML='<div class="lib-empty">No saved models.<br/>Generate → Save Model on any result</div>';return;}
+  el.innerHTML=savedModels.map(m=>{const esc=m.name.replace(/"/g,'&quot;');return`<div class="lrow${cur?.id===m.id?' on':''}" onclick="selectModel('${m.id}','${esc}','${m.imageUrl}')"><img class="lthumb" src="${m.imageUrl}" onerror="this.style.display='none'" alt="${esc}"/><div class="linfo"><div class="lname">${m.name}</div><div class="lsub">${m.gender||''}${m.description?' · '+m.description:''}</div></div><button class="ldel" onclick="event.stopPropagation();delModel('${m.id}')">×</button></div>`;}).join('');
+  const cb=document.getElementById('model-clr');if(cb)cb.className=cur?'lclr vis':'lclr';
 }
-function selectModel(id,name,imageUrl,ctx){
-  activeModel[ctx]=activeModel[ctx]?.id===id?null:{id,name,imageUrl};
-  renderModelLib(ctx);
-  if(ctx==='m')updateRev();
-  toast(activeModel[ctx]?`🔒 "${name}" locked`:'Lock removed',activeModel[ctx]?'ok':'');
+function syncGenModelLib(){
+  const el=document.getElementById('gen-model-lib');if(!el)return;const cur=activeModel;
+  if(!savedModels.length){el.innerHTML='<div class="lib-empty">No saved models — generate then click Save Model</div>';return;}
+  el.innerHTML=savedModels.map(m=>{const esc=m.name.replace(/"/g,'&quot;');return`<div class="lrow${cur?.id===m.id?' on':''}" onclick="selectModel('${m.id}','${esc}','${m.imageUrl}')"><img class="lthumb" src="${m.imageUrl}" onerror="this.style.display='none'" alt="${esc}"/><div class="linfo"><div class="lname">${m.name}</div><div class="lsub">${m.gender||''}${m.description?' · '+m.description:''}</div></div></div>`;}).join('');
+  const ga=document.getElementById('gen-model-active');if(ga)ga.innerHTML=cur?`<div class="lkbar" style="margin-bottom:.75rem"><img src="${cur.imageUrl}" onerror="this.style.display='none'"/><div style="flex:1"><div class="lkname">🔒 ${cur.name}</div><div class="lksub">Active — anchor for every shot</div></div><button class="lkdel" onclick="clearModelLock()">✕</button></div>`:'';
 }
-function clearModel(ctx){activeModel[ctx]=null;renderModelLib(ctx);if(ctx==='m')updateRev();toast('Model lock removed');}
-async function delModel(id){
-  if(!falKey)return;
-  try{
-    await fetch(`/api/models/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});
-    if(activeModel.m?.id===id){activeModel.m=null;if(step===3)updateRev();}
-    if(activeModel.p?.id===id)activeModel.p=null;
-    loadModels();toast('Model deleted');
-  }catch(e){toast(e.message,'err');}
-}
+function selectModel(id,name,imageUrl){activeModel=activeModel?.id===id?null:{id,name,imageUrl};renderModelLib();syncGenModelLib();if(curStep===3)updateReview();toast(activeModel?`🔒 "${name}" locked`:'Model lock removed',activeModel?'ok':'');}
+function clearModelLock(){activeModel=null;renderModelLib();syncGenModelLib();if(curStep===3)updateReview();toast('Model lock removed');}
+async function delModel(id){if(!falKey)return;try{await fetch(`/api/models/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});if(activeModel?.id===id)activeModel=null;await loadLib();toast('Model deleted');}catch(e){toast(e.message,'err');}}
 
-// ════════ STYLE LIBRARY ════════
-async function doSaveStyle(){
-  const name=document.getElementById('ssn').value.trim();if(!name){toast('Enter name','err');return;}if(!falKey){toast('Save key first','err');return;}
-  closeM('ms-style');
-  try{await fetch('/api/styles/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,prompt:document.getElementById('gprompt').value.trim(),styleKey:document.getElementById('m-style').value,category:cats.m,bgOption:BGs.m,realism:document.getElementById('m-realism').value})});toast(`"${name}" saved`,'ok');loadStyles();}catch(e){toast(e.message,'err');}
-}
-async function loadStyles(){
-  if(!falKey)return;
-  try{
-    const r=await fetch('/api/styles',{headers:{'Authorization':`Key ${falKey}`}});const s=await r.json();
-    const el=document.getElementById('slib');
-    if(!s.length){el.innerHTML='<div style="font-size:11px;color:var(--t3);text-align:center;padding:6px 0">No saved styles</div>';return;}
-    el.innerHTML=s.map(x=>`<div class="sli" onclick="applyStyle('${x.name}','${x.styleKey||''}','${x.category||''}','${x.bgOption||'white'}')"><span>${x.name}</span><button class="sld" onclick="event.stopPropagation();delStyle('${x.name}')">×</button></div>`).join('');
-  }catch{}
-}
-function applyStyle(name,styleKey,category,bgOption){
-  if(styleKey){const el=document.getElementById('m-style');if(el)el.value=styleKey;}
-  if(category){cats.m=category;document.getElementById('cat-m').querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b.dataset.v===category));}
-  if(bgOption){BGs.m=bgOption;document.getElementById('bgp-m').querySelectorAll('.bgp').forEach(p=>p.classList.toggle('on',p.dataset.b===bgOption));}
-  toast(`"${name}" applied`,'ok');
-}
-async function delStyle(name){if(!falKey)return;await fetch(`/api/styles/${encodeURIComponent(name)}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});loadStyles();}
+// ════ LIBRARY — BACKGROUNDS ════
+const BGEM={white:'⬜',grey:'◻️',lightgrey:'🔲',black:'⬛',outdoor:'🌿',street:'🏙️',luxury:'💎',beach:'🏖️',forest:'🌲',studio:'📸',minimal_bg:'🔘',pink:'🩷',cream:'🟡',ai:'✨',custom:'✍️'};
+async function confirmSaveBg(){const name=document.getElementById('sb-name').value.trim();if(!name){toast('Enter a name','err');return;}if(!falKey){toast('Save key first','err');return;}const bgOption=document.getElementById('sb-type').value,bgCustom=bgOption==='custom'?document.getElementById('sb-custom').value.trim():'';try{const r=await fetch('/api/backgrounds/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({name,bgOption,bgCustom,description:document.getElementById('sb-notes').value.trim()})});const d=await r.json();if(d.error)throw new Error(d.error);closeM('m-savebg');toast(`"${name}" saved ✓`,'ok');await loadLib();}catch(e){toast(e.message,'err');}}
+function renderBgLib(){const el=document.getElementById('bg-lib');const cur=activeBg;if(!savedBgs.length){el.innerHTML='<div class="lib-empty">No saved backgrounds</div>';return;}el.innerHTML=savedBgs.map(bg=>{const esc=bg.name.replace(/"/g,'&quot;');const ec=(bg.bgCustom||'').replace(/'/g,"\\'");return`<div class="lrow${cur?.id===bg.id?' on':''}" onclick="selectBg('${bg.id}','${esc}','${bg.bgOption}','${ec}')"><div class="licon">${BGEM[bg.bgOption]||'🖼️'}</div><div class="linfo"><div class="lname">${bg.name}</div><div class="lsub">${bg.bgOption}${bg.bgCustom?' — '+bg.bgCustom:''}</div></div><button class="ldel" onclick="event.stopPropagation();delBg('${bg.id}')">×</button></div>`;}).join('');const cb=document.getElementById('bg-clr');if(cb)cb.className=cur?'lclr vis':'lclr';}
+function selectBg(id,name,bgOption,bgCustom){activeBg=activeBg?.id===id?null:{id,name,bgOption,bgCustom};renderBgLib();toast(activeBg?`🎨 "${name}" applied`:'Background reset',activeBg?'ok':'');}
+function clearBgLock(){activeBg=null;renderBgLib();toast('Background reset');}
+async function delBg(id){if(!falKey)return;try{await fetch(`/api/backgrounds/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});if(activeBg?.id===id)activeBg=null;await loadLib();toast('Deleted');}catch(e){toast(e.message,'err');}}
 
-// ════════ MODAL / TOAST ════════
-function openM(id){document.getElementById(id).classList.add('open');}
-function closeM(id){document.getElementById(id).classList.remove('open');}
+// ════ TEMPLATES ════
+function openSaveTemplate(){openM('m-savetemplate');setTimeout(()=>document.getElementById('tp-name').focus(),80);}
+async function confirmSaveTemplate(){
+  const name=document.getElementById('tp-name').value.trim();if(!name){toast('Enter a name','err');return;}if(!falKey){toast('Save key first','err');return;}
+  const gp=document.getElementById('global-prompt')?.value?.trim()||'';
+  const data={name,description:document.getElementById('tp-desc').value.trim(),prompt:gp,styleKey:document.getElementById('style-sel').value,category:selCat,bgOption:selBg,bgMode,realism:document.getElementById('real-sel').value,gender:document.getElementById('gender-sel').value,aspectRatio:selAR};
+  try{const r=await fetch('/api/templates/save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify(data)});const d=await r.json();if(d.error)throw new Error(d.error);closeM('m-savetemplate');toast(`Template "${name}" saved ✓`,'ok');await loadLib();}catch(e){toast(e.message,'err');}
+}
+function renderTemplateLib(){
+  const el=document.getElementById('tlib');
+  if(!savedTemplates.length){el.innerHTML='<div class="lib-empty">No templates saved</div>';return;}
+  el.innerHTML=savedTemplates.map(t=>`<div class="trow" onclick="applyTemplate('${t.id}')"><div class="tinfo"><div class="tname">${t.name}</div><div class="tmeta">${t.category||''}${t.styleKey?' · '+t.styleKey:''}</div></div><button class="tdel" onclick="event.stopPropagation();delTemplate('${t.id}')">×</button></div>`).join('');
+}
+function applyTemplate(id){
+  const t=savedTemplates.find(x=>x.id===id);if(!t)return;
+  if(t.prompt){const gp=document.getElementById('global-prompt');if(gp)gp.value=t.prompt;}
+  if(t.styleKey){const ss=document.getElementById('style-sel');if(ss)ss.value=t.styleKey;}
+  if(t.category){selCat=t.category;document.getElementById('cat-grid').querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b.dataset.v===t.category));}
+  if(t.bgOption){selBg=t.bgOption;document.getElementById('bgps').querySelectorAll('.bgp').forEach(p=>p.classList.toggle('on',p.dataset.b===t.bgOption));}
+  if(t.gender){const gs=document.getElementById('gender-sel');if(gs)gs.value=t.gender;}
+  if(t.realism){const rs=document.getElementById('real-sel');if(rs)rs.value=t.realism;}
+  if(t.aspectRatio){selAR=t.aspectRatio;document.getElementById('ar-grid').querySelectorAll('.arb').forEach(b=>b.classList.toggle('on',b.dataset.r===t.aspectRatio));}
+  updateReview();toast(`Template "${t.name}" applied ✓`,'ok');
+}
+async function delTemplate(id){if(!falKey)return;try{await fetch(`/api/templates/${id}`,{method:'DELETE',headers:{'Authorization':`Key ${falKey}`}});await loadLib();toast('Template deleted');}catch(e){toast(e.message,'err');}}
+
+// ════ HISTORY ════
+function saveHist(id,prompt,prods,total){history.unshift({id,prompt:prompt.slice(0,55),prods,total,thumbs:[],status:'running',date:Date.now()});if(history.length>20)history.pop();localStorage.setItem('fai_hist',JSON.stringify(history));renderHist();}
+function updateHist(id,urls){const h=history.find(x=>x.id===id);if(h){h.status='done';h.thumbs=urls.slice(0,3);}localStorage.setItem('fai_hist',JSON.stringify(history));renderHist();}
+function clearHist(){history=[];localStorage.removeItem('fai_hist');renderHist();toast('History cleared');}
+function renderHist(){
+  const el=document.getElementById('hist-list');
+  if(!history.length){el.innerHTML='<div class="lib-empty">No history yet</div>';return;}
+  el.innerHTML=history.map(h=>{const thumbs=h.thumbs?.slice(0,3).map(u=>`<img class="hthumb" src="${u}" onerror="this.style.display='none'"/>`).join('')||'<div style="width:22px;height:28px;background:var(--bg);border-radius:4px;border:1px solid var(--br)"></div>';const dt=new Date(h.date).toLocaleDateString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});return`<div class="hrow" onclick="loadHist('${h.id}')"><div class="hthumbs">${thumbs}</div><div class="hinfo"><div class="hname">${h.prompt||h.prods+' products'}</div><div class="hmeta">${dt} · ${h.total} imgs</div></div>${h.status==='done'?'<span class="hbdg">✓</span>':''}<button class="hdel" onclick="event.stopPropagation();delHist('${h.id}')">×</button></div>`;}).join('');
+}
+function loadHist(id){batchId=id;allItems=[];showResults();document.getElementById('prog').style.display='none';document.getElementById('rgrid').innerHTML='';document.getElementById('zip-btn').disabled=false;doPoll();startPoll();}
+function delHist(id){history=history.filter(h=>h.id!==id);localStorage.setItem('fai_hist',JSON.stringify(history));renderHist();}
+
+// ════ MODAL / TOAST ════
+function openM(id){document.getElementById(id)?.classList.add('open');}
+function closeM(id){document.getElementById(id)?.classList.remove('open');}
 document.querySelectorAll('.mbg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
-function toast(msg,type=''){
-  const w=document.getElementById('toasts');
-  const el=document.createElement('div');el.className=`ti ${type}`;el.textContent=msg;w.appendChild(el);
-  setTimeout(()=>el.remove(),3500);
-}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.mbg.open').forEach(m=>m.classList.remove('open'));closeLightbox();closeCanvas();}});
+function toast(msg,type=''){const w=document.getElementById('toasts');const el=document.createElement('div');el.className='ti'+(type?' '+type:'');el.textContent=msg;w.appendChild(el);setTimeout(()=>el.remove(),3500);}
 </script>
 </body>
 </html>
