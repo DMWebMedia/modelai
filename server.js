@@ -494,7 +494,13 @@ app.get('/api/batch/:id/zip', async(req,res) => {
   await arc.finalize();
 });
 
-function uid(a){let h=0;for(let i=0;i<a.length;i++){h=(Math.imul(31,h)+a.charCodeAt(i))|0;}return Math.abs(h).toString(16);}
+function uid(a){
+  // Always resolve to the real key before hashing — "Key SERVER" must use server key
+  const resolved = (a === 'Key SERVER' || !a) ? (FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : a) : a;
+  let h=0;
+  for(let i=0;i<resolved.length;i++){h=(Math.imul(31,h)+resolved.charCodeAt(i))|0;}
+  return Math.abs(h).toString(16);
+}
 
 // Models
 app.post('/api/models/save',(req,res)=>{const a=req.headers['authorization'];if(!a)return res.status(401).json({error:'Missing key'});const u=uid(a);const{name,imageUrl,description='',gender=''}=req.body;if(!name||!imageUrl)return res.status(400).json({error:'name+imageUrl required'});if(!MODELS[u])MODELS[u]={};const id='m'+Date.now();MODELS[u][id]={id,name,imageUrl,description,gender,created:Date.now()};saveStore('models',MODELS);res.json({ok:true,id});});
@@ -652,6 +658,87 @@ app.get('/api/video/poll/:requestId', async(req, res) => {
     }
     res.json({status: st.status || 'processing'});
   } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+
+// ── Model swap: replace model in image while keeping product/clothing ──────
+app.post('/api/item/swap-model', async(req, res) => {
+  let auth = req.headers['authorization'];
+  if(!auth || auth === 'Key SERVER') auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : auth;
+  if(!auth || auth === 'Key SERVER') return res.status(401).json({error:'Missing key'});
+
+  const { sourceImageUrl, sourceImageBase64, sourceImageMime,
+          modelImageUrl, modelImageBase64, modelImageMime,
+          modelDesc, gender='female', keepProduct=true,
+          aspectRatio='3:4', resolution='1K', bgOption='ai', bgCustom='' } = req.body;
+
+  try {
+    // Upload source image if base64
+    let srcUrl = sourceImageUrl;
+    if(!srcUrl && sourceImageBase64) {
+      srcUrl = await uploadToFal(sourceImageBase64, sourceImageMime||'image/jpeg', auth);
+    }
+
+    // Upload model reference if base64
+    let modelUrl = modelImageUrl;
+    if(!modelUrl && modelImageBase64) {
+      modelUrl = await uploadToFal(modelImageBase64, modelImageMime||'image/jpeg', auth);
+    }
+
+    // Build swap prompt
+    const bgHint = bgOption === 'custom' ? bgCustom : (BG[bgOption] || '');
+    const genderHint = GENDER[gender] || GENDER.female;
+    const modelHint = modelUrl ? 'same model as reference photo, identical face identical hair identical skin tone' : (modelDesc || genderHint);
+    
+    const prompt = keepProduct
+      ? `${modelHint}, wearing the exact same clothing and products from the original image — keep all garments, accessories, colors, and styling identical, only replace the model's face and body, ${bgHint || 'same background'}, hyperrealistic photograph, professional fashion photography`
+      : `${modelHint}, fashion model, ${bgHint || 'studio background'}, hyperrealistic photograph`;
+
+    // Trim prompt
+    const finalPrompt = prompt.length > 480 ? prompt.slice(0, 477) + '...' : prompt;
+
+    // Send: model reference first, then source image
+    const imageUrls = modelUrl
+      ? [modelUrl, srcUrl]   // model anchor first so AI knows what face to use
+      : [srcUrl];
+
+    const sub = await falQ('/fal-ai/nano-banana-2/edit', {
+      prompt: finalPrompt,
+      image_urls: imageUrls,
+      num_images: 1,
+      aspect_ratio: toAR(aspectRatio),
+      output_format: 'jpeg',
+      safety_tolerance: '4',
+      resolution,
+    }, auth);
+
+    if(!sub.request_id) {
+      const msg = sub.detail || sub.error || JSON.stringify(sub).slice(0,200);
+      return res.status(400).json({error: 'Submit failed: ' + msg});
+    }
+
+    // Poll for result
+    for(let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 4000));
+      const sp = sub.status_url
+        ? sub.status_url.replace('https://queue.fal.run','')
+        : `/fal-ai/nano-banana-2/edit/requests/${sub.request_id}/status`;
+      const st = await falGet(sp, auth);
+      if(st.status === 'COMPLETED') {
+        const rp = sub.response_url
+          ? sub.response_url.replace('https://queue.fal.run','')
+          : `/fal-ai/nano-banana-2/edit/requests/${sub.request_id}`;
+        const result = await falGet(rp, auth);
+        const url = result?.images?.[0]?.url || result?.output?.images?.[0]?.url || result?.image?.url;
+        if(url) return res.json({url});
+        return res.status(500).json({error: 'No image URL in result'});
+      }
+      if(st.status === 'FAILED') return res.status(500).json({error: st.error || 'Generation failed'});
+    }
+    res.status(500).json({error: 'Timed out'});
+  } catch(e) {
+    res.status(500).json({error: e.message});
+  }
 });
 
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));

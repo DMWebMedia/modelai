@@ -384,6 +384,11 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .v-pick-label{font-size:10px;font-weight:600;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--w)}
 .v-pick-card.v-pick-on .v-pick-label{background:var(--bll);color:var(--bl)}
 
+
+.sw-opt{border:2px solid var(--br);border-radius:var(--r);padding:8px 12px;cursor:pointer;transition:all .12s;margin-bottom:0}
+.sw-opt:hover{border-color:var(--bl)}.sw-opt.on{border-color:var(--bl);background:var(--bll)}
+.sw-opt-hd{font-size:12px;font-weight:600;pointer-events:none}
+
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
 @media(max-width:860px){.wrap{flex-direction:column}.sb{width:100%;height:auto}.rgrid{grid-template-columns:repeat(2,1fr)}}
@@ -866,6 +871,79 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   <div class="macts">
     <button class="btn bout" onclick="closeM('m-groupshot')">Cancel</button>
     <button class="btn bpri" style="background:linear-gradient(135deg,var(--pur),var(--bl));border:none" id="gs-gen-btn" onclick="startGroupShot()">Generate Group Shot</button>
+  </div>
+</div></div>
+
+
+<!-- SWAP MODEL MODAL -->
+<div class="mbg" id="m-swapmodel"><div class="modal" style="max-width:640px">
+  <div class="mt">🔄 Swap the Model</div>
+  <div class="ms">Keep the same clothing/product — replace or change the model in the image</div>
+  <input type="hidden" id="sw-src-url"/>
+  <input type="hidden" id="sw-item-id"/>
+
+  <!-- Preview of source image -->
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:1.2rem">
+    <div style="flex-shrink:0">
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:5px">Original Image</div>
+      <img id="sw-src-prev" src="" style="width:100px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);background:var(--bg)" alt=""/>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:5px">New Model Source</div>
+      <!-- 3 options -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <!-- Option A: from saved library -->
+        <div class="sw-opt" id="sw-opt-lib" onclick="setSwOpt('lib')" style="border:2px solid var(--bl);background:var(--bll)">
+          <div class="sw-opt-hd">📚 Use Saved Model from Library</div>
+          <div id="sw-lib-sel" style="margin-top:6px">
+            <div class="lib" id="sw-model-lib" style="max-height:130px"></div>
+          </div>
+        </div>
+        <!-- Option B: upload new photo -->
+        <div class="sw-opt" id="sw-opt-upload" onclick="setSwOpt('upload')">
+          <div class="sw-opt-hd">📁 Upload Model Photo</div>
+          <div id="sw-upload-wrap" style="display:none;margin-top:6px">
+            <div class="dz" style="padding:1rem" onclick="document.getElementById('sw-fi').click()">
+              <input type="file" id="sw-fi" accept="image/*" style="display:none"/>
+              <div style="font-size:12px;color:var(--t2)">Click to upload a photo of the model you want</div>
+            </div>
+            <img id="sw-upload-prev" src="" style="display:none;width:80px;height:100px;object-fit:cover;border-radius:var(--r);border:1px solid var(--br);margin-top:6px"/>
+          </div>
+        </div>
+        <!-- Option C: describe with text -->
+        <div class="sw-opt" id="sw-opt-desc" onclick="setSwOpt('desc')">
+          <div class="sw-opt-hd">✍️ Describe the Model</div>
+          <div id="sw-desc-wrap" style="display:none;margin-top:6px">
+            <textarea id="sw-model-desc" rows="2" placeholder="E.g: tall slim woman, olive skin, long dark hair, early 30s, Mediterranean look..."></textarea>
+            <div class="fld" style="margin-top:6px"><label class="lbl">Gender</label>
+              <select id="sw-gender"><option value="female">Female</option><option value="male">Male</option><option value="neutral">Neutral</option></select>
+            </div>
+          </div>
+        </div>
+        <!-- Option D: generate fresh, no model ref -->
+        <div class="sw-opt" id="sw-opt-fresh" onclick="setSwOpt('fresh')">
+          <div class="sw-opt-hd">✨ Generate Fresh Model (AI chooses)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="m2c">
+    <div class="fld"><label class="lbl">Background</label>
+      <select id="sw-bg"><option value="ai">Same as original</option><option value="white">White Studio</option><option value="grey">Grey Studio</option><option value="lightgrey">Light Grey</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option></select>
+    </div>
+    <div class="fld"><label class="lbl">Quality</label>
+      <select id="sw-res"><option value="1K">1K — $0.08</option><option value="2K">2K — $0.12</option></select>
+    </div>
+  </div>
+
+  <div style="background:var(--ybg);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--t2);margin-bottom:1rem">
+    ⚡ AI will keep the exact clothing, colors, and products — only the model changes
+  </div>
+
+  <div class="macts">
+    <button class="btn bout" onclick="closeM('m-swapmodel')">Cancel</button>
+    <button class="btn bpri" style="background:linear-gradient(135deg,#ea580c,#d97706);border:none" id="sw-gen-btn" onclick="doSwapModel()">Swap Model</button>
   </div>
 </div></div>
 
@@ -2191,6 +2269,129 @@ async function startGroupShot() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Generate Group Shot';
+  }
+}
+
+
+// ════ MODEL SWAP ════
+let swOption = 'lib'; // lib | upload | desc | fresh
+let swUploadB64 = null, swUploadMime = null;
+let swSelectedModelUrl = null;
+
+function openSwapModel(srcUrl, itemId, name) {
+  document.getElementById('sw-src-url').value = srcUrl;
+  document.getElementById('sw-item-id').value = itemId;
+  document.getElementById('sw-src-prev').src = srcUrl;
+  document.getElementById('sw-src-prev').style.height = '120px';
+  swUploadB64 = null; swUploadMime = null; swSelectedModelUrl = null;
+
+  // Populate saved models
+  renderSwModelLib();
+  setSwOpt('lib');
+
+  // File input for upload option
+  const fi = document.getElementById('sw-fi');
+  fi.onchange = async(e) => {
+    const f = e.target.files[0]; if(!f) return;
+    swUploadMime = f.type || 'image/jpeg';
+    swUploadB64 = await toB64(f);
+    const prev = document.getElementById('sw-upload-prev');
+    prev.src = 'data:' + swUploadMime + ';base64,' + swUploadB64;
+    prev.style.display = 'block';
+    fi.value = '';
+  };
+
+  openM('m-swapmodel');
+}
+
+function setSwOpt(opt) {
+  swOption = opt;
+  ['lib','upload','desc','fresh'].forEach(o => {
+    const el = document.getElementById('sw-opt-'+o);
+    if(el) el.classList.toggle('on', o === opt);
+  });
+  document.getElementById('sw-lib-sel').style.display = opt === 'lib' ? 'block' : 'none';
+  document.getElementById('sw-upload-wrap').style.display = opt === 'upload' ? 'block' : 'none';
+  document.getElementById('sw-desc-wrap').style.display = opt === 'desc' ? 'block' : 'none';
+}
+
+function renderSwModelLib() {
+  const el = document.getElementById('sw-model-lib'); if(!el) return;
+  if(!savedModels.length) { el.innerHTML = '<div class="lib-empty">No saved models — save a model from any result first</div>'; return; }
+  el.innerHTML = savedModels.map(m => {
+    const esc = m.name.replace(/"/g,'&quot;');
+    return `<div class="lrow${swSelectedModelUrl===m.imageUrl?' on':''}" onclick="selectSwModel('${m.imageUrl}',this)">
+      <img class="lthumb" src="${m.imageUrl}" onerror="this.style.display='none'" alt="${esc}"/>
+      <div class="linfo"><div class="lname">${m.name}</div><div class="lsub">${m.gender||''}${m.description?' · '+m.description:''}</div></div>
+    </div>`;
+  }).join('');
+}
+function selectSwModel(url, el) {
+  swSelectedModelUrl = swSelectedModelUrl === url ? null : url;
+  document.querySelectorAll('#sw-model-lib .lrow').forEach(r => r.classList.remove('on'));
+  if(swSelectedModelUrl) el.classList.add('on');
+}
+
+async function doSwapModel() {
+  const srcUrl = document.getElementById('sw-src-url').value;
+  const btn = document.getElementById('sw-gen-btn');
+  btn.disabled = true; btn.textContent = 'Swapping...';
+
+  try {
+    const body = {
+      sourceImageUrl: srcUrl,
+      bgOption: document.getElementById('sw-bg').value,
+      resolution: document.getElementById('sw-res').value,
+      keepProduct: true,
+      gender: document.getElementById('sw-gender')?.value || 'female',
+    };
+
+    if(swOption === 'lib') {
+      if(!swSelectedModelUrl) { toast('Select a model from the library', 'err'); btn.disabled=false; btn.textContent='Swap Model'; return; }
+      body.modelImageUrl = swSelectedModelUrl;
+    } else if(swOption === 'upload') {
+      if(!swUploadB64) { toast('Upload a model photo first', 'err'); btn.disabled=false; btn.textContent='Swap Model'; return; }
+      body.modelImageBase64 = swUploadB64;
+      body.modelImageMime = swUploadMime;
+    } else if(swOption === 'desc') {
+      body.modelDesc = document.getElementById('sw-model-desc').value.trim();
+      if(!body.modelDesc) { toast('Describe the model first', 'err'); btn.disabled=false; btn.textContent='Swap Model'; return; }
+    }
+    // 'fresh' = no model reference, AI picks
+
+    const headers = {'Content-Type':'application/json','Authorization': falKey === 'SERVER' ? 'Key SERVER' : `Key ${falKey}`};
+    toast('Swapping model… takes ~60s', '');
+    const r = await fetch('/api/item/swap-model', {method:'POST', headers, body: JSON.stringify(body)});
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+
+    closeM('m-swapmodel');
+    toast('Model swapped! ✓', 'ok');
+
+    // Show result in a lightbox
+    const name = 'Swapped — ' + new Date().toLocaleTimeString();
+    openLightboxSingle(d.url, name, 'swap-result');
+
+    // Also add to results grid as a new card
+    const grid = document.getElementById('rgrid');
+    if(grid) {
+      const card = document.createElement('div'); card.className = 'rc';
+      card.innerHTML = `<div class="rcimg" style="padding-bottom:125%;position:relative">
+        <img src="${d.url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onclick="openLightboxSingle('${d.url}','${name}','swap')"/>
+        <div class="rcov" style="position:absolute"><button onclick="openCanvasEditor('${d.url}','${name}')">🎨 Edit</button><a href="${d.url}" target="_blank" download="swapped.jpg">↓ Save</a></div>
+      </div>
+      <div class="rcm"><div class="rcn">Swapped Model</div>
+      <div class="rcacts">
+        <a href="${d.url}" target="_blank" download="swapped.jpg" class="btn bout bxs">↓</a>
+        <button class="smb" onclick="openSaveModel('${d.url}')">🔒 Save Model</button>
+        <button class="smb" style="background:linear-gradient(135deg,#ea580c,#d97706)" onclick="openSwapModel('${d.url}','swap','Swapped')">🔄 Swap Again</button>
+      </div></div>`;
+      grid.prepend(card);
+    }
+  } catch(e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Swap Model';
   }
 }
 
