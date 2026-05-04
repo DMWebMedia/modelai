@@ -285,8 +285,10 @@ function runBatch(batchId, auth, concurrency=3) {
 
 // ── Batch create ────────────────────────────────────────────────────────
 app.post('/api/batch/create', async(req, res) => {
-  const auth = req.headers['authorization'];
-  if(!auth) return res.status(401).json({error:'Missing key'});
+  let auth = req.headers['authorization'];
+  // If frontend says 'Key SERVER', use server-side key
+  if(!auth || auth === 'Key SERVER') auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : auth;
+  if(!auth || auth === 'Key SERVER') return res.status(401).json({error:'Missing key'});
   const { type='model', products, globalPrompt, promptMode,
           category, styleKey, bgOption, bgCustom,
           gender, realism, resolution, aspectRatio,
@@ -360,8 +362,10 @@ app.get('/api/batch/:id/status', (req,res) => {
 });
 
 app.post('/api/item/:bid/:iid/regenerate', async(req,res) => {
-  const auth = req.headers['authorization'];
-  if(!auth) return res.status(401).json({error:'Missing key'});
+  let auth = req.headers['authorization'];
+  // If frontend says 'Key SERVER', use server-side key
+  if(!auth || auth === 'Key SERVER') auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : auth;
+  if(!auth || auth === 'Key SERVER') return res.status(401).json({error:'Missing key'});
   const b = jobs[req.params.bid]; if(!b) return res.status(404).json({error:'Not found'});
   const item = b.items.find(i=>i.id===req.params.iid); if(!item) return res.status(404).json({error:'Not found'});
   const {prompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,aspectRatio,shotType,modelDesc} = req.body;
@@ -376,8 +380,10 @@ app.post('/api/item/:bid/:iid/regenerate', async(req,res) => {
 });
 
 app.post('/api/batch/:id/edit', async(req,res) => {
-  const auth = req.headers['authorization'];
-  if(!auth) return res.status(401).json({error:'Missing key'});
+  let auth = req.headers['authorization'];
+  // If frontend says 'Key SERVER', use server-side key
+  if(!auth || auth === 'Key SERVER') auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : auth;
+  if(!auth || auth === 'Key SERVER') return res.status(401).json({error:'Missing key'});
   const b = jobs[req.params.id]; if(!b) return res.status(404).json({error:'Not found'});
   const {globalPrompt,category,styleKey,bgOption,bgCustom,gender,realism,resolution,modelDesc} = req.body;
   b.completedCount=0; b.status='processing';
@@ -393,8 +399,10 @@ app.post('/api/batch/:id/edit', async(req,res) => {
 });
 
 app.post('/api/item/:bid/:iid/upscale', async(req,res) => {
-  const auth = req.headers['authorization'];
-  if(!auth) return res.status(401).json({error:'Missing key'});
+  let auth = req.headers['authorization'];
+  // If frontend says 'Key SERVER', use server-side key
+  if(!auth || auth === 'Key SERVER') auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : auth;
+  if(!auth || auth === 'Key SERVER') return res.status(401).json({error:'Missing key'});
   const item = jobs[req.params.bid]?.items.find(i=>i.id===req.params.iid);
   if(!item?.resultUrl) return res.status(400).json({error:'No image'});
   try {
@@ -438,6 +446,143 @@ app.delete('/api/backgrounds/:id',(req,res)=>{const a=req.headers['authorization
 app.post('/api/templates/save',(req,res)=>{const a=req.headers['authorization'];if(!a)return res.status(401).json({error:'Missing key'});const u=uid(a);const{name,...rest}=req.body;if(!name)return res.status(400).json({error:'name required'});if(!TEMPLATES[u])TEMPLATES[u]={};const id='t'+Date.now();TEMPLATES[u][id]={id,name,...rest,created:Date.now()};saveStore('templates',TEMPLATES);res.json({ok:true,id});});
 app.get('/api/templates',(req,res)=>{const a=req.headers['authorization'];if(!a)return res.status(401).json({error:'Missing key'});res.json(Object.values(TEMPLATES[uid(a)]||{}).sort((x,y)=>y.created-x.created));});
 app.delete('/api/templates/:id',(req,res)=>{const a=req.headers['authorization'];if(!a)return res.status(401).json({error:'Missing key'});const u=uid(a);delete TEMPLATES[u]?.[req.params.id];saveStore('templates',TEMPLATES);res.json({ok:true});});
+
+
+// ── Pre-configured API key (server-side, never exposed in HTML source) ──────
+// Key is stored server-side only. Frontend fetches it once via /api/config.
+const FAL_KEY_SERVER = process.env.FAL_KEY || '3ac08d82-1ead-4b6d-bd1e-284466179096:47b3486ef62f854276f4c2bf6fbfae09';
+
+app.get('/api/config', (req, res) => {
+  // Returns whether a server key exists so frontend can auto-auth
+  res.json({ hasServerKey: !!FAL_KEY_SERVER, version: '2.0' });
+});
+
+// ── Video generation (Kling 3.0 Pro via fal.ai) ───────────────────────────
+// Image-to-video: product/model image + motion prompt → MP4 clip
+app.post('/api/video/create', async(req, res) => {
+  // Use server key if available, else use header key
+  const auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : req.headers['authorization'];
+  if(!auth) return res.status(401).json({error:'Missing key'});
+
+  const { clips } = req.body; // array of {imageUrl, prompt, duration, aspectRatio, id}
+  if(!clips?.length) return res.status(400).json({error:'No clips'});
+
+  const jobId = uuidv4();
+  const videoJobs = {};
+  
+  // Store video jobs separately
+  if(!global.videoJobs) global.videoJobs = {};
+  global.videoJobs[jobId] = {
+    status: 'processing',
+    created: Date.now(),
+    clips: clips.map(c => ({...c, status:'queued', resultUrl:null, error:null, requestId:null})),
+    completedCount: 0,
+  };
+
+  res.json({ jobId, total: clips.length });
+
+  // Process clips with concurrency 2 (video is expensive)
+  const job = global.videoJobs[jobId];
+  const queue = [...job.clips];
+  const next = async () => {
+    const clip = queue.shift();
+    if(!clip) return;
+    try {
+      clip.status = 'generating';
+      // Kling 3.0 Pro image-to-video endpoint
+      const sub = await falQ('/fal-ai/kling-video/v3/pro/image-to-video', {
+        image_url: clip.imageUrl,
+        prompt: clip.prompt || 'fashion model walking, professional fashion video, cinematic movement',
+        duration: clip.duration || '5',
+        aspect_ratio: clip.aspectRatio || '9:16',
+      }, auth);
+
+      if(!sub.request_id) {
+        // Try standard kling endpoint as fallback
+        const sub2 = await falQ('/fal-ai/kling-video/v1.6/pro/image-to-video', {
+          image_url: clip.imageUrl,
+          prompt: clip.prompt || 'fashion model, cinematic movement, professional video',
+          duration: clip.duration || '5',
+          aspect_ratio: clip.aspectRatio || '9:16',
+        }, auth);
+        if(!sub2.request_id) throw new Error(sub2.detail || sub2.error || 'Submit failed');
+        clip.requestId = sub2.request_id;
+        clip.statusUrl = sub2.status_url;
+        clip.responseUrl = sub2.response_url;
+      } else {
+        clip.requestId = sub.request_id;
+        clip.statusUrl = sub.status_url;
+        clip.responseUrl = sub.response_url;
+      }
+
+      // Poll for result
+      const endpoint = '/fal-ai/kling-video/v3/pro/image-to-video';
+      for(let i = 0; i < 180; i++) {
+        await new Promise(r=>setTimeout(r, 5000));
+        const sp = clip.statusUrl ? clip.statusUrl.replace('https://queue.fal.run','') : `${endpoint}/requests/${clip.requestId}/status`;
+        const st = await falGet(sp, auth);
+        if(st.status === 'COMPLETED') {
+          const rp = clip.responseUrl ? clip.responseUrl.replace('https://queue.fal.run','') : `${endpoint}/requests/${clip.requestId}`;
+          const result = await falGet(rp, auth);
+          const url = result?.video?.url || result?.output?.video?.url || result?.videos?.[0]?.url;
+          if(!url) throw new Error('No video URL in result');
+          clip.resultUrl = url;
+          clip.status = 'done';
+          break;
+        }
+        if(st.status === 'FAILED') throw new Error(st.error || 'Generation failed');
+      }
+      if(!clip.resultUrl) throw new Error('Timed out');
+    } catch(err) {
+      clip.status = 'error';
+      clip.error = err.message;
+      console.error('[video]', err.message);
+    }
+    job.completedCount++;
+    if(job.completedCount >= job.clips.length) job.status = 'done';
+    await next();
+  };
+  Promise.all([next(), next()]); // 2 concurrent
+});
+
+app.get('/api/video/:id/status', (req, res) => {
+  if(!global.videoJobs) return res.status(404).json({error:'Not found'});
+  const job = global.videoJobs[req.params.id];
+  if(!job) return res.status(404).json({error:'Not found'});
+  res.json({
+    status: job.status, total: job.clips.length, completed: job.completedCount,
+    clips: job.clips.map(({id,prompt,status,resultUrl,error,aspectRatio,duration}) =>
+      ({id,prompt,status,resultUrl,error,aspectRatio,duration}))
+  });
+});
+
+// Text-to-video using Kling
+app.post('/api/video/text', async(req, res) => {
+  const auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : req.headers['authorization'];
+  if(!auth) return res.status(401).json({error:'Missing key'});
+  const { prompt, duration, aspectRatio } = req.body;
+  if(!prompt) return res.status(400).json({error:'Prompt required'});
+  try {
+    const sub = await falQ('/fal-ai/kling-video/v3/pro/text-to-video', {
+      prompt, duration: duration||'5', aspect_ratio: aspectRatio||'9:16',
+    }, auth);
+    if(!sub.request_id) throw new Error(sub.detail||sub.error||'Submit failed');
+    res.json({ requestId: sub.request_id, statusUrl: sub.status_url, responseUrl: sub.response_url });
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.get('/api/video/poll/:requestId', async(req, res) => {
+  const auth = FAL_KEY_SERVER ? `Key ${FAL_KEY_SERVER}` : req.headers['authorization'];
+  if(!auth) return res.status(401).json({error:'Missing key'});
+  try {
+    const st = await falGet(`/fal-ai/kling-video/v3/pro/text-to-video/requests/${req.params.requestId}/status`, auth);
+    if(st.status === 'COMPLETED') {
+      const r = await falGet(`/fal-ai/kling-video/v3/pro/text-to-video/requests/${req.params.requestId}`, auth);
+      return res.json({status:'done', url: r?.video?.url || r?.output?.video?.url});
+    }
+    res.json({status: st.status || 'processing'});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
 
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
 app.listen(PORT,()=>console.log(`\n✅ Fashion AI → http://localhost:${PORT}\n`));
