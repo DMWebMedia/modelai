@@ -154,60 +154,124 @@ const GENDER={female:'beautiful female model',male:'handsome male model',neutral
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL  = 'claude-sonnet-4-5';
 
+// Analyze a single image with a specific angle context
+async function analyzeOneImage(base64, mimeType, angleHint) {
+  const body = {
+    model: CLAUDE_MODEL,
+    max_tokens: 250,
+    messages: [{
+      role: 'user',
+      content: [
+        { type:'image', source:{ type:'base64', media_type:mimeType||'image/jpeg', data:base64 } },
+        {
+          type: 'text',
+          text: `This is a product photo (${angleHint}) for an AI fashion image generator.
+
+Describe ONLY what is visible in THIS image. Be precise and specific.
+
+For clothing: type, color, fabric, length, cut, neckline, straps, and any details VISIBLE IN THIS IMAGE ONLY.
+For accessories: describe every bag, jewelry, bracelet, belt visible in this image.
+For feet: ONLY mention if shoes/feet are clearly exposed. If dress covers feet write "feet covered".
+
+Output: one dense paragraph, max 80 words. No model descriptions.`,
+        },
+      ],
+    }],
+  };
+
+  const resp = await fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await resp.json();
+  return data?.content?.[0]?.text?.trim() || null;
+}
+
+// Analyze garment by processing each image separately then combining
+// This mirrors how a human would analyze: look at front, note what's there,
+// look at back, note what's DIFFERENT, combine into structured description
 async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
   try {
-    // Send ALL images but clearly label them as different angles of the SAME garment
-    // This prevents Claude from conflating back-specific details onto front descriptions
-    const imgCount = 1 + extraImages.length;
-    const imageContent = [
-      { type:'image', source:{ type:'base64', media_type:mimeType||'image/jpeg', data:imageBase64 } },
-      ...extraImages.map(img=>({ type:'image', source:{ type:'base64', media_type:img.mimeType||'image/jpeg', data:img.base64 } }))
+    const allImages = [
+      { base64: imageBase64, mimeType: mimeType||'image/jpeg' },
+      ...extraImages,
     ];
-    const body = {
+
+    // Determine angle labels based on image count and order
+    // Typically: first image = front/main, subsequent = back/side/detail
+    const angleLabels = ['front/main view', 'back view', 'side view', 'detail view', 'alternate view'];
+
+    // Analyze each image individually
+    const analyses = [];
+    for(let i = 0; i < allImages.length; i++) {
+      const label = angleLabels[i] || `angle ${i+1}`;
+      const desc = await analyzeOneImage(allImages[i].base64, allImages[i].mimeType, label);
+      if(desc) {
+        analyses.push({ angle: label, desc });
+        console.log(`[Claude vision] ${label}:`, desc.slice(0, 80) + '...');
+      }
+    }
+
+    if(!analyses.length) throw new Error('No analyses returned');
+
+    // If only one image, return its description directly
+    if(analyses.length === 1) {
+      return analyses[0].desc;
+    }
+
+    // Multiple images: ask Claude to combine them into a structured description
+    // with front/back details clearly separated
+    const combineBody = {
       model: CLAUDE_MODEL,
-      max_tokens: 400,
+      max_tokens: 300,
       messages: [{
         role: 'user',
-        content: [
-          ...imageContent,
-          {
-            type: 'text',
-            text: `You are analyzing product photos for an AI fashion image generator. These ${imgCount} image(s) show the SAME product from different angles, or multiple products worn together.
+        content: [{
+          type: 'text',
+          text: `I analyzed ${analyses.length} product photos of the SAME garment from different angles. Here are my observations:
 
-Describe the garment(s) precisely using this EXACT format so front and back details are kept separate:
+${analyses.map(a => a.angle.toUpperCase() + ': ' + a.desc).join('\n\n')}
 
-"[general garment: type, color, fabric, length, silhouette, neckline, straps/sleeves], front: [details only visible from front], back: [details only visible from back], accessories: [every accessory seen in ANY image - bags, jewelry, belts, watches - described precisely], feet: [ONLY if shoes are clearly exposed - otherwise write 'hem reaches floor feet not visible']"
+')}
 
-CRITICAL RULES:
-- Keep front-only details under "front:" and back-only details under "back:" — NEVER mix them
-- List EVERY accessory visible in ANY of the images under "accessories:"
-- If hem covers feet write "hem reaches floor feet not visible" — never invent bare feet or shoes
-- Max 150 words total. No model descriptions.
+Now combine these into ONE structured description for an AI image generator using EXACTLY this format:
+"[garment base: type, color, fabric, length, silhouette, neckline, straps], front: [details ONLY visible from front], back: [details ONLY visible from back], accessories: [ALL accessories from ANY angle], feet: [feet/shoes status]"
 
-Example: "floor-length black matte maxi dress, wide square neckline, thick spaghetti straps with gold square-buckle hardware, slim fitted silhouette with slight mermaid flare at hem, front: smooth structured boned bodice panels, back: vertical lace-up corset ribbon detail center back, accessories: large gold cuff bracelet on right wrist, black structured leather baguette bag gold twist-lock clasp, feet: hem reaches floor feet not visible"`,
-          },
-        ],
+Rules:
+- NEVER put back-specific details in the front section or vice versa
+- Include ALL accessories mentioned in any angle
+- Max 150 words
+- No model descriptions`,
+        }],
       }],
     };
 
-    const resp = await fetch(ANTHROPIC_API, {
+    const combineResp = await fetch(ANTHROPIC_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': ANTHROPIC_KEY,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(combineBody),
     });
 
-    const data = await resp.json();
-    const text = data?.content?.[0]?.text?.trim();
-    if(!text) throw new Error('No response from Claude vision');
-    console.log('[Claude vision]', text.slice(0, 100) + '...');
-    return text;
+    const combineData = await combineResp.json();
+    const combined = combineData?.content?.[0]?.text?.trim();
+    if(!combined) throw new Error('No combined description');
+
+    console.log('[Claude vision combined]', combined.slice(0, 120) + '...');
+    return combined;
+
   } catch(err) {
     console.error('[Claude vision error]', err.message);
-    return null; // fall back to generic GARMENT_LOCK
+    return null;
   }
 }
 
