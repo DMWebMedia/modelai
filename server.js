@@ -154,27 +154,36 @@ const GENDER={female:'beautiful female model',male:'handsome male model',neutral
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL  = 'claude-sonnet-4-5';
 
-async function analyzeGarment(imageBase64, mimeType) {
+async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
   try {
+    // Build content array — all product images so Claude sees the full group
+    const imageContent = [
+      { type:'image', source:{ type:'base64', media_type:mimeType||'image/jpeg', data:imageBase64 } },
+      ...extraImages.map(img=>({ type:'image', source:{ type:'base64', media_type:img.mimeType||'image/jpeg', data:img.base64 } }))
+    ];
     const body = {
       model: CLAUDE_MODEL,
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{
         role: 'user',
         content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 },
-          },
+          ...imageContent,
           {
             type: 'text',
-            text: `You are analyzing a product photo for an AI fashion image generator.
-Describe ONLY the clothing/accessory in this image with extreme precision for use as an AI prompt.
-Be specific about: garment type, exact length, color, fabric/material, cut/silhouette, neckline, straps, sleeves, details, patterns, closures, hardware.
-Also note: are shoes visible? are accessories visible (bags, jewelry, belts)? bare feet or shoes?
-Output a single dense comma-separated description, max 120 words.
-Focus on what to PRESERVE exactly. Do NOT describe the model's face, hair, or body.
-Example format: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable hardware, corseted back with vertical lace-up ribbon detail, straight fitted silhouette that skims the body, slight flare at hem, no shoes visible, bare feet, no bag in frame"`,
+            text: `You are analyzing product photos for an AI fashion image generator.
+These images are all from the SAME product group — they may show different angles of the same garment OR multiple separate products that go together.
+Describe ALL visible products/garments with extreme precision for use as an AI image prompt.
+
+For each item describe: exact type, exact length, color, fabric/texture, cut/silhouette, neckline, straps, sleeves, all visible details, closures, hardware, patterns.
+Also state explicitly: are shoes visible? bare feet? what accessories (bags, jewelry, belts, watches) are visible and describe them precisely.
+
+Rules:
+- Output ONE dense comma-separated description covering ALL items
+- Max 150 words
+- Do NOT describe the model's face, hair, skin, or body shape
+- Be extremely specific — this description will be used to lock the garment and prevent any changes
+
+Example: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable square-buckle hardware, corseted bodice with vertical boning channels, lace-up ribbon detail at back center, slim straight silhouette flaring slightly at hem, dress hem reaches floor, bare feet no shoes, black structured leather baguette bag with single top handle and gold twist-lock clasp hardware held in left hand"`,
           },
         ],
       }],
@@ -206,14 +215,13 @@ const garmentCache = new Map();
 
 async function getGarmentDescription(images) {
   if(!images?.length) return null;
-  // Use first image (primary product angle)
-  const img = images[0];
-  const cacheKey = img.base64.slice(0, 64);
+  // Cache key = first 64 chars of ALL images combined
+  const cacheKey = images.map(i=>i.base64.slice(0,32)).join('|');
   if(garmentCache.has(cacheKey)) {
     console.log('[Claude vision] cache hit');
     return garmentCache.get(cacheKey);
   }
-  const desc = await analyzeGarment(img.base64, img.mimeType);
+  const desc = await analyzeGarment(images[0].base64, images[0].mimeType, images.slice(1));
   if(desc) {
     garmentCache.set(cacheKey, desc);
     if(garmentCache.size > 200) garmentCache.delete(garmentCache.keys().next().value);
@@ -351,12 +359,16 @@ async function generate(item,auth,modelAnchorUrls=[]){
 function buildPromptWithGarment(item, garmentDesc){
   const parts = [];
   
-  // 1. Exact garment description from Claude vision (highest priority)
-  // This is image-specific, not generic — locks every detail
-  parts.push('reproduce exactly: ' + garmentDesc);
+  // 1. Hard lock — no inventions allowed
+  parts.push('do not add, remove, or change any clothing item or accessory — reproduce only what is described below');
+  // 2. Exact garment description from Claude vision
+  parts.push(garmentDesc);
   
   // 2. Shot angle
-  parts.push(SHOT[item.shotLabel] || SHOT[item.shotType] || SHOT.front);
+  // shotType is the key (front/back/side), shotLabel is display name (Front View)
+  // Try shotType first, then map shotLabel to key
+  const shotKey = item.shotType || (item.shotLabel||'').toLowerCase().replace(' view','').replace(' ','_') || 'front';
+  parts.push(SHOT[shotKey] || SHOT.front);
   
   // 3. Model identity
   if(item.modelLocked){
