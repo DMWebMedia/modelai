@@ -76,9 +76,9 @@ const CAT={
   other:'wearing or holding the product, product clearly visible',
 };
 const SHOT={
-  front:'full body front view, complete head to toe, feet visible, facing camera directly',
-  back:'full body back view, complete head to toe, feet visible, model facing away, full dress/outfit length visible',
-  side:'full body side profile, complete head to toe, feet visible',
+  front:'full body front view, facing camera, full outfit visible from head to floor, do not add shoes unless shown in reference',
+  back:'full body back view, model facing away from camera, full outfit visible from shoulders to floor, do not add shoes unless shown in reference',
+  side:'full body side profile view, full outfit visible, do not add shoes unless shown in reference',
   threeq:'three-quarter angle, slightly turned from camera',
   detail:'extreme close-up detail shot, product texture in sharp focus',
   face:'portrait, head and shoulders, face clearly visible',
@@ -162,9 +162,11 @@ function buildPrompt(opts={}){
     // Shot 0 already handled the replacement. Shots 1+ just stay consistent.
     parts.push('same model as the reference photo, identical face and hair, consistent character');
   } else if(replaceModel){
-    parts.push('completely replace the model in the product image with a new model — keep the clothing and product exactly as shown, change only the person');
+    // Frame as GENERATION not editing — describe clothing from reference, put on new model
+    // Do NOT say "replace" — that tells NB2 to edit, making it copy the original face
     if(modelDesc) parts.push(modelDesc);
     else parts.push(GENDER[gender]||GENDER.female);
+    parts.push('use the reference image for clothing style only — ignore the person in the reference image completely');
   } else if(multiModelDesc){
     parts.push(multiModelDesc);
   } else if(modelDesc){
@@ -173,7 +175,7 @@ function buildPrompt(opts={}){
     parts.push(GENDER[gender]||GENDER.female);
   }
 
-  // 3. What they're wearing/showing
+  // 3. What they're wearing/showing — keep clothing description simple, don't over-describe
   if(modelCount>1 && productNames.length>1){
     parts.push(modelCount+' models, each wearing different products: '+productNames.join(', ')+', all visible in one scene');
   } else if(category==='outfit' && productNames.length>1){
@@ -214,8 +216,17 @@ function buildProductOnlyPrompt(opts={}){
 // ── Core generation ────────────────────────────────────────────────────────
 async function generate(item,auth,modelAnchorUrls=[]){
   item.status='uploading';
+  
+  let imagesToUpload = item.productImages || [];
+  
+  // When replacing the model: send only the FIRST product image
+  // Multiple angles = multiple faces = NB2 gets confused and blends them
+  if(item.replaceModel && item.shotIndex === 0 && imagesToUpload.length > 1){
+    imagesToUpload = [imagesToUpload[0]];
+  }
+  
   const productUrls=await Promise.all(
-    (item.productImages||[]).map(img=>uploadToFal(img.base64,img.mimeType,auth))
+    imagesToUpload.map(img=>uploadToFal(img.base64,img.mimeType,auth))
   );
   // Product images first — define WHAT to wear
   // Model anchor after — define WHO wears it (or consistency reference)
