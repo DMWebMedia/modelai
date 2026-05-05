@@ -156,7 +156,9 @@ const CLAUDE_MODEL  = 'claude-sonnet-4-5';
 
 async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
   try {
-    // Build content array — all product images so Claude sees the full group
+    // Send ALL images but clearly label them as different angles of the SAME garment
+    // This prevents Claude from conflating back-specific details onto front descriptions
+    const imgCount = 1 + extraImages.length;
     const imageContent = [
       { type:'image', source:{ type:'base64', media_type:mimeType||'image/jpeg', data:imageBase64 } },
       ...extraImages.map(img=>({ type:'image', source:{ type:'base64', media_type:img.mimeType||'image/jpeg', data:img.base64 } }))
@@ -170,21 +172,19 @@ async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
           ...imageContent,
           {
             type: 'text',
-            text: `You are analyzing product photos for an AI fashion image generator.
-These images are all from the SAME product group — they may show different angles of the same garment OR multiple separate products that go together.
-Describe ALL visible products/garments with extreme precision for use as an AI image prompt.
+            text: `You are analyzing product photos for an AI fashion image generator. These ${imgCount} image(s) show the SAME product from different angles, or multiple products worn together.
 
-For each item describe: exact type, exact length, color, fabric/texture, cut/silhouette, neckline, straps, sleeves, all visible details, closures, hardware, patterns.
-Also state explicitly: are shoes visible? bare feet? what accessories (bags, jewelry, belts, watches) are visible and describe them precisely.
+Describe the garment(s) precisely using this EXACT format so front and back details are kept separate:
 
-Rules:
-- Output ONE dense comma-separated description covering ALL items
-- Max 150 words  
-- Do NOT describe the model's face, hair, skin, or body shape
-- CRITICAL: If the dress/garment hem reaches the floor or covers the feet, write "feet not visible, do not show feet or toes". Only mention shoes/feet if they are clearly visible AND exposed in the image
-- Be extremely specific — this description will be used to lock every garment detail
+"[general garment: type, color, fabric, length, silhouette, neckline, straps/sleeves], front: [details only visible from front], back: [details only visible from back], accessories: [every accessory seen in ANY image - bags, jewelry, belts, watches - described precisely], feet: [ONLY if shoes are clearly exposed - otherwise write 'hem reaches floor feet not visible']"
 
-Example: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable square-buckle hardware, corseted bodice with vertical boning channels, lace-up ribbon detail at back center, slim straight silhouette flaring slightly at hem, hem reaches floor completely covering feet, feet not visible do not show feet or toes, black structured leather baguette bag with single top handle and gold twist-lock clasp hardware held in left hand"`,
+CRITICAL RULES:
+- Keep front-only details under "front:" and back-only details under "back:" — NEVER mix them
+- List EVERY accessory visible in ANY of the images under "accessories:"
+- If hem covers feet write "hem reaches floor feet not visible" — never invent bare feet or shoes
+- Max 150 words total. No model descriptions.
+
+Example: "floor-length black matte maxi dress, wide square neckline, thick spaghetti straps with gold square-buckle hardware, slim fitted silhouette with slight mermaid flare at hem, front: smooth structured boned bodice panels, back: vertical lace-up corset ribbon detail center back, accessories: large gold cuff bracelet on right wrist, black structured leather baguette bag gold twist-lock clasp, feet: hem reaches floor feet not visible"`,
           },
         ],
       }],
@@ -358,31 +358,42 @@ async function generate(item,auth,modelAnchorUrls=[]){
 
 // Build final NB2 prompt using Claude vision's precise garment description
 function buildPromptWithGarment(item, garmentDesc){
+  // Determine shot key once
+  const shotKey = item.shotType || (item.shotLabel||'').toLowerCase().replace(' view','').replace(' ','_') || 'front';
+  
+  // Filter garment description to match shot angle
+  // Removes opposite-angle details: front shot strips "back: [...]", back shot strips "front: [...]"
+  let angleDesc = garmentDesc;
+  if(shotKey === 'front' || shotKey === 'threeq') {
+    angleDesc = garmentDesc.replace(/,?\s*back:\s*[^,]+(?:,|$)/gi, ' ').trim();
+  } else if(shotKey === 'back') {
+    angleDesc = garmentDesc.replace(/,?\s*front:\s*[^,]+(?:,|$)/gi, ' ').trim();
+  }
+  
   const parts = [];
   
   // 1. Hard lock — no inventions allowed
   parts.push('do not add, remove, or change any clothing item or accessory — reproduce only what is described below');
-  // 2. Exact garment description from Claude vision
-  parts.push(garmentDesc);
+  // 2. Angle-specific garment description
+  parts.push(angleDesc);
   
-  // 2. Shot angle
-  // shotType is the key (front/back/side), shotLabel is display name (Front View)
-  // Try shotType first, then map shotLabel to key
-  const shotKey = item.shotType || (item.shotLabel||'').toLowerCase().replace(' view','').replace(' ','_') || 'front';
+  // 3. Shot angle
   parts.push(SHOT[shotKey] || SHOT.front);
   
-  // 3. Model identity — modelDescText includes hair/look description from Step 2
+  // 3. Model identity
   if(item.modelLocked){
+    // Shot 1+ consistency — use face from shot 0
     parts.push('same model as the reference photo, identical face and hair');
   } else if(item.replaceModel){
-    // Put full model description here — this is what the user wrote in Step 2
+    // User wants a different model — ignore original product model completely
     const modelDesc = item.modelDescText || 'beautiful female model';
-    parts.push(modelDesc);
-    parts.push('completely different person from the reference image');
+    parts.push(modelDesc + ', completely different person from the product reference image, ignore the person in the product photo');
+  } else if(item.modelDescText){
+    // User described a model in Step 2 — use that description
+    // Also tell AI to ignore any person visible in the product reference
+    parts.push(item.modelDescText + ', ignore any person visible in the product reference image, focus only on the clothing');
   } else {
-    // Even without replaceModel, include model description if user wrote one
-    if(item.modelDescText) parts.push(item.modelDescText);
-    else parts.push('beautiful female model');
+    parts.push('beautiful female model');
   }
 
   // 4. Scene / background from user prompt
