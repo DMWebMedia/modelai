@@ -563,35 +563,31 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   <!-- UPLOAD VIEW -->
   <div id="v-upload">
     <div class="sechd">
-      <div class="sectitle">Upload & Group</div>
-      <button class="btn bpri" id="continue-btn" onclick="showGen()" disabled>Continue →</button>
+      <div class="sectitle">Products</div>
+      <button class="btn bpri" id="continue-btn" onclick="showGen()" disabled>Generate →</button>
     </div>
-    <div class="card">
-      <div class="chd">Product Images <span class="bdg" id="pool-bdg">0 in pool</span></div>
-      <div class="csub">Upload all images at once — then group below by product. Multiple angles per product get sent together to AI for complete context.</div>
-      <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
-        <input type="file" id="fi" multiple accept="image/*"/>
-        <div class="dzi"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-        <div class="dzt">Drop product images here</div><div class="dzs">JPG · PNG · WEBP — any number, any order</div>
-      </div>
-      <div id="pool-wrap" style="display:none">
-        <div class="ptb">
-          <div class="pinfo" id="pinfo">Click images to select</div>
-          <button class="btn bout bsm" onclick="selAll()">All</button>
-          <button class="btn bout bsm" onclick="clrSel()">None</button>
-          <button class="btn bpri bsm" id="grp-btn" onclick="startGrp()" disabled>Group as Product →</button>
+    <div class="card" style="padding-bottom:1rem">
+      <div class="chd" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>Products <span class="bdg" id="grps-bdg">0 products</span></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn bpri bsm" id="grp-shot-btn" onclick="openGroupShot()" disabled style="background:linear-gradient(135deg,var(--pur),var(--bl));border:none">⊞ Group Shot</button>
+          <button class="btn bpri bsm" onclick="addNewProduct()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Product
+          </button>
         </div>
-        <div class="pgrid" id="pgrid"></div>
       </div>
+      <div class="csub" style="margin-bottom:0">Upload images into labeled slots — Claude analyzes each angle separately for precise garment detection. All slots are optional.</div>
     </div>
-    <div class="card">
-      <div class="chd" style="justify-content:space-between">
-        <span>Product Groups <span class="bdg" id="grps-bdg">0 groups</span></span>
-        <button class="btn bpri bsm" id="grp-shot-btn" onclick="openGroupShot()" disabled style="background:linear-gradient(135deg,var(--pur),var(--bl));border:none">⊞ Group Shot</button>
-      </div>
-      <div class="csub">Each group = one product. Select groups → click "Group Shot" to generate all in one image (banner, campaign, group photo).</div>
-      <div id="grps-con"><div class="no-grps">No products grouped yet — select images above and click "Group as Product"</div></div>
-    </div>
+    <div id="grps-con"><div class="no-grps" style="padding:2.5rem 1rem;text-align:center;border:2px dashed var(--br);border-radius:var(--rl);margin-top:0">
+      <div style="font-size:36px;margin-bottom:10px">👗</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px">No products yet</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Click "Add Product" to add your first product with labeled image slots</div>
+      <button class="btn bpri" onclick="addNewProduct()" style="gap:6px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add First Product
+      </button>
+    </div></div>
   </div>
 
   <!-- GENERATE VIEW -->
@@ -2611,6 +2607,29 @@ function getProductImagesForGroup(g) {
     mimeType: im.mimeType,
     slot: i===0 ? 'front view' : i===1 ? 'back view' : `angle ${i+1}`,
   }));
+}
+
+
+// ════ ADD PRODUCT (new simple flow) ════
+function addNewProduct() {
+  const id = 'g' + Math.random().toString(36).slice(2,9);
+  const name = 'Product ' + (groups.length + 1);
+  groups.push({
+    id, name,
+    images: [],      // kept for backward compat but slots is primary
+    slots: {},       // {front, back, left_side, right_side, accessories:[]}
+    modelId: null, modelUrl: null, modelName: null,
+    replaceModel: false,
+  });
+  selGroups.add(id); // auto-select new product
+  renderGroups();
+  updContinue();
+  // Scroll to new card
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.gc');
+    if(cards.length) cards[cards.length-1].scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 100);
+  toast('"' + name + '" added', 'ok');
 }
 
 </script>
