@@ -1310,7 +1310,7 @@ function compressImage(file, maxPx=1200, quality=0.88) {
 }
 async function addPool(files){for(const f of files.filter(f=>f.type.startsWith('image/'))){const b64=await compressImage(f);pool.push({id:'p'+Math.random().toString(36).slice(2,9),b64,mimeType:f.type||'image/jpeg',name:f.name.replace(/\.[^.]+$/,'')});}renderPool();}
 function renderPool(){
-  const grid=document.getElementById('pgrid'),wrap=document.getElementById('pool-wrap'); if(!grid||!wrap)return;
+  const grid=document.getElementById('pgrid'),wrap=document.getElementById('pool-wrap');if(!grid||!wrap)return; if(!grid||!wrap)return;
   document.getElementById('pool-bdg').textContent=pool.length+' in pool';
   wrap.style.display=pool.length?'block':'none';grid.innerHTML='';
   pool.forEach(pi=>{const sel=poolSel.has(pi.id);const d=document.createElement('div');d.className='pi'+(sel?' sel':'');d.id='pp'+pi.id;
@@ -1536,13 +1536,16 @@ async function startGen(){
       replaceModel:g.replaceModel||false,
     }));
     const{bgOption,bgCustom}=getBgOpt();
+    const modelDescVal = document.getElementById('model-desc')?.value?.trim()||'';
+    // Pass modelDesc on each product so server can use it in Claude-vision prompt
+    products.forEach(p=>{ p.modelDesc = modelDescVal; });
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
       body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:promptMode==='g'?'global':'individual',
-        category:selCat,styleKey:document.getElementById('style-sel').value,bgOption,bgCustom,
+        category:selCat,styleKey:document.getElementById('style-sel').value,bgOption:bgOption||'white',bgCustom,
         aiModel:getAiModel(),gptQuality:getGptQuality(),
         gender:document.getElementById('gender-sel').value,realism:document.getElementById('real-sel').value,
         resolution:document.getElementById('res-sel').value,aspectRatio:selAR,
-        modelDesc:document.getElementById('model-desc')?.value?.trim()||'',
+        modelDesc:modelDescVal,
         savedModelUrl:activeModel?.imageUrl||null,shots:shots.length?shots:null,
       })});
     const data=await resp.json();if(data.error)throw new Error(data.error);
