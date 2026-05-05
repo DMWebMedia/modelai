@@ -371,14 +371,18 @@ function buildPromptWithGarment(item, garmentDesc){
   const shotKey = item.shotType || (item.shotLabel||'').toLowerCase().replace(' view','').replace(' ','_') || 'front';
   parts.push(SHOT[shotKey] || SHOT.front);
   
-  // 3. Model identity
+  // 3. Model identity — modelDescText includes hair/look description from Step 2
   if(item.modelLocked){
     parts.push('same model as the reference photo, identical face and hair');
   } else if(item.replaceModel){
-    parts.push(item.modelDescText || 'beautiful female model');
-    parts.push('different person from the reference image');
+    // Put full model description here — this is what the user wrote in Step 2
+    const modelDesc = item.modelDescText || 'beautiful female model';
+    parts.push(modelDesc);
+    parts.push('completely different person from the reference image');
   } else {
-    parts.push(item.modelDescText || 'beautiful female model');
+    // Even without replaceModel, include model description if user wrote one
+    if(item.modelDescText) parts.push(item.modelDescText);
+    else parts.push('beautiful female model');
   }
 
   // 4. Scene / background from user prompt
@@ -395,6 +399,21 @@ function buildPromptWithGarment(item, garmentDesc){
   return prompt.length > 500 ? prompt.slice(0, 497) + '...' : prompt;
 }
 
+
+
+// GPT Image 2 uses image_size with specific enum values, not aspect_ratio
+const GPT2_SIZE = {
+  '1:1':  'square_hd',
+  '4:5':  'portrait_4_3',   // closest to 4:5
+  '3:4':  'portrait_4_3',
+  '2:3':  'portrait_4_3',
+  '9:16': 'portrait_16_9',
+  '4:3':  'landscape_4_3',
+  '3:2':  'landscape_4_3',
+  '16:9': 'landscape_16_9',
+  '21:9': 'landscape_16_9',
+};
+const toGPT2Size = ar => GPT2_SIZE[ar] || 'portrait_4_3';
 
 // ── GPT Image 2 generation (via fal.ai) ───────────────────────────────────
 async function generateGPT2(item, auth, modelAnchorUrls=[]) {
@@ -417,8 +436,8 @@ async function generateGPT2(item, auth, modelAnchorUrls=[]) {
   const sub = await falQ('/openai/gpt-image-2/edit', {
     prompt: item.prompt,
     image_urls: allUrls,
-    quality: item.gptQuality || 'medium', // low=$0.01, medium=$0.04, high=$0.15
-    aspect_ratio: toAR(item.aspectRatio || '3:4'),
+    quality: item.gptQuality || 'medium',
+    image_size: toGPT2Size(item.aspectRatio || '3:4'),
   }, auth);
 
   if(!sub.request_id) {
@@ -443,11 +462,16 @@ async function generateGPT2(item, auth, modelAnchorUrls=[]) {
         ? item.responseUrl.replace('https://queue.fal.run', '')
         : `/openai/gpt-image-2/edit/requests/${item.requestId}`;
       const res = await falGet(rp, auth);
+      // GPT Image 2 response: { images: [{ url: "..." }] }
       const url = res?.images?.[0]?.url
         || res?.output?.images?.[0]?.url
         || res?.image?.url
+        || res?.data?.[0]?.url
         || res?.data?.images?.[0]?.url;
-      if(!url) throw new Error('No image URL in GPT Image 2 result');
+      if(!url){
+        console.error('[GPT2 result]', JSON.stringify(res).slice(0,300));
+        throw new Error('No image URL in GPT Image 2 result: ' + JSON.stringify(res).slice(0,150));
+      }
       return url;
     }
     if(st.status === 'FAILED') throw new Error(st.error || st.detail || 'GPT Image 2 generation failed');
@@ -595,7 +619,7 @@ app.post('/api/batch/create',async(req,res)=>{
         gptQuality: req.body.gptQuality || 'medium',
         // Extra fields for Claude-vision prompt rebuilding
         modelLocked:modelLocked,
-        modelDescText:prod.modelDesc||modelDesc||'',
+        modelDescText:prod.modelDesc||modelDesc||'',  // includes hair/body desc from Step 2
         userPrompt:perPrompt+extra,
         bgOption:iBg, bgCustom:iBgC,
         realism:realism||'ultra',
