@@ -61,40 +61,48 @@ const AR_MAP={'1:1':'1:1','4:5':'4:5','3:4':'3:4','2:3':'2:3','9:16':'9:16','4:3
 const toAR=ar=>AR_MAP[ar]||'3:4';
 
 // ── Prompt dictionaries ────────────────────────────────────────────────────
+// CORE RULE: The product image is the SINGLE SOURCE OF TRUTH for the garment.
+// Never add, invent, or change anything about the clothing.
+// The garment in the output must be pixel-identical to the reference in terms of:
+// length, shape, cut, color, fabric, details, accessories, hem, straps, patterns.
+
+const GARMENT_LOCK = 'reproduce the exact garment from the reference image with 100% accuracy — same length, same cut, same fabric, same color, same every detail — do not add shoes, do not shorten, do not lengthen, do not add any item not visible in the reference';
+
 const CAT={
-  shirts:'wearing the shirt, fabric and fit clearly visible',
-  dresses:'wearing the dress, complete dress clearly visible, dress hemline and neckline visible',
-  sunglasses:'wearing the sunglasses, face visible, eyewear clearly shown',
-  bags:'carrying the bag, bag clearly visible',
-  shoes:'wearing the shoes, shoes clearly visible',
-  watches:'wearing the watch on wrist, watch face clearly visible',
-  jackets:'wearing the jacket, full body visible',
-  pants:'wearing the pants, full body visible, fit clearly shown',
-  jewelry:'wearing the jewelry, jewelry in sharp focus',
-  hats:'wearing the hat, hat clearly visible',
-  outfit:'wearing the complete outfit head to toe, all pieces visible simultaneously',
-  other:'wearing or holding the product, product clearly visible',
+  shirts:'wearing the exact shirt from the reference image',
+  dresses:'wearing the exact dress from the reference image, preserve exact hemline and length',
+  sunglasses:'wearing the exact sunglasses from the reference image',
+  bags:'holding the exact bag from the reference image, same bag shape and hardware',
+  shoes:'wearing the exact shoes from the reference image',
+  watches:'wearing the exact watch from the reference image',
+  jackets:'wearing the exact jacket from the reference image',
+  pants:'wearing the exact pants from the reference image, preserve exact length',
+  jewelry:'wearing the exact jewelry from the reference image',
+  hats:'wearing the exact hat from the reference image',
+  outfit:'wearing the exact complete outfit from the reference image, every piece identical',
+  other:'wearing or holding the exact product from the reference image',
 };
+
 const SHOT={
-  front:'full body front view, facing camera, full outfit visible from head to floor, do not add shoes unless shown in reference',
-  back:'full body back view, model facing away from camera, full outfit visible from shoulders to floor, do not add shoes unless shown in reference',
-  side:'full body side profile view, full outfit visible, do not add shoes unless shown in reference',
-  threeq:'three-quarter angle, slightly turned from camera',
-  detail:'extreme close-up detail shot, product texture in sharp focus',
-  face:'portrait, head and shoulders, face clearly visible',
-  sitting:'model seated, relaxed sitting pose',
-  walking:'model walking, mid-stride movement',
-  dynamic:'dynamic pose, energy and movement',
+  front:'model facing camera directly, full body visible from head to feet',
+  back:'model facing away from camera, full body visible from head to feet, rear view',
+  side:'model in side profile, full body visible from head to feet',
+  threeq:'three-quarter angle view, slightly turned',
+  detail:'extreme close-up, product texture and detail in sharp focus',
+  face:'portrait, head and shoulders only',
+  sitting:'model seated naturally',
+  walking:'model mid-stride, walking',
+  dynamic:'dynamic energetic pose',
   hands:'close-up on hands and wrists',
-  flat_lay:'flat lay overhead shot, product on surface, no model',
-  mannequin:'ghost mannequin, clothing only floating, no visible person',
-  alone_white:'product only on pure white background, no model, commercial product shot',
+  flat_lay:'flat lay overhead, product on surface, no model',
+  mannequin:'ghost mannequin effect, clothing only, no visible model',
+  alone_white:'product only on pure white background, no model',
   alone_grey:'product only on neutral grey background, no model',
   alone_natural:'product on natural wood surface, no model',
-  lookbook:'lookbook editorial lifestyle shot',
+  lookbook:'lookbook editorial lifestyle composition',
   street_life:'street photography, urban candid environment',
-  banner:'wide cinematic banner format, lots of negative space',
-  group:'group composition, wide shot, all subjects clearly visible',
+  banner:'wide cinematic banner, negative space on sides',
+  group:'group composition, wide shot, all subjects visible',
 };
 const BG={
   white:'pure white seamless studio background',
@@ -138,35 +146,31 @@ const REAL={
 };
 const GENDER={female:'beautiful female model',male:'handsome male model',neutral:'fashion model'};
 
-// ── Clean prompt builder — no patches, no conflicts ────────────────────────
 function buildPrompt(opts={}){
   const{
     userPrompt='', shotType='front', category='other',
     styleKey='', bgOption='ai', bgCustom='',
     gender='female', realism='ultra',
-    modelDesc='',       // text description of desired model
-    modelLocked=false,  // shots 2+ waiting for shot 1 face
-    productNames=[],
-    modelCount=1, multiModelDesc='',
-    replaceModel=false, // product photo has a model → replace them
+    modelDesc='', modelLocked=false,
+    productNames=[], modelCount=1, multiModelDesc='',
+    replaceModel=false,
   }=opts;
 
   const parts=[];
 
-  // 1. User scene prompt
-  if(userPrompt) parts.push(userPrompt);
+  // 1. GARMENT LOCK — always first, highest priority
+  // This is the most important instruction — preserve the clothing exactly
+  parts.push(GARMENT_LOCK);
 
-  // 2. Model identity — one clear instruction, no conflicts
+  // 2. Shot angle — second priority so pose is respected
+  parts.push(SHOT[shotType]||SHOT.front);
+
+  // 3. Model identity
   if(modelLocked){
-    // Shots 1+ always lock onto shot 0's face — whether or not replaceModel was used
-    // Shot 0 already handled the replacement. Shots 1+ just stay consistent.
-    parts.push('same model as the reference photo, identical face and hair, consistent character');
+    parts.push('same model as the reference photo, identical face and hair');
   } else if(replaceModel){
-    // Frame as GENERATION not editing — describe clothing from reference, put on new model
-    // Do NOT say "replace" — that tells NB2 to edit, making it copy the original face
-    if(modelDesc) parts.push(modelDesc);
-    else parts.push(GENDER[gender]||GENDER.female);
-    parts.push('use the reference image for clothing style only — ignore the person in the reference image completely');
+    parts.push(modelDesc||GENDER[gender]||GENDER.female);
+    parts.push('different person from the reference image');
   } else if(multiModelDesc){
     parts.push(multiModelDesc);
   } else if(modelDesc){
@@ -175,30 +179,29 @@ function buildPrompt(opts={}){
     parts.push(GENDER[gender]||GENDER.female);
   }
 
-  // 3. What they're wearing/showing — keep clothing description simple, don't over-describe
+  // 4. Category — minimal, just enough for AI to understand the garment type
   if(modelCount>1 && productNames.length>1){
-    parts.push(modelCount+' models, each wearing different products: '+productNames.join(', ')+', all visible in one scene');
-  } else if(category==='outfit' && productNames.length>1){
-    parts.push('wearing the complete outfit: '+productNames.join(' + ')+', all pieces visible');
+    parts.push(modelCount+' models each wearing different products: '+productNames.join(', '));
   } else {
     parts.push(CAT[category]||CAT.other);
   }
 
-  // 4. Shot angle
-  parts.push(SHOT[shotType]||SHOT.front);
+  // 5. User scene prompt (background/vibe)
+  if(userPrompt) parts.push(userPrompt);
 
-  // 5. Style
+  // 6. Style
   if(styleKey && STYLE[styleKey]) parts.push(STYLE[styleKey]);
 
-  // 6. Background
+  // 7. Background
   const bg=bgOption==='custom'?bgCustom:(BG[bgOption]||'');
   if(bg) parts.push(bg);
 
-  // 7. Quality
+  // 8. Quality
   parts.push(REAL[realism]||REAL.ultra);
 
+  // Keep prompt tight — NB2 quality drops with long prompts
   const prompt=parts.filter(Boolean).join(', ');
-  return prompt.length>450?prompt.slice(0,447)+'...':prompt;
+  return prompt.length>420?prompt.slice(0,417)+'...':prompt;
 }
 
 function buildProductOnlyPrompt(opts={}){
