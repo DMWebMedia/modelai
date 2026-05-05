@@ -155,25 +155,40 @@ const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_MODEL  = 'claude-sonnet-4-5';
 
 // Analyze a single image with a specific angle context
-async function analyzeOneImage(base64, mimeType, angleHint) {
+async function analyzeOneImage(base64, mimeType, slotLabel) {
+  const isAccessory = slotLabel.toLowerCase().includes('accessor');
+
   const body = {
     model: CLAUDE_MODEL,
-    max_tokens: 250,
+    max_tokens: 200,
     messages: [{
       role: 'user',
       content: [
         { type:'image', source:{ type:'base64', media_type:mimeType||'image/jpeg', data:base64 } },
         {
           type: 'text',
-          text: `This is a product photo (${angleHint}) for an AI fashion image generator.
+          text: isAccessory
+            ? `This product photo shows an ACCESSORY (labeled: "${slotLabel}").
 
-Describe ONLY what is visible in THIS image. Be precise and specific.
+Describe this accessory in complete detail:
+- Exact type (bag, handbag, earring, necklace, bracelet, belt, watch, ring, etc.)
+- Color and material (leather, gold, silver, fabric, etc.)
+- Shape and size
+- All hardware (clasps, chains, buckles, zippers, locks) with exact color
+- Any logos, patterns, decorative details
 
-For clothing: type, color, fabric, length, cut, neckline, straps, and any details VISIBLE IN THIS IMAGE ONLY.
-For accessories: describe every bag, jewelry, bracelet, belt visible in this image.
-For feet: ONLY mention if shoes/feet are clearly exposed. If dress covers feet write "feet covered".
+Output: dense comma-separated description, max 80 words. No model descriptions.`
+            : `This product photo is the "${slotLabel}" of a garment.
 
-Output: one dense paragraph, max 80 words. No model descriptions.`,
+Describe ONLY what is visible from THIS specific angle:
+- Garment type, color, fabric/material
+- Exact length (floor-length, midi, knee-length, cropped, etc.)
+- Silhouette and fit
+- Neckline, straps, sleeves visible from this angle
+- Details ONLY visible from this angle (stitching, panels, lacing, buttons, etc.)
+- If garment hem covers feet write "hem covers feet" — ONLY mention shoes if clearly exposed
+
+Output: dense comma-separated description, max 80 words. No model/person descriptions.`,
         },
       ],
     }],
@@ -188,7 +203,6 @@ Output: one dense paragraph, max 80 words. No model descriptions.`,
     },
     body: JSON.stringify(body),
   });
-
   const data = await resp.json();
   return data?.content?.[0]?.text?.trim() || null;
 }
@@ -203,18 +217,18 @@ async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
       ...extraImages,
     ];
 
-    // Determine angle labels based on image count and order
-    // Typically: first image = front/main, subsequent = back/side/detail
-    const angleLabels = ['front/main view', 'back view', 'side view', 'detail view', 'alternate view'];
+    // Use slot label from image if available, else fall back to positional label
+    const positionalLabels = ['front view','back view','left side view','right side view','detail view','alternate view'];
 
-    // Analyze each image individually
+    // Analyze EVERY image individually with its specific label
     const analyses = [];
     for(let i = 0; i < allImages.length; i++) {
-      const label = angleLabels[i] || `angle ${i+1}`;
-      const desc = await analyzeOneImage(allImages[i].base64, allImages[i].mimeType, label);
+      const img = allImages[i];
+      const label = img.slot || positionalLabels[i] || `angle ${i+1}`;
+      const desc = await analyzeOneImage(img.base64, img.mimeType, label);
       if(desc) {
         analyses.push({ angle: label, desc });
-        console.log(`[Claude vision] ${label}:`, desc.slice(0, 80) + '...');
+        console.log(`[Claude vision] [${label}]:`, desc.slice(0,80)+'...');
       }
     }
 
@@ -234,20 +248,7 @@ async function analyzeGarment(imageBase64, mimeType, extraImages=[]) {
         role: 'user',
         content: [{
           type: 'text',
-          text: `I analyzed ${analyses.length} product photos of the SAME garment from different angles. Here are my observations:
-
-${analyses.map(a => a.angle.toUpperCase() + ': ' + a.desc).join('\n\n')}
-
-')}
-
-Now combine these into ONE structured description for an AI image generator using EXACTLY this format:
-"[garment base: type, color, fabric, length, silhouette, neckline, straps], front: [details ONLY visible from front], back: [details ONLY visible from back], accessories: [ALL accessories from ANY angle], feet: [feet/shoes status]"
-
-Rules:
-- NEVER put back-specific details in the front section or vice versa
-- Include ALL accessories mentioned in any angle
-- Max 150 words
-- No model descriptions`,
+          text: `I analyzed ${analyses.length} product photos. Observations for each angle:\n\n${analyses.map(a => a.angle.toUpperCase() + ': ' + a.desc).join('\\n\\n')}\n\nWrite ONE combined description in this EXACT format (no deviations):\n[garment: type color fabric exact-length silhouette neckline straps], front: [details from front image ONLY], back: [details from back image ONLY], accessories: [ALL accessories seen in ANY image - each bag must be described fully with color/material/hardware; all jewelry], feet: [exposed feet description OR 'hem covers feet']\n\nMUST FOLLOW:\n- If a bag appears in ANY image it MUST be listed in accessories\n- front section = front angle details ONLY\n- back section = back angle details ONLY\n- 160 words max, no model descriptions`,
         }],
       }],
     };
@@ -280,13 +281,17 @@ const garmentCache = new Map();
 
 async function getGarmentDescription(images) {
   if(!images?.length) return null;
-  // Cache key = first 64 chars of ALL images combined
-  const cacheKey = images.map(i=>i.base64.slice(0,32)).join('|');
+  const cacheKey = images.map(i=>i.base64.slice(0,32)+(i.slot||'')).join('|');
   if(garmentCache.has(cacheKey)) {
     console.log('[Claude vision] cache hit');
     return garmentCache.get(cacheKey);
   }
-  const desc = await analyzeGarment(images[0].base64, images[0].mimeType, images.slice(1));
+  // Pass ALL images with their slot labels
+  const desc = await analyzeGarment(
+    images[0].base64,
+    images[0].mimeType,
+    images.slice(1) // rest already have slot info if set by frontend
+  );
   if(desc) {
     garmentCache.set(cacheKey, desc);
     if(garmentCache.size > 200) garmentCache.delete(garmentCache.keys().next().value);
@@ -429,10 +434,14 @@ function buildPromptWithGarment(item, garmentDesc){
   // Removes opposite-angle details: front shot strips "back: [...]", back shot strips "front: [...]"
   let angleDesc = garmentDesc;
   if(shotKey === 'front' || shotKey === 'threeq') {
-    angleDesc = garmentDesc.replace(/,?\s*back:\s*[^,]+(?:,|$)/gi, ' ').trim();
+    // Remove everything from "back:" until the next labeled section or end
+    // Handles multi-word back descriptions like "back: lace-up detail with ribbon ties"
+    angleDesc = garmentDesc.replace(/,?\s*back:\s*(?:(?!front:|back:|accessories:|feet:).)+/gi, '').trim();
   } else if(shotKey === 'back') {
-    angleDesc = garmentDesc.replace(/,?\s*front:\s*[^,]+(?:,|$)/gi, ' ').trim();
+    // Remove everything from "front:" until the next labeled section or end
+    angleDesc = garmentDesc.replace(/,?\s*front:\s*(?:(?!front:|back:|accessories:|feet:).)+/gi, '').trim();
   }
+  // Always keep accessories section intact regardless of angle
   
   const parts = [];
   

@@ -389,6 +389,23 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 .sw-opt:hover{border-color:var(--bl)}.sw-opt.on{border-color:var(--bl);background:var(--bll)}
 .sw-opt-hd{font-size:12px;font-weight:600;pointer-events:none}
 
+
+/* IMAGE SLOTS */
+.slots-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.slot-row{display:flex;align-items:center;gap:8px}
+.slot-label{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;width:72px;flex-shrink:0}
+.slot-box{width:54px;height:68px;border:2px dashed var(--br2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;flex-shrink:0;background:var(--bg)}
+.slot-box:hover{border-color:var(--bl);background:var(--bll)}
+.slot-box.filled{border-style:solid;border-color:var(--bl)}
+.slot-box img{width:100%;height:100%;object-fit:cover;display:block}
+.slot-box .slot-del{position:absolute;top:1px;right:1px;width:14px;height:14px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;padding:0}
+.slot-box.filled:hover .slot-del{display:flex}
+.slot-box .slot-plus{font-size:18px;color:var(--t3);pointer-events:none}
+.slot-add-acc{padding:4px 10px;border:1.5px dashed var(--br2);border-radius:100px;font-size:11px;cursor:pointer;color:var(--t2);background:none;font-family:'Inter',sans-serif;transition:all .12s;margin-top:4px}
+.slot-add-acc:hover{border-color:var(--bl);color:var(--bl)}
+.acc-slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.slot-badge{position:absolute;bottom:1px;left:0;right:0;background:rgba(37,99,235,.85);color:#fff;font-size:7px;font-weight:700;text-align:center;padding:1px 2px;pointer-events:none}
+
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
 @media(max-width:860px){.wrap{flex-direction:column}.sb{width:100%;height:auto}.rgrid{grid-template-columns:repeat(2,1fr)}}
@@ -1322,34 +1339,65 @@ function startGrp(){
 function confirmGrp(){
   if(!pendingImgs.length)return;
   const name=document.getElementById('gn-inp').value.trim()||('Product '+(groups.length+1));
-  groups.push({id:'g'+Math.random().toString(36).slice(2,9),name,images:pendingImgs.map(p=>({b64:p.b64,mimeType:p.mimeType})),modelId:null,modelUrl:null,modelName:null});
+  groups.push({id:'g'+Math.random().toString(36).slice(2,9),name,images:pendingImgs.map(p=>({b64:p.b64,mimeType:p.mimeType})),slots:{},modelId:null,modelUrl:null,modelName:null,replaceModel:false});
   const ids=new Set(pendingImgs.map(p=>p.id));pool=pool.filter(p=>!ids.has(p.id));poolSel.clear();pendingImgs=[];
   selGroups.add(groups[groups.length-1].id);closeM('m-grpname');renderPool();renderGroups();updContinue();toast(`"${name}" grouped`,'ok');
 }
 function renderGroups(){
   const con=document.getElementById('grps-con');
   const total=groups.length;
-  const selCount=selGroups.size;
   document.getElementById('grps-bdg').textContent=total+' groups';
   if(!total){con.innerHTML='<div class="no-grps">No products grouped yet</div>';updateGrpToolbar();return;}
+
   con.innerHTML=`<div id="grp-toolbar" style="display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid var(--br);margin-bottom:10px;flex-wrap:wrap">
-    <span style="font-size:12px;color:var(--t2);flex:1" id="grp-sel-label">Click checkboxes to select products to generate</span>
-    <button class="btn bout bsm" onclick="grpSelAll()">Select All</button>
+    <span style="font-size:12px;color:var(--t2);flex:1" id="grp-sel-label">Click cards to select</span>
+    <button class="btn bout bsm" onclick="grpSelAll()">All</button>
     <button class="btn bout bsm" onclick="grpSelNone()">None</button>
     <button class="btn bout bsm" onclick="grpSelInvert()">Invert</button>
     <button class="btn bpri bsm" id="sel-gen-btn" onclick="showGen()" disabled>Generate Selected →</button>
   </div>
   <div class="gstack">`+groups.map((g,gi)=>{
     const sel=selGroups.has(g.id);
-    const imgs=g.images.map((im,ii)=>`<div class="gci"><img src="data:${im.mimeType};base64,${im.b64}"/><button class="gd" onclick="rmGI(${gi},${ii})">×</button></div>`).join('');
     const safeName=g.name.replace(/"/g,'&quot;');
+    const slots=g.slots||{};
+    const accSlots=slots.accessories||[];
+
+    const mkSlot=(key,label)=>{
+      const img=slots[key];
+      return `<div class="slot-row">
+        <span class="slot-label">${label}</span>
+        <div class="slot-box${img?' filled':''}" onclick="event.stopPropagation();openSlotPicker(${gi},'${key}')">
+          ${img?`<img src="data:${img.mimeType};base64,${img.b64}"/><button class="slot-del" onclick="event.stopPropagation();clearSlot(${gi},'${key}')">×</button><span class="slot-badge">${label}</span>`:'<span class="slot-plus">+</span>'}
+        </div>
+        <span style="font-size:10px;color:var(--t3)">${img?'✓ Set':'Optional'}</span>
+      </div>`;
+    };
+
+    const accHtml=`<div class="slot-row">
+      <span class="slot-label">Accessories</span>
+      <div style="flex:1">
+        <div class="acc-slots">
+          ${accSlots.map((img,ai)=>`<div class="slot-box filled" style="width:44px;height:54px" onclick="event.stopPropagation()">
+            <img src="data:${img.mimeType};base64,${img.b64}"/>
+            <button class="slot-del" onclick="event.stopPropagation();rmAccSlot(${gi},${ai})">×</button>
+            <span class="slot-badge">ACC${ai+1}</span>
+          </div>`).join('')}
+          <div class="slot-box" style="width:44px;height:54px" onclick="event.stopPropagation();openSlotPicker(${gi},'accessory')">
+            <span class="slot-plus" style="font-size:14px">+</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">${accSlots.length} item${accSlots.length!==1?'s':''} — bags, earrings, jewelry etc.</div>
+      </div>
+    </div>`;
+
     const mrow=g.modelUrl
-      ?`<div class="gcmrow"><img class="gcmthumb" src="${g.modelUrl}" onerror="this.style.display='none'"/><div class="gcminfo"><div class="gcmname">🔒 ${g.modelName}</div><div class="gcmsub">Per-group model</div></div><button class="bghost bxs" onclick="rmGM(${gi})">✕</button></div>`
-      :savedModels.length?`<div class="gcmrow"><div style="flex:1;font-size:11px;color:var(--t3)">No per-group model</div><select onchange="setGM(${gi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--br2);border-radius:6px"><option value="">Assign model...</option>${savedModels.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>`
-      :`<div class="gcmrow"><div style="font-size:11px;color:var(--t3)">Save a model to assign per-group</div></div>`;
-    return`<div class="gc${sel?' gc-sel':''}" style="cursor:pointer" onclick="toggleGrpSel('${g.id}',event)">
+      ?`<div class="gcmrow" style="margin-top:8px"><img class="gcmthumb" src="${g.modelUrl}" onerror="this.style.display='none'"/><div class="gcminfo"><div class="gcmname">🔒 ${g.modelName}</div><div class="gcmsub">Per-group model</div></div><button class="bghost bxs" onclick="rmGM(${gi})">✕</button></div>`
+      :savedModels.length?`<div class="gcmrow" style="margin-top:8px"><div style="flex:1;font-size:11px;color:var(--t3)">No per-group model</div><select onchange="setGM(${gi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--br2);border-radius:6px;font-family:'Inter',sans-serif"><option value="">Assign model...</option>${savedModels.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>`
+      :'';
+
+    return`<div class="gc${sel?' gc-sel':''}" style="cursor:pointer;border:2px solid ${sel?'var(--bl)':'var(--br)'};" onclick="toggleGrpSel('${g.id}',event)">
       <div class="gchd">
-        <div class="gc-checkbox" style="width:18px;height:18px;border-radius:5px;border:2px solid ${sel?'var(--bl)':'var(--br2)'};background:${sel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s">
+        <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${sel?'var(--bl)':'var(--br2)'};background:${sel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2 6 5 9 10 3" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
         </div>
         <div class="gcnum">${gi+1}</div>
@@ -1357,14 +1405,17 @@ function renderGroups(){
         <button class="gcdel" onclick="event.stopPropagation();delG(${gi})">✕</button>
       </div>
       <div class="gcbody">
-        <div class="gcimgs">${imgs}</div>
-        <div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
-        <div onclick="toggleReplaceModel('${g.id}')" style="display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1.5px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ybg)':'var(--bg)'}">
-          <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ylw)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:#fff">${g.replaceModel?'✓':''}</div>
-          <div style="flex:1">
-            <div style="font-size:11px;font-weight:700;color:${g.replaceModel?'#92400e':'var(--tx)'};line-height:1.3">⚠️ Product photo has a model in it</div>
-            <div style="font-size:10px;color:var(--t2);line-height:1.3">${g.replaceModel?'AI will replace that model with yours':'Tick if product image shows a model — AI will swap them out'}</div>
-          </div>
+        <div style="font-size:11px;font-weight:600;color:var(--bl);margin-bottom:8px">📷 Image Slots <span style="font-size:10px;font-weight:400;color:var(--t3)">optional — label each angle so AI knows exactly what it's looking at</span></div>
+        <div class="slots-grid">
+          ${mkSlot('front','Front')}
+          ${mkSlot('back','Back')}
+          ${mkSlot('left_side','Left Side')}
+          ${mkSlot('right_side','Right Side')}
+          ${accHtml}
+        </div>
+        <div onclick="toggleReplaceModel('${g.id}')" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:var(--r);cursor:pointer;border:1.5px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ybg)':'var(--bg)'}">
+          <div style="width:16px;height:16px;border-radius:4px;border:2px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ylw)':'var(--w)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0">${g.replaceModel?'✓':''}</div>
+          <div style="font-size:11px;font-weight:600;color:${g.replaceModel?'#92400e':'var(--t2)'}">⚠️ Product photo has a model — replace with mine</div>
         </div>
         ${mrow}
       </div>
@@ -1472,7 +1523,7 @@ async function startGen(){
     const activeGroups=groups.filter(g=>selGroups.has(g.id));
     const products=activeGroups.map((g,i)=>({
       name:g.name,
-      images:g.images.map(im=>({base64:im.b64,mimeType:im.mimeType})),
+      images:getProductImagesForGroup(g),  // uses slots if set, else falls back to pool images
       prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
       savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
       componentNames:selCat==='outfit'?activeGroups.map(gg=>gg.name):[],
@@ -2473,6 +2524,93 @@ function getAiModel() {
 
 function getGptQuality() {
   return document.getElementById('gpt2-quality-sel')?.value || 'medium';
+}
+
+
+// ════ IMAGE SLOTS ════
+// g.slots = { front:{b64,mimeType}, back:{...}, left_side:{...}, right_side:{...}, accessories:[{...},...] }
+
+let slotPickerTarget = null; // {gi, slotKey}
+
+function openSlotPicker(gi, slotKey) {
+  slotPickerTarget = {gi, slotKey};
+  // Create a hidden file input and trigger it
+  let fi = document.getElementById('slot-fi');
+  if(!fi){
+    fi = document.createElement('input');
+    fi.type = 'file'; fi.id = 'slot-fi'; fi.accept = 'image/*';
+    fi.style.display = 'none';
+    fi.addEventListener('change', onSlotFileSelected);
+    document.body.appendChild(fi);
+  }
+  fi.value = '';
+  fi.click();
+}
+
+async function onSlotFileSelected(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const {gi, slotKey} = slotPickerTarget;
+  const b64 = await compressImage(f, 1400, 0.9);
+  const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
+  
+  if(!groups[gi].slots) groups[gi].slots = {};
+  
+  if(slotKey === 'accessory') {
+    if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
+    groups[gi].slots.accessories.push(imgObj);
+  } else {
+    groups[gi].slots[slotKey] = imgObj;
+  }
+  renderGroups();
+  toast(`${slotKey.replace('_',' ')} image set ✓`, 'ok');
+}
+
+function clearSlot(gi, slotKey) {
+  if(!groups[gi].slots) return;
+  delete groups[gi].slots[slotKey];
+  renderGroups();
+}
+
+function rmAccSlot(gi, ai) {
+  if(!groups[gi].slots?.accessories) return;
+  groups[gi].slots.accessories.splice(ai, 1);
+  renderGroups();
+}
+
+// Build productImages array from slots — all slot images with their slot labels
+// If no slots set, fall back to g.images (the original pool-based images)
+function getProductImagesForGroup(g) {
+  const slots = g.slots || {};
+  const slotImages = [];
+  
+  // Add labeled slot images in logical order
+  const orderedSlots = ['front','back','left_side','right_side'];
+  for(const key of orderedSlots) {
+    if(slots[key]) {
+      slotImages.push({
+        base64: slots[key].b64,
+        mimeType: slots[key].mimeType,
+        slot: key.replace('_',' ') + ' view',
+      });
+    }
+  }
+  // Add accessories
+  for(let i=0; i<(slots.accessories||[]).length; i++) {
+    const acc = slots.accessories[i];
+    slotImages.push({
+      base64: acc.b64,
+      mimeType: acc.mimeType,
+      slot: `accessory ${i+1}`,
+    });
+  }
+  
+  // If user set slots, use those. If not, fall back to pool images (old behavior)
+  if(slotImages.length > 0) return slotImages;
+  return (g.images||[]).map((im,i) => ({
+    base64: im.b64,
+    mimeType: im.mimeType,
+    slot: i===0 ? 'front view' : i===1 ? 'back view' : `angle ${i+1}`,
+  }));
 }
 
 </script>
