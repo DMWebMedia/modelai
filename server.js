@@ -63,7 +63,7 @@ const toAR=ar=>AR_MAP[ar]||'3:4';
 // ── Prompt dictionaries ────────────────────────────────────────────────────
 const CAT={
   shirts:'wearing the shirt, fabric and fit clearly visible',
-  dresses:'wearing the dress, full length head to toe, dress silhouette clearly visible',
+  dresses:'wearing the dress, complete dress clearly visible, dress hemline and neckline visible',
   sunglasses:'wearing the sunglasses, face visible, eyewear clearly shown',
   bags:'carrying the bag, bag clearly visible',
   shoes:'wearing the shoes, shoes clearly visible',
@@ -76,9 +76,9 @@ const CAT={
   other:'wearing or holding the product, product clearly visible',
 };
 const SHOT={
-  front:'front view, model facing camera, full body head to toe',
-  back:'back view, model facing away from camera, full body rear shot',
-  side:'side profile view, full body',
+  front:'full body front view, complete head to toe, feet visible, facing camera directly',
+  back:'full body back view, complete head to toe, feet visible, model facing away, full dress/outfit length visible',
+  side:'full body side profile, complete head to toe, feet visible',
   threeq:'three-quarter angle, slightly turned from camera',
   detail:'extreme close-up detail shot, product texture in sharp focus',
   face:'portrait, head and shoulders, face clearly visible',
@@ -158,6 +158,8 @@ function buildPrompt(opts={}){
 
   // 2. Model identity — one clear instruction, no conflicts
   if(modelLocked){
+    // Shots 1+ always lock onto shot 0's face — whether or not replaceModel was used
+    // Shot 0 already handled the replacement. Shots 1+ just stay consistent.
     parts.push('same model as the reference photo, identical face and hair, consistent character');
   } else if(replaceModel){
     parts.push('completely replace the model in the product image with a new model — keep the clothing and product exactly as shown, change only the person');
@@ -263,6 +265,10 @@ async function processItem(batchId,itemId,auth){
       modelAnchorUrls=Array.isArray(item.savedModelUrls)&&item.savedModelUrls.length
         ?item.savedModelUrls:[item.savedModelUrl];
     } else if(item.shotIndex>0&&batch.type!=='website'){
+      // Always chain: shots 1+ wait for shot 0 and use its face as anchor
+      // This works for both normal AND replaceModel mode:
+      // - Normal: shot 0 has the AI-chosen model → chain keeps face consistent
+      // - replaceModel: shot 0 has the REPLACED model → chain keeps THAT face consistent
       const shot0=batch.items.find(i=>i.productKey===item.productKey&&i.shotIndex===0);
       if(shot0){
         item.status='waiting';
@@ -352,7 +358,7 @@ app.post('/api/batch/create',async(req,res)=>{
             category:prod.category||category||'other',styleKey:shot.styleKey||styleKey||'',
             bgOption:iBg,bgCustom:iBgC,gender:prod.gender||gender||'female',realism:realism||'ultra',
             modelDesc:prod.modelDesc||modelDesc||'',modelLocked,productNames,
-            replaceModel:replaceModel&&si===0});
+            replaceModel:replaceModel&&si===0});  // only shot 0 replaces
       items.push({id:uuidv4(),
         name:shotList.length>1?`${prod.name} — ${shot.label||shot.shotType}`:prod.name,
         productName:prod.name,productKey,shotLabel:shot.label||shot.shotType,shotIndex:si,
