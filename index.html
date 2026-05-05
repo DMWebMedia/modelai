@@ -1360,11 +1360,18 @@ function renderGroups(){
 
     const mkSlot=(key,label)=>{
       const img=slots[key];
+      const inputId=`slot-${g.id}-${key}`;
       return `<div class="slot-row">
         <span class="slot-label">${label}</span>
-        <div class="slot-box${img?' filled':''}" onclick="event.stopPropagation();openSlotPicker(${gi},'${key}')">
-          ${img?`<img src="data:${img.mimeType};base64,${img.b64}"/><button class="slot-del" onclick="event.stopPropagation();clearSlot(${gi},'${key}')">×</button><span class="slot-badge">${label}</span>`:'<span class="slot-plus">+</span>'}
-        </div>
+        <label for="${inputId}" class="slot-box${img?' filled':''}" onclick="event.stopPropagation()" style="cursor:pointer">
+          <input type="file" id="${inputId}" accept="image/*" style="display:none"
+            onchange="event.stopPropagation();handleSlotFile(event,${gi},'${key}')"/>
+          ${img
+            ? `<img src="data:${img.mimeType};base64,${img.b64}"/>
+               <button class="slot-del" onclick="event.preventDefault();event.stopPropagation();clearSlot(${gi},'${key}');return false">×</button>
+               <span class="slot-badge">${label}</span>`
+            : '<span class="slot-plus">+</span>'}
+        </label>
         <span style="font-size:10px;color:var(--t3)">${img?'✓ Set':'Optional'}</span>
       </div>`;
     };
@@ -1378,9 +1385,11 @@ function renderGroups(){
             <button class="slot-del" onclick="event.stopPropagation();rmAccSlot(${gi},${ai})">×</button>
             <span class="slot-badge">ACC${ai+1}</span>
           </div>`).join('')}
-          <div class="slot-box" style="width:44px;height:54px" onclick="event.stopPropagation();openSlotPicker(${gi},'accessory')">
+          <label for="slot-${g.id}-acc-new" class="slot-box" style="width:44px;height:54px;cursor:pointer" onclick="event.stopPropagation()">
+            <input type="file" id="slot-${g.id}-acc-new" accept="image/*" style="display:none"
+              onchange="event.stopPropagation();handleSlotFile(event,${gi},'accessory')"/>
             <span class="slot-plus" style="font-size:14px">+</span>
-          </div>
+          </label>
         </div>
         <div style="font-size:10px;color:var(--t3);margin-top:3px">${accSlots.length} item${accSlots.length!==1?'s':''} — bags, earrings, jewelry etc.</div>
       </div>
@@ -2526,40 +2535,29 @@ function getGptQuality() {
 // ════ IMAGE SLOTS ════
 // g.slots = { front:{b64,mimeType}, back:{...}, left_side:{...}, right_side:{...}, accessories:[{...},...] }
 
-let slotPickerTarget = null; // {gi, slotKey}
-
-function openSlotPicker(gi, slotKey) {
-  slotPickerTarget = {gi, slotKey};
-  // Create a hidden file input and trigger it
-  let fi = document.getElementById('slot-fi');
-  if(!fi){
-    fi = document.createElement('input');
-    fi.type = 'file'; fi.id = 'slot-fi'; fi.accept = 'image/*';
-    fi.style.display = 'none';
-    fi.addEventListener('change', onSlotFileSelected);
-    document.body.appendChild(fi);
-  }
-  fi.value = '';
-  fi.click();
-}
-
-async function onSlotFileSelected(e) {
+// Direct file handler — called from inline onchange on slot inputs
+// No programmatic .click() needed, browser allows this from real user gesture
+async function handleSlotFile(e, gi, slotKey) {
   const f = e.target.files[0]; if(!f) return;
-  const {gi, slotKey} = slotPickerTarget;
-  const b64 = await compressImage(f, 1400, 0.9);
-  const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
-  
-  if(!groups[gi].slots) groups[gi].slots = {};
-  
-  if(slotKey === 'accessory') {
-    if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
-    groups[gi].slots.accessories.push(imgObj);
-  } else {
-    groups[gi].slots[slotKey] = imgObj;
+  try {
+    const b64 = await compressImage(f, 1400, 0.9);
+    const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
+    if(!groups[gi]) return;
+    if(!groups[gi].slots) groups[gi].slots = {};
+    if(slotKey === 'accessory') {
+      if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
+      groups[gi].slots.accessories.push(imgObj);
+    } else {
+      groups[gi].slots[slotKey] = imgObj;
+    }
+    renderGroups();
+    toast(label(slotKey) + ' image added ✓', 'ok');
+  } catch(err) {
+    toast('Error reading image: ' + err.message, 'err');
   }
-  renderGroups();
-  toast(`${slotKey.replace('_',' ')} image set ✓`, 'ok');
 }
+
+function label(key){ return key==='accessory'?'Accessory':key.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase()); }
 
 function clearSlot(gi, slotKey) {
   if(!groups[gi].slots) return;
