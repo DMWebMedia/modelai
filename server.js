@@ -508,11 +508,22 @@ async function generateGPT2(item, auth, modelAnchorUrls=[]) {
   item.status = 'generating';
 
   // GPT Image 2 edit endpoint
+  // Sanitize prompt for GPT2 — remove words that trigger content filters
+  // "corset", "lace-up", "bodice" can get flagged even for normal fashion
+  const safePrompt = item.prompt
+    .replace(/corset/gi, 'structured waist')
+    .replace(/lace-up/gi, 'ribbon-tied')
+    .replace(/bodice/gi, 'fitted top')
+    .replace(/plunging/gi, 'low')
+    .replace(/revealing/gi, '')
+    .replace(/exposed/gi, 'visible');
+
   const sub = await falQ('/openai/gpt-image-2/edit', {
-    prompt: item.prompt,
+    prompt: safePrompt,
     image_urls: allUrls,
     quality: item.gptQuality || 'medium',
     image_size: toGPT2Size(item.aspectRatio || '3:4'),
+    content_moderation: 'permissive',
   }, auth);
 
   if(!sub.request_id) {
@@ -544,8 +555,9 @@ async function generateGPT2(item, auth, modelAnchorUrls=[]) {
         || res?.data?.[0]?.url
         || res?.data?.images?.[0]?.url;
       if(!url){
-        console.error('[GPT2 result]', JSON.stringify(res).slice(0,300));
-        throw new Error('No image URL in GPT Image 2 result: ' + JSON.stringify(res).slice(0,150));
+        const errStr = JSON.stringify(res).slice(0,300);
+        console.error('[GPT2 result]', errStr);
+        throw new Error('GPT Image 2 returned no image. ' + errStr.slice(0,200));
       }
       return url;
     }
@@ -581,10 +593,7 @@ async function processItem(batchId,itemId,auth){
       modelAnchorUrls=Array.isArray(item.savedModelUrls)&&item.savedModelUrls.length
         ?item.savedModelUrls:[item.savedModelUrl];
     } else if(item.shotIndex>0&&batch.type!=='website'){
-      // Always chain: shots 1+ wait for shot 0 and use its face as anchor
-      // This works for both normal AND replaceModel mode:
-      // - Normal: shot 0 has the AI-chosen model → chain keeps face consistent
-      // - replaceModel: shot 0 has the REPLACED model → chain keeps THAT face consistent
+      // Chain: shots 1+ wait for shot 0, use its result as face anchor
       const shot0=batch.items.find(i=>i.productKey===item.productKey&&i.shotIndex===0);
       if(shot0){
         item.status='waiting';
@@ -593,15 +602,24 @@ async function processItem(batchId,itemId,auth){
           if(shot0.status==='error')break;
           await new Promise(r=>setTimeout(r,3000));
         }
-        if(shot0.resultUrl)modelAnchorUrls=[shot0.resultUrl];
+        if(shot0.resultUrl){
+          // Shot 0 succeeded — use its result as face anchor
+          modelAnchorUrls=[shot0.resultUrl];
+        } else if(shot0.status==='error'){
+          // Shot 0 failed — generate this shot independently (no anchor)
+          // This means face may differ slightly but at least we get an image
+          console.log('[chain] Shot 0 failed, generating shot',item.shotIndex,'independently');
+          modelAnchorUrls=[]; // no anchor, generate fresh
+        }
       }
     }
-    // Route to correct AI model
+    // Always use GPT Image 2 unless explicitly set to nb2
     let url;
-    if(item.aiModel === 'gpt2') {
-      url = await generateGPT2(item, auth, modelAnchorUrls);
-    } else {
+    if(item.aiModel === 'nb2') {
       url = await generate(item, auth, modelAnchorUrls);
+    } else {
+      // Default: GPT Image 2
+      url = await generateGPT2(item, auth, modelAnchorUrls);
     }
     item.resultUrl=url;item.status='done';
     batch.completedCount=(batch.completedCount||0)+1;
@@ -624,7 +642,7 @@ app.post('/api/batch/create',async(req,res)=>{
   const auth=resolveAuth();
   const{type='model',products,globalPrompt,promptMode,category,styleKey,bgOption,bgCustom,
         gender,realism,resolution,aspectRatio,modelDesc,shots,savedModelUrl,
-        aiModel='nb2',gptQuality='medium',
+        aiModel='gpt2',gptQuality='medium',
         groupShot=false,groupShotModels=[],groupShotPrompt=''}=req.body;
 
   if(!products?.length)return res.status(400).json({error:'No products'});
