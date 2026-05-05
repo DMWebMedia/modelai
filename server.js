@@ -179,11 +179,12 @@ Also state explicitly: are shoes visible? bare feet? what accessories (bags, jew
 
 Rules:
 - Output ONE dense comma-separated description covering ALL items
-- Max 150 words
+- Max 150 words  
 - Do NOT describe the model's face, hair, skin, or body shape
-- Be extremely specific — this description will be used to lock the garment and prevent any changes
+- CRITICAL: If the dress/garment hem reaches the floor or covers the feet, write "feet not visible, do not show feet or toes". Only mention shoes/feet if they are clearly visible AND exposed in the image
+- Be extremely specific — this description will be used to lock every garment detail
 
-Example: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable square-buckle hardware, corseted bodice with vertical boning channels, lace-up ribbon detail at back center, slim straight silhouette flaring slightly at hem, dress hem reaches floor, bare feet no shoes, black structured leather baguette bag with single top handle and gold twist-lock clasp hardware held in left hand"`,
+Example: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable square-buckle hardware, corseted bodice with vertical boning channels, lace-up ribbon detail at back center, slim straight silhouette flaring slightly at hem, hem reaches floor completely covering feet, feet not visible do not show feet or toes, black structured leather baguette bag with single top handle and gold twist-lock clasp hardware held in left hand"`,
           },
         ],
       }],
@@ -395,6 +396,66 @@ function buildPromptWithGarment(item, garmentDesc){
 }
 
 
+// ── GPT Image 2 generation (via fal.ai) ───────────────────────────────────
+async function generateGPT2(item, auth, modelAnchorUrls=[]) {
+  item.status = 'uploading';
+
+  // Upload product images
+  let imagesToUpload = item.productImages || [];
+  if(item.replaceModel && item.shotIndex === 0 && imagesToUpload.length > 1) {
+    imagesToUpload = [imagesToUpload[0]];
+  }
+  const productUrls = await Promise.all(
+    imagesToUpload.map(img => uploadToFal(img.base64, img.mimeType, auth))
+  );
+
+  const allUrls = [...productUrls, ...modelAnchorUrls];
+
+  item.status = 'generating';
+
+  // GPT Image 2 edit endpoint
+  const sub = await falQ('/openai/gpt-image-2/edit', {
+    prompt: item.prompt,
+    image_urls: allUrls,
+    quality: item.gptQuality || 'medium', // low=$0.01, medium=$0.04, high=$0.15
+    aspect_ratio: toAR(item.aspectRatio || '3:4'),
+  }, auth);
+
+  if(!sub.request_id) {
+    const msg = Array.isArray(sub.detail)
+      ? sub.detail.map(d => d.msg || d).join('; ')
+      : (sub.detail || sub.error || JSON.stringify(sub).slice(0, 200));
+    throw new Error('GPT Image 2 submit failed: ' + msg);
+  }
+
+  item.requestId   = sub.request_id;
+  item.statusUrl   = sub.status_url;
+  item.responseUrl = sub.response_url;
+
+  for(let i = 0; i < 150; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const sp = item.statusUrl
+      ? item.statusUrl.replace('https://queue.fal.run', '')
+      : `/openai/gpt-image-2/edit/requests/${item.requestId}/status`;
+    const st = await falGet(sp, auth);
+    if(st.status === 'COMPLETED') {
+      const rp = item.responseUrl
+        ? item.responseUrl.replace('https://queue.fal.run', '')
+        : `/openai/gpt-image-2/edit/requests/${item.requestId}`;
+      const res = await falGet(rp, auth);
+      const url = res?.images?.[0]?.url
+        || res?.output?.images?.[0]?.url
+        || res?.image?.url
+        || res?.data?.images?.[0]?.url;
+      if(!url) throw new Error('No image URL in GPT Image 2 result');
+      return url;
+    }
+    if(st.status === 'FAILED') throw new Error(st.error || st.detail || 'GPT Image 2 generation failed');
+  }
+  throw new Error('GPT Image 2 timed out');
+}
+
+
 async function processItem(batchId,itemId,auth){
   const batch=jobs[batchId];if(!batch)return;
   const item=batch.items.find(i=>i.id===itemId);if(!item)return;
@@ -436,7 +497,13 @@ async function processItem(batchId,itemId,auth){
         if(shot0.resultUrl)modelAnchorUrls=[shot0.resultUrl];
       }
     }
-    const url=await generate(item,auth,modelAnchorUrls);
+    // Route to correct AI model
+    let url;
+    if(item.aiModel === 'gpt2') {
+      url = await generateGPT2(item, auth, modelAnchorUrls);
+    } else {
+      url = await generate(item, auth, modelAnchorUrls);
+    }
     item.resultUrl=url;item.status='done';
     batch.completedCount=(batch.completedCount||0)+1;
   }catch(err){
@@ -458,6 +525,7 @@ app.post('/api/batch/create',async(req,res)=>{
   const auth=resolveAuth();
   const{type='model',products,globalPrompt,promptMode,category,styleKey,bgOption,bgCustom,
         gender,realism,resolution,aspectRatio,modelDesc,shots,savedModelUrl,
+        aiModel='nb2',gptQuality='medium',
         groupShot=false,groupShotModels=[],groupShotPrompt=''}=req.body;
 
   if(!products?.length)return res.status(400).json({error:'No products'});
@@ -523,6 +591,8 @@ app.post('/api/batch/create',async(req,res)=>{
         productImages:prod.images,styleRefImages:[],prompt,
         aspectRatio:shot.aspectRatio||aspectRatio||'3:4',resolution:shot.resolution||resolution||'1K',
         replaceModel,
+        aiModel: aiModel || 'nb2',
+        gptQuality: req.body.gptQuality || 'medium',
         // Extra fields for Claude-vision prompt rebuilding
         modelLocked:modelLocked,
         modelDescText:prod.modelDesc||modelDesc||'',

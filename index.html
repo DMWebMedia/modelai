@@ -475,7 +475,22 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
   <div class="sbs">
     <div class="sbh">Output</div>
-    <div class="fld"><label class="lbl">Quality</label>
+    <div class="fld"><label class="lbl">AI Model</label>
+      <select id="ai-model-sel" onchange="onModelChange()">
+        <option value="nb2">⚡ Nano Banana 2 — Best realism ($0.08)</option>
+        <option value="gpt2">🧠 GPT Image 2 — Best accuracy ($0.04–$0.15)</option>
+      </select>
+    </div>
+    <div id="gpt2-quality-wrap" style="display:none">
+      <div class="fld"><label class="lbl">GPT Image 2 Quality</label>
+        <select id="gpt2-quality-sel" onchange="updateCost()">
+          <option value="low">Low — $0.01/img (fast preview)</option>
+          <option value="medium" selected>Medium — $0.04/img (recommended)</option>
+          <option value="high">High — $0.15/img (best quality)</option>
+        </select>
+      </div>
+    </div>
+    <div class="fld" id="nb2-quality-wrap"><label class="lbl">Quality</label>
       <select id="res-sel" onchange="updateCost()"><option value="1K">1K — $0.08/img</option><option value="2K">2K — $0.12/img</option></select>
     </div>
     <div class="fld"><label class="lbl">Aspect Ratio</label>
@@ -1419,7 +1434,14 @@ function renderSQ(){
 }
 
 // ════ COST / REVIEW ════
-function getRate(){return document.getElementById('res-sel').value==='2K'?0.12:0.08;}
+function getRate(){
+  const m = getAiModel();
+  if(m === 'gpt2') {
+    const q = getGptQuality();
+    return q === 'low' ? 0.01 : q === 'high' ? 0.15 : 0.04;
+  }
+  return document.getElementById('res-sel').value==='2K'?0.12:0.08;
+}
 function updateCost(){const n=groups.length*(shots.length||1),r=getRate();const ca=document.getElementById('cost-num'),cm=document.getElementById('cost-meta');if(ca)ca.textContent='$'+(n*r).toFixed(2);if(cm)cm.textContent=`${n} image${n!==1?'s':''} × $${r}`;}
 function updateWebCost(){const n=groups.length,r=getRate();const ca=document.getElementById('w-cost-num'),cm=document.getElementById('w-cost-meta');if(ca)ca.textContent='$'+(n*r).toFixed(2);if(cm)cm.textContent=`${n} image${n!==1?'s':''} × $${r}`;const btn=document.getElementById('w-gen-btn');if(btn)btn.disabled=!falKey||!selCat||!groups.length;}
 function updateReview(){
@@ -1460,6 +1482,7 @@ async function startGen(){
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
       body:JSON.stringify({type:'model',products,globalPrompt:gp,promptMode:promptMode==='g'?'global':'individual',
         category:selCat,styleKey:document.getElementById('style-sel').value,bgOption,bgCustom,
+        aiModel:getAiModel(),gptQuality:getGptQuality(),
         gender:document.getElementById('gender-sel').value,realism:document.getElementById('real-sel').value,
         resolution:document.getElementById('res-sel').value,aspectRatio:selAR,
         modelDesc:document.getElementById('model-desc')?.value?.trim()||'',
@@ -2434,6 +2457,22 @@ function toggleReplaceModel(gId) {
   if(!g) return;
   g.replaceModel = !g.replaceModel;
   renderGroups();
+}
+
+
+function onModelChange() {
+  const m = document.getElementById('ai-model-sel').value;
+  document.getElementById('gpt2-quality-wrap').style.display = m === 'gpt2' ? 'block' : 'none';
+  document.getElementById('nb2-quality-wrap').style.display  = m === 'nb2'  ? 'block' : 'none';
+  updateCost();
+}
+
+function getAiModel() {
+  return document.getElementById('ai-model-sel')?.value || 'nb2';
+}
+
+function getGptQuality() {
+  return document.getElementById('gpt2-quality-sel')?.value || 'medium';
 }
 
 </script>
