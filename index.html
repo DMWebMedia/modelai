@@ -599,7 +599,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <div id="st2" style="display:none">
         <div class="card">
           <div class="chd">Model Description <span class="bdg bdg-g">Optional</span></div>
-          <div class="csub">Describe the model you want. If your product images already have a model — <strong>go back to your groups and tick "My product image has a model"</strong> on each one, so AI ignores that model.</div>
+          <div class="csub">Describe the model you want. If your product photo already shows a model and you want a different one, go to your groups and tick the ⚠️ "Product photo has a model" option for each group.</div>
           <textarea id="model-desc" rows="3" placeholder="E.g: tall slim woman, olive skin, long straight dark brown hair, barefoot, early 30s, Mediterranean look, confident posture"></textarea>
         </div>
         <div class="card">
@@ -1344,11 +1344,11 @@ function renderGroups(){
       <div class="gcbody">
         <div class="gcimgs">${imgs}</div>
         <div class="gcmeta">${g.images.length} angle${g.images.length!==1?'s':''} — all sent together to AI</div>
-        <div onclick="togglePHM('${g.id}',${gi})" style="display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1.5px solid ${g.productHasModel?'var(--bl)':'var(--br2)'};background:${g.productHasModel?'var(--bll)':'var(--bg)'}">
-          <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${g.productHasModel?'var(--bl)':'var(--br2)'};background:${g.productHasModel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:#fff">${g.productHasModel?'✓':''}</div>
+        <div onclick="toggleReplaceModel('${g.id}')" style="display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 10px;border-radius:var(--r);cursor:pointer;transition:all .12s;border:1.5px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ybg)':'var(--bg)'}">
+          <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ylw)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:#fff">${g.replaceModel?'✓':''}</div>
           <div style="flex:1">
-            <div style="font-size:11px;font-weight:700;color:${g.productHasModel?'var(--bl)':'var(--tx)'};line-height:1.3">My product image has a model in it</div>
-            <div style="font-size:10px;color:var(--t2);line-height:1.3">${g.productHasModel?'✅ AI will ignore that model — using your description instead':'Tick this so AI ignores the model in your photo'}</div>
+            <div style="font-size:11px;font-weight:700;color:${g.replaceModel?'#92400e':'var(--tx)'};line-height:1.3">⚠️ Product photo has a model in it</div>
+            <div style="font-size:10px;color:var(--t2);line-height:1.3">${g.replaceModel?'AI will replace that model with yours':'Tick if product image shows a model — AI will swap them out'}</div>
           </div>
         </div>
         ${mrow}
@@ -1454,7 +1454,7 @@ async function startGen(){
       prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
       savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
       componentNames:selCat==='outfit'?activeGroups.map(gg=>gg.name):[],
-      productHasModel:g.productHasModel||false,
+      replaceModel:g.replaceModel||false,
     }));
     const{bgOption,bgCustom}=getBgOpt();
     const resp=await fetch('/api/batch/create',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},
@@ -2429,11 +2429,11 @@ async function doSwapModel() {
 }
 
 
-function togglePHM(gId, gi) {
+function toggleReplaceModel(gId) {
   const g = groups.find(x => x.id === gId);
   if(!g) return;
-  g.productHasModel = !g.productHasModel;
-  renderGroups(); // re-render to show updated state
+  g.replaceModel = !g.replaceModel;
+  renderGroups();
 }
 
 </script>
