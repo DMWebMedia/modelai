@@ -23,7 +23,8 @@ const jobs    = {};
 setInterval(()=>{const c=Date.now()-8*60*60*1000;for(const id of Object.keys(jobs)){if(jobs[id].created<c)delete jobs[id];}},30*60*1000);
 
 // ── API key ────────────────────────────────────────────────────────────────
-const FAL_KEY_SERVER = process.env.FAL_KEY || '3ac08d82-1ead-4b6d-bd1e-284466179096:47b3486ef62f854276f4c2bf6fbfae09';
+const FAL_KEY_SERVER     = process.env.FAL_KEY || '3ac08d82-1ead-4b6d-bd1e-284466179096:47b3486ef62f854276f4c2bf6fbfae09';
+const ANTHROPIC_KEY      = process.env.ANTHROPIC_API_KEY || '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';
 function resolveAuth(){ return 'Key ' + FAL_KEY_SERVER; }
 function uid(){
   const key = 'Key ' + FAL_KEY_SERVER;
@@ -145,6 +146,81 @@ const REAL={
   raw:'raw documentary style, natural ambient light, candid',
 };
 const GENDER={female:'beautiful female model',male:'handsome male model',neutral:'fashion model'};
+
+
+// ── Claude Vision — analyze product image to extract exact garment description ──
+// This runs once per product group before NB2 generation
+// Cost: ~$0.003 per image (negligible vs $0.08 for NB2)
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_MODEL  = 'claude-sonnet-4-5';
+
+async function analyzeGarment(imageBase64, mimeType) {
+  try {
+    const body = {
+      model: CLAUDE_MODEL,
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 },
+          },
+          {
+            type: 'text',
+            text: `You are analyzing a product photo for an AI fashion image generator.
+Describe ONLY the clothing/accessory in this image with extreme precision for use as an AI prompt.
+Be specific about: garment type, exact length, color, fabric/material, cut/silhouette, neckline, straps, sleeves, details, patterns, closures, hardware.
+Also note: are shoes visible? are accessories visible (bags, jewelry, belts)? bare feet or shoes?
+Output a single dense comma-separated description, max 120 words.
+Focus on what to PRESERVE exactly. Do NOT describe the model's face, hair, or body.
+Example format: "floor-length black matte crepe maxi dress, wide square neckline, thin spaghetti straps with gold adjustable hardware, corseted back with vertical lace-up ribbon detail, straight fitted silhouette that skims the body, slight flare at hem, no shoes visible, bare feet, no bag in frame"`,
+          },
+        ],
+      }],
+    };
+
+    const resp = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await resp.json();
+    const text = data?.content?.[0]?.text?.trim();
+    if(!text) throw new Error('No response from Claude vision');
+    console.log('[Claude vision]', text.slice(0, 100) + '...');
+    return text;
+  } catch(err) {
+    console.error('[Claude vision error]', err.message);
+    return null; // fall back to generic GARMENT_LOCK
+  }
+}
+
+// Cache: base64 prefix → garment description (avoid re-analyzing same image)
+const garmentCache = new Map();
+
+async function getGarmentDescription(images) {
+  if(!images?.length) return null;
+  // Use first image (primary product angle)
+  const img = images[0];
+  const cacheKey = img.base64.slice(0, 64);
+  if(garmentCache.has(cacheKey)) {
+    console.log('[Claude vision] cache hit');
+    return garmentCache.get(cacheKey);
+  }
+  const desc = await analyzeGarment(img.base64, img.mimeType);
+  if(desc) {
+    garmentCache.set(cacheKey, desc);
+    if(garmentCache.size > 200) garmentCache.delete(garmentCache.keys().next().value);
+  }
+  return desc;
+}
+
 
 function buildPrompt(opts={}){
   const{
@@ -270,10 +346,64 @@ async function generate(item,auth,modelAnchorUrls=[]){
   throw new Error('Timed out after 10 minutes');
 }
 
+
+// Build final NB2 prompt using Claude vision's precise garment description
+function buildPromptWithGarment(item, garmentDesc){
+  const parts = [];
+  
+  // 1. Exact garment description from Claude vision (highest priority)
+  // This is image-specific, not generic — locks every detail
+  parts.push('reproduce exactly: ' + garmentDesc);
+  
+  // 2. Shot angle
+  parts.push(SHOT[item.shotLabel] || SHOT[item.shotType] || SHOT.front);
+  
+  // 3. Model identity
+  if(item.modelLocked){
+    parts.push('same model as the reference photo, identical face and hair');
+  } else if(item.replaceModel){
+    parts.push(item.modelDescText || 'beautiful female model');
+    parts.push('different person from the reference image');
+  } else {
+    parts.push(item.modelDescText || 'beautiful female model');
+  }
+
+  // 4. Scene / background from user prompt
+  if(item.userPrompt) parts.push(item.userPrompt);
+  
+  // 5. Background
+  const bg = item.bgOption === 'custom' ? item.bgCustom : (BG[item.bgOption] || '');
+  if(bg) parts.push(bg);
+  
+  // 6. Quality
+  parts.push(REAL[item.realism] || REAL.ultra);
+
+  const prompt = parts.filter(Boolean).join(', ');
+  return prompt.length > 500 ? prompt.slice(0, 497) + '...' : prompt;
+}
+
+
 async function processItem(batchId,itemId,auth){
   const batch=jobs[batchId];if(!batch)return;
   const item=batch.items.find(i=>i.id===itemId);if(!item)return;
   try{
+
+    // ── CLAUDE VISION: analyze garment on shot 0, reuse for shots 1+ ──────
+    if(item.shotIndex===0 && batch.type!=='website' && item.productImages?.length){
+      const garmentDesc = await getGarmentDescription(item.productImages);
+      if(garmentDesc){
+        // Store on the batch so all shots for this product reuse it
+        if(!batch.garmentDescs) batch.garmentDescs = {};
+        batch.garmentDescs[item.productKey] = garmentDesc;
+        // Rebuild the prompt with the precise garment description
+        item.prompt = buildPromptWithGarment(item, garmentDesc);
+        console.log('[prompt rebuilt with Claude vision for', item.productName, ']');
+      }
+    } else if(item.shotIndex>0 && batch.garmentDescs?.[item.productKey]){
+      // Shots 1+ reuse the garment description from shot 0
+      item.prompt = buildPromptWithGarment(item, batch.garmentDescs[item.productKey]);
+    }
+
     let modelAnchorUrls=[];
     if((item.savedModelUrls?.length||item.savedModelUrl)&&batch.type!=='website'){
       modelAnchorUrls=Array.isArray(item.savedModelUrls)&&item.savedModelUrls.length
@@ -375,11 +505,19 @@ app.post('/api/batch/create',async(req,res)=>{
             replaceModel:replaceModel&&si===0});  // only shot 0 replaces
       items.push({id:uuidv4(),
         name:shotList.length>1?`${prod.name} — ${shot.label||shot.shotType}`:prod.name,
-        productName:prod.name,productKey,shotLabel:shot.label||shot.shotType,shotIndex:si,
+        productName:prod.name,productKey,shotLabel:shot.label||shot.shotType,
+        shotType:shot.shotType||'front',shotIndex:si,
         savedModelUrl:prodModelUrl,savedModelUrls:null,
         productImages:prod.images,styleRefImages:[],prompt,
         aspectRatio:shot.aspectRatio||aspectRatio||'3:4',resolution:shot.resolution||resolution||'1K',
-        replaceModel,status:'queued',requestId:null,resultUrl:null,error:null});
+        replaceModel,
+        // Extra fields for Claude-vision prompt rebuilding
+        modelLocked:modelLocked,
+        modelDescText:prod.modelDesc||modelDesc||'',
+        userPrompt:perPrompt+extra,
+        bgOption:iBg, bgCustom:iBgC,
+        realism:realism||'ultra',
+        status:'queued',requestId:null,resultUrl:null,error:null});
     }
   }
 
