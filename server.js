@@ -198,12 +198,17 @@ function buildPromptWithGarment(item, garmentDesc){
     .replace(/,\s*,/g,',')
     .trim();
 
-  // Model identity string
+  // Model identity string — shot-aware:
+  // Back shots face away so "identical face" is irrelevant and confuses the AI;
+  // we ask for hair/body match only. Side shots are in-between.
+  const isFrontFacing = !['back','side'].includes(shotKey);
   let modelStr;
   if(item.modelLocked){
-    modelStr='same model as reference photo, identical face and hair';
+    modelStr = isFrontFacing
+      ? 'same model as reference photo, identical face, skin tone, and hair'
+      : 'same model as reference photo, identical hair color and body type, facing away from camera';
   } else if(item.replaceModel){
-    modelStr=(item.modelDescText||GENDER[item.gender||'female']||GENDER.female)+', ignore the model in the product image';
+    modelStr=(item.modelDescText||GENDER[item.gender||'female']||GENDER.female)+', different person from the product photo';
   } else if(item.modelDescText){
     modelStr=item.modelDescText;
   } else {
@@ -303,7 +308,9 @@ function sanitizeForGPT2(prompt){
 async function generateGPT2(item, modelAnchorUrls=[]){
   item.status='uploading';
   const imgs=item.productImages||[];
+  console.log('[GPT2] shot='+item.shotType+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
   const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
+  // Order: angle-specific product images first, model anchor last
   const allUrls=[...productUrls,...modelAnchorUrls];
   item.status='generating';
 
@@ -372,7 +379,9 @@ async function generateGPT2(item, modelAnchorUrls=[]){
 
 async function generateNB2(item, modelAnchorUrls=[]){
   item.status='uploading';
-  const productUrls=await Promise.all((item.productImages||[]).map(i=>uploadToFal(i.base64,i.mimeType)));
+  const imgs=item.productImages||[];
+  console.log('[NB2] shot='+item.shotType+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
+  const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
   const allUrls=[...productUrls,...modelAnchorUrls];
   item.status='generating';
   const sub=await falQ('/fal-ai/nano-banana-2/edit',{prompt:item.prompt,image_urls:allUrls,num_images:1,aspect_ratio:toAR(item.aspectRatio||'3:4'),output_format:'jpeg',safety_tolerance:'4',resolution:item.resolution||'1K'});
@@ -392,6 +401,54 @@ async function generateNB2(item, modelAnchorUrls=[]){
     if(st.status==='FAILED')throw new Error(st.error||'NB2 failed');
   }
   throw new Error('NB2 timed out');
+}
+
+// ── Per-shot image filter ──────────────────────────────────────────────────
+// CRITICAL: only send images that belong to the shot's angle.
+// If we send front + back images to a back-shot generation, GPT Image 2
+// composites them and renders BOTH models in the same frame (the bug the
+// user was seeing). We also always include accessories regardless of angle.
+const PRODUCT_ONLY_SHOTS = new Set(['flat_lay','mannequin','alone_white','alone_grey','alone_natural']);
+const SHOT_TO_SLOT = {
+  front:'front view', threeq:'front view', face:'front view',
+  sitting:'front view', walking:'front view', dynamic:'front view',
+  hands:'front view', detail:'front view', lookbook:'front view',
+  street_life:'front view', banner:'front view',
+  back:'back view',
+  side:null, // handled separately
+};
+function filterImagesForShot(productImages, shotType){
+  if(!productImages?.length) return productImages;
+  const sl = s => (s||'').toLowerCase();
+  const isAcc = img => sl(img.slot).startsWith('accessory');
+
+  // Product-only shots: give the AI all angles so it can lay them flat / show all
+  if(PRODUCT_ONLY_SHOTS.has(shotType)) return productImages;
+
+  const accessories = productImages.filter(isAcc);
+
+  // Determine which slot label corresponds to this shot
+  let angleImages;
+  if(shotType === 'side'){
+    angleImages = productImages.filter(img => !isAcc(img) && (
+      sl(img.slot).startsWith('left side view') || sl(img.slot).startsWith('right side view')
+    ));
+  } else {
+    const target = SHOT_TO_SLOT[shotType] || 'front view';
+    angleImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith(target));
+  }
+
+  if(angleImages.length > 0){
+    // Use ONLY this angle's images + accessories — never mix angles
+    return [...angleImages, ...accessories];
+  }
+
+  // No images for this angle: fall back gracefully
+  const frontImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith('front view'));
+  if(frontImages.length) return [...frontImages, ...accessories];
+
+  // Last resort: all non-accessory images + accessories
+  return productImages;
 }
 
 // ── Process item ───────────────────────────────────────────────────────────
@@ -437,31 +494,14 @@ async function processItem(batchId, itemId){
       }
     }
 
-    // STEP 2.5: Sort product images so the angle-matching image is FIRST.
-    // GPT Image 2 and NB2 both weight the first image most heavily.
-    if(item.productImages?.length > 1){
-      const shotAngleKeywords = {
-        front:    ['front view'],
-        threeq:   ['front view'],
-        face:     ['front view'],
-        sitting:  ['front view'],
-        walking:  ['front view'],
-        dynamic:  ['front view'],
-        hands:    ['front view'],
-        detail:   ['front view'],
-        lookbook: ['front view'],
-        street_life:['front view'],
-        banner:   ['front view'],
-        back:     ['back view'],
-        side:     ['left side view','right side view'],
-      };
-      const preferred = shotAngleKeywords[item.shotType] || ['front view'];
-      const sl = s => (s||'').toLowerCase();
-      item.productImages = [...item.productImages].sort((a,b)=>{
-        const aM = preferred.some(p=>sl(a.slot).startsWith(p)) ? 0 : 1;
-        const bM = preferred.some(p=>sl(b.slot).startsWith(p)) ? 0 : 1;
-        return aM - bM;
-      });
+    // STEP 2.5: Filter product images to ONLY the angle for this shot.
+    // This is the critical fix: sending front+back images to a back shot
+    // causes GPT Image 2 to composite both models into one frame.
+    // Claude vision already analyzed ALL images (step 1), so filtering here
+    // doesn't lose any garment knowledge — it only stops the visual confusion.
+    if(batch.type !== 'website'){
+      item.productImages = filterImagesForShot(item.productImages, item.shotType);
+      console.log('[filter] shot='+item.shotType+' → '+item.productImages.length+' images: '+item.productImages.map(i=>i.slot).join(', '));
     }
 
     // STEP 3: Generate
