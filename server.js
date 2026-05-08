@@ -64,7 +64,7 @@ const GENDER={female:'beautiful female model',male:'handsome male model',neutral
 
 // ── Claude Vision ──────────────────────────────────────────────────────────
 const CLAUDE_API   = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL = 'claude-sonnet-4-5';
+const CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 async function claudeMsg(messages, maxTokens=300){
   const r=await fetch(CLAUDE_API,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:maxTokens,messages})});
@@ -77,22 +77,22 @@ async function analyzeOneImage(base64, mimeType, slotLabel){
   const isAcc = slotLabel.toLowerCase().includes('accessor');
   const prompt = isAcc
     ? `This product photo shows an ACCESSORY labeled "${slotLabel}".
-Describe it completely: exact type (bag/earring/necklace/bracelet/belt/watch/ring/etc), color, material, shape, size, ALL hardware (clasps/chains/buckles/zippers/locks) with exact color, any logos or patterns.
-Output: dense comma-separated, max 80 words. No model descriptions.`
+Describe it with extreme precision: exact type (bag/earring/necklace/bracelet/belt/watch/ring/etc), exact color(s), material, shape, size estimate, ALL hardware details (clasps/chains/buckles/zippers/locks/rings — exact color and finish), any logos, patterns, embossing, stitching, lining color.
+Output: dense comma-separated, max 150 words. No model descriptions. Miss nothing.`
     : `This product photo is the "${slotLabel}" angle.
-Describe ONLY what is visible from THIS specific angle:
-- Garment type, exact color, fabric/material texture
-- Exact length (floor-length/maxi/midi/knee/cropped — be specific)
-- Silhouette and fit
-- Neckline and strap/sleeve details visible from this angle
-- Structural details ONLY visible from this angle
-- Feet/shoes: write "hem covers feet completely" if dress reaches floor. ONLY mention shoes if clearly exposed.
-Output: dense comma-separated, max 80 words. No model/person descriptions.`;
+Describe with extreme precision ONLY what is visible from THIS specific angle:
+- Garment type, exact color(s), fabric/material texture
+- Exact length (floor-length/maxi/midi/knee-length/cropped — be very specific)
+- Silhouette, fit, cut
+- Neckline style and exact strap/sleeve details visible from this angle
+- Every structural detail visible: seams, zippers, buttons, pockets, pleats, ruffles, tiers, embroidery
+- Feet/shoes: write "hem covers feet completely" if garment reaches floor. ONLY describe shoes if clearly visible.
+Output: dense comma-separated, max 150 words. No model/person descriptions. Miss nothing.`;
 
   return claudeMsg([{role:'user',content:[
     {type:'image',source:{type:'base64',media_type:mimeType||'image/jpeg',data:base64}},
     {type:'text',text:prompt}
-  ]}], 200);
+  ]}], 350);
 }
 
 // Analyze ALL images in a product group — each separately, then combine
@@ -124,16 +124,18 @@ ${garmentAngles.map(a=>a.label.toUpperCase()+': '+a.desc).join('\n')}
 ${accessories.length?'\nACCESSORIES (separate product images):\n'+accessories.map(a=>a.label.toUpperCase()+': '+a.desc).join('\n'):''}
 
 Write ONE combined description in EXACTLY this format:
-[garment: type, color, fabric, exact length, silhouette, neckline, straps], front: [front-angle details ONLY], back: [back-angle details ONLY], sides: [side details if any], accessories: [EVERY accessory from EVERY image — each fully described: type/color/material/hardware], feet: [hem covers feet completely / or describe if exposed]
+[garment: type, exact color, fabric/material, exact length, silhouette, neckline, straps/sleeves], front: [front-angle details ONLY], back: [back-angle details ONLY], sides: [side details if any], accessories: [EVERY accessory from EVERY image — each fully described: type/color/material/ALL hardware], feet: [hem covers feet completely / or describe exposed footwear precisely]
 
 ABSOLUTE RULES:
 - front: section = front image details ONLY — NEVER include back-specific details here
-- back: section = back image details ONLY — NEVER include front-specific details here  
-- accessories: = ALL accessories from ALL images — missing one is not acceptable
+- back: section = back image details ONLY — NEVER include front-specific details here
+- accessories: = ALL accessories from ALL images — missing even one is NOT acceptable
+- If multiple images show the same slot angle (e.g. "front view 1", "front view 2"), combine their details into one coherent section
 - If hem covers feet: write exactly "hem covers feet completely, do not show feet or toes"
-- 180 words max. Zero model/person descriptions.`;
+- Be specific about every color, every hardware piece, every structural detail
+- 280 words max. Zero model/person descriptions.`;
 
-  const combined=await claudeMsg([{role:'user',content:[{type:'text',text:combinePrompt}]}],400);
+  const combined=await claudeMsg([{role:'user',content:[{type:'text',text:combinePrompt}]}],700);
   if(combined){
     garmentCache.set(cacheKey,combined);
     if(garmentCache.size>200)garmentCache.delete(garmentCache.keys().next().value);
@@ -168,14 +170,19 @@ function buildPromptWithGarment(item, garmentDesc){
   const isNB2 = item.aiModel==='nb2';
 
   // Extract angle-specific garment section from Claude's structured description
+  // Uses [\s\S] instead of . so the match works across newlines
   let angleDesc=garmentDesc;
-  
+
   if(shotKey==='front'||shotKey==='threeq'){
-    // For front: remove back: section, keep front: and accessories:
-    angleDesc=garmentDesc.replace(/,?\s*back:\s*(?:(?!front:|back:|sides:|accessories:|feet:).)+/gi,'').trim();
+    // Remove back: [...] section — keep garment/front/sides/accessories/feet
+    angleDesc=garmentDesc.replace(/,?\s*back:\s*\[[\s\S]*?\]/gi,'').trim();
+    // Fallback: section without brackets
+    angleDesc=angleDesc.replace(/,?\s*back:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
   } else if(shotKey==='back'){
-    // For back: remove front: section, keep back: and accessories:
-    angleDesc=garmentDesc.replace(/,?\s*front:\s*(?:(?!front:|back:|sides:|accessories:|feet:).)+/gi,'').trim();
+    // Remove front: [...] section — keep garment/back/sides/accessories/feet
+    angleDesc=garmentDesc.replace(/,?\s*front:\s*\[[\s\S]*?\]/gi,'').trim();
+    // Fallback: section without brackets
+    angleDesc=angleDesc.replace(/,?\s*front:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
   }
   // sides, accessories, feet always kept regardless of angle
 
@@ -206,23 +213,43 @@ function buildPromptWithGarment(item, garmentDesc){
   const bg=item.bgOption==='custom'?item.bgCustom:(BG[item.bgOption]||'');
   const shotStr=SHOT[shotKey]||SHOT.front;
 
+  // Shot-specific angle label for prompts
+  const shotAngleHint = {
+    front:'front-facing',back:'rear-facing',side:'side-profile',threeq:'three-quarter angle',
+    detail:'close-up detail',face:'portrait close-up',sitting:'seated pose',walking:'walking mid-stride',
+    dynamic:'dynamic action pose',hands:'hands and wrists close-up',flat_lay:'flat lay overhead',
+    mannequin:'ghost mannequin, no model',alone_white:'product only, no model',
+    alone_grey:'product only, no model',alone_natural:'product on natural surface, no model',
+    lookbook:'lifestyle editorial',street_life:'urban street candid',
+    banner:'wide cinematic banner',group:'group composition',
+  }[shotKey]||'front-facing';
+
   if(isNB2){
-    // NB2: SHORT prompt — model responds better to concise instructions
-    // Put the most critical constraint first: the garment description
-    const parts=[
-      angleDesc.slice(0,200), // truncate garment desc for NB2
-      shotStr,
-      modelStr,
-      bg||'',
-      REAL[item.realism||'ultra']||REAL.ultra,
-    ];
+    // NB2: concise but complete — garment first, model second, bg third
+    const desc = angleDesc.slice(0,300);
+    const parts=[desc, shotStr, modelStr, bg||'', REAL[item.realism||'ultra']||REAL.ultra];
     const p=parts.filter(Boolean).join(', ');
-    return p.length>350?p.slice(0,347)+'...':p;
+    return p.length>450?p.slice(0,447)+'...':p;
   } else {
-    // GPT2: explicit, detailed prompt with hard constraints
+    // GPT2: highly structured prompt — reference → what to reproduce → hard rules → shot/model/bg
+    // Leading with the garment gets maximum attention from the image edit model
+    const feetRule = angleDesc.toLowerCase().includes('hem covers feet') || angleDesc.toLowerCase().includes('floor-length')
+      ? 'DO NOT show feet or toes — hem reaches the floor.'
+      : '';
+    const accRule = angleDesc.toLowerCase().includes('including accessories')
+      ? 'Reproduce ALL accessories EXACTLY — same color, shape, hardware, no substitutions.'
+      : '';
+    const constraints = [
+      'EXACT garment color, fabric, length, hemline — zero deviation from reference.',
+      'NEVER add any item not visible in the reference (no shoes added, no extra jewelry, no invented clothing).',
+      feetRule,
+      accRule,
+      'Do NOT change or invent any detail.',
+    ].filter(Boolean).join(' ');
+
     const parts=[
-      'Fashion editorial photo. Reproduce the EXACT garment from the reference: '+angleDesc,
-      'STRICT: do not add shoes, do not show feet or toes, do not change garment length or hemline, do not alter any accessory or bag, do not add any item not in the reference',
+      `${shotAngleHint} fashion photo. Wearing: ${angleDesc}`,
+      constraints,
       shotStr,
       modelStr,
       bg||'',
@@ -230,7 +257,7 @@ function buildPromptWithGarment(item, garmentDesc){
       REAL[item.realism||'ultra']||REAL.ultra,
     ];
     const p=parts.filter(Boolean).join(', ');
-    return p.length>500?p.slice(0,497)+'...':p;
+    return p.length>700?p.slice(0,697)+'...':p;
   }
 }
 
@@ -283,10 +310,10 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   // Try up to 3 times with progressively simpler prompts if content flagged
   const prompts=[
     sanitizeForGPT2(item.prompt),
-    // Level 2: strip to 200 chars, remove all adjectives that might trigger
-    sanitizeForGPT2(item.prompt).slice(0,200).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
-    // Level 3: ultra minimal — just describe the shot
-    'fashion model wearing the outfit shown in the reference image, ' + (SHOT[item.shotType]||SHOT.front) + ', ' + (BG[item.bgOption]||BG.white) + ', professional photograph',
+    // Level 2: strip to 220 chars, remove adjectives that might trigger filters
+    sanitizeForGPT2(item.prompt).slice(0,220).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
+    // Level 3: minimal but still references the product images
+    `${GENDER[item.gender||'female']||GENDER.female} wearing the clothing shown in the reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography, do not add any items not in the reference`,
   ];
 
   let sub=null;
@@ -408,6 +435,33 @@ async function processItem(batchId, itemId){
           // No anchor — generate fresh. Face may differ but image will exist.
         }
       }
+    }
+
+    // STEP 2.5: Sort product images so the angle-matching image is FIRST.
+    // GPT Image 2 and NB2 both weight the first image most heavily.
+    if(item.productImages?.length > 1){
+      const shotAngleKeywords = {
+        front:    ['front view'],
+        threeq:   ['front view'],
+        face:     ['front view'],
+        sitting:  ['front view'],
+        walking:  ['front view'],
+        dynamic:  ['front view'],
+        hands:    ['front view'],
+        detail:   ['front view'],
+        lookbook: ['front view'],
+        street_life:['front view'],
+        banner:   ['front view'],
+        back:     ['back view'],
+        side:     ['left side view','right side view'],
+      };
+      const preferred = shotAngleKeywords[item.shotType] || ['front view'];
+      const sl = s => (s||'').toLowerCase();
+      item.productImages = [...item.productImages].sort((a,b)=>{
+        const aM = preferred.some(p=>sl(a.slot).startsWith(p)) ? 0 : 1;
+        const bM = preferred.some(p=>sl(b.slot).startsWith(p)) ? 0 : 1;
+        return aM - bM;
+      });
     }
 
     // STEP 3: Generate

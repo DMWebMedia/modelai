@@ -391,20 +391,24 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
 
 
 /* IMAGE SLOTS */
-.slots-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-.slot-row{display:flex;align-items:center;gap:8px}
-.slot-label{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;width:72px;flex-shrink:0}
-.slot-box{width:54px;height:68px;border:2px dashed var(--br2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;flex-shrink:0;background:var(--bg)}
-.slot-box:hover{border-color:var(--bl);background:var(--bll)}
+.slots-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.slot-row{display:flex;align-items:flex-start;gap:8px}
+.slot-label{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;width:72px;flex-shrink:0;padding-top:6px}
+.slot-box{width:64px;height:80px;border:2px dashed var(--br2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;flex-shrink:0;background:var(--bg)}
+.slot-box:hover,.slot-box.drag-ov{border-color:var(--bl);background:var(--bll)}
+.slot-box.drag-ov{border-style:solid;box-shadow:0 0 0 3px rgba(37,99,235,.2)}
 .slot-box.filled{border-style:solid;border-color:var(--bl)}
 .slot-box img{width:100%;height:100%;object-fit:cover;display:block}
-.slot-box .slot-del{position:absolute;top:1px;right:1px;width:14px;height:14px;background:rgba(0,0,0,.75);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;padding:0}
+.slot-box .slot-del{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,.8);color:#fff;border:none;border-radius:50%;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:2;padding:0;line-height:1}
 .slot-box.filled:hover .slot-del{display:flex}
-.slot-box .slot-plus{font-size:18px;color:var(--t3);pointer-events:none}
+.slot-box .slot-plus{font-size:20px;color:var(--t3);pointer-events:none}
 .slot-add-acc{padding:4px 10px;border:1.5px dashed var(--br2);border-radius:100px;font-size:11px;cursor:pointer;color:var(--t2);background:none;font-family:'Inter',sans-serif;transition:all .12s;margin-top:4px}
 .slot-add-acc:hover{border-color:var(--bl);color:var(--bl)}
 .acc-slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.slot-badge{position:absolute;bottom:1px;left:0;right:0;background:rgba(37,99,235,.85);color:#fff;font-size:7px;font-weight:700;text-align:center;padding:1px 2px;pointer-events:none}
+.slot-badge{position:absolute;bottom:0;left:0;right:0;background:rgba(37,99,235,.9);color:#fff;font-size:7px;font-weight:700;text-align:center;padding:2px 2px;pointer-events:none}
+/* Accuracy score badge on product card */
+.acc-score{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;margin-top:6px}
+.acc-score.poor{background:#fff1f2;color:var(--red)}.acc-score.ok{background:var(--ybg);color:#92400e}.acc-score.great{background:var(--gbg);color:#15803d}
 
 @keyframes tup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
@@ -1359,21 +1363,35 @@ function renderGroups(){
     const slots=g.slots||{};
     const accSlots=slots.accessories||[];
 
-    const mkSlot=(key,label)=>{
-      const img=slots[key];
+    const mkSlot=(key,lbl)=>{
+      const imgs=Array.isArray(slots[key])?slots[key]:(slots[key]?[slots[key]]:[]);
       const inputId=`slot-${g.id}-${key}`;
+      const hint = imgs.length===0 ? 'Drop images here or click +' : imgs.length===1 ? '1 image — add more for better accuracy' : `${imgs.length} images ✓ great detail`;
+      const hintColor = imgs.length===0 ? 'var(--t3)' : imgs.length===1 ? '#92400e' : '#15803d';
       return `<div class="slot-row">
-        <span class="slot-label">${label}</span>
-        <label for="${inputId}" class="slot-box${img?' filled':''}" onclick="event.stopPropagation()" style="cursor:pointer">
-          <input type="file" id="${inputId}" accept="image/*" style="display:none"
-            onchange="event.stopPropagation();handleSlotFile(event,${gi},'${key}')"/>
-          ${img
-            ? `<img src="data:${img.mimeType};base64,${img.b64}"/>
-               <button class="slot-del" onclick="event.preventDefault();event.stopPropagation();clearSlot(${gi},'${key}');return false">×</button>
-               <span class="slot-badge">${label}</span>`
-            : '<span class="slot-plus">+</span>'}
-        </label>
-        <span style="font-size:10px;color:var(--t3)">${img?'✓ Set':'Optional'}</span>
+        <span class="slot-label">${lbl}</span>
+        <div style="flex:1">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:flex-start">
+            ${imgs.map((img,ai)=>`<div class="slot-box filled" onclick="event.stopPropagation()"
+              ondragover="event.preventDefault();event.stopPropagation()"
+              ondrop="event.preventDefault();event.stopPropagation();handleSlotDrop(event,${gi},'${key}')">
+              <img src="data:${img.mimeType};base64,${img.b64}"/>
+              <button class="slot-del" onclick="event.preventDefault();event.stopPropagation();rmSlotImg(${gi},'${key}',${ai});return false">×</button>
+              <span class="slot-badge">${ai+1}</span>
+            </div>`).join('')}
+            <label for="${inputId}" class="slot-box"
+              onclick="event.stopPropagation()"
+              ondragover="event.preventDefault();event.stopPropagation();this.classList.add('drag-ov')"
+              ondragleave="this.classList.remove('drag-ov')"
+              ondrop="event.preventDefault();event.stopPropagation();this.classList.remove('drag-ov');handleSlotDrop(event,${gi},'${key}')"
+              style="cursor:pointer;flex-shrink:0">
+              <input type="file" id="${inputId}" accept="image/*" multiple style="display:none"
+                onchange="event.stopPropagation();handleSlotFile(event,${gi},'${key}')"/>
+              <span class="slot-plus">+</span>
+            </label>
+          </div>
+          <div style="font-size:10px;color:${hintColor};margin-top:3px;font-weight:${imgs.length>1?'600':'400'}">${hint}</div>
+        </div>
       </div>`;
     };
 
@@ -1411,7 +1429,12 @@ function renderGroups(){
         <button class="gcdel" onclick="event.stopPropagation();delG(${gi})">✕</button>
       </div>
       <div class="gcbody">
-        <div style="font-size:11px;font-weight:600;color:var(--bl);margin-bottom:8px">📷 Image Slots <span style="font-size:10px;font-weight:400;color:var(--t3)">optional — label each angle so AI knows exactly what it's looking at</span></div>
+        ${(()=>{
+          const total = ['front','back','left_side','right_side'].reduce((n,k)=>{const a=slots[k];return n+(Array.isArray(a)?a.length:a?1:0);},0) + (slots.accessories||[]).length;
+          const score = total===0?{cls:'poor',icon:'⚠️',txt:'No images — add product photos'}:total===1?{cls:'poor',icon:'⚠️',txt:'Only 1 image — accuracy will be low'}:total===2?{cls:'ok',icon:'🟡',txt:'2 images — decent accuracy'}:total<=4?{cls:'ok',icon:'🟡',txt:`${total} images — good accuracy`}:{cls:'great',icon:'✅',txt:`${total} images — excellent accuracy`};
+          return `<span class="acc-score ${score.cls}">${score.icon} ${score.txt}</span>`;
+        })()}
+        <div style="font-size:11px;font-weight:600;color:var(--bl);margin-top:8px;margin-bottom:8px">📷 Image Slots <span style="font-size:10px;font-weight:400;color:var(--t3)">drag & drop or click + to add multiple images per angle</span></div>
         <div class="slots-grid">
           ${mkSlot('front','Front')}
           ${mkSlot('back','Back')}
@@ -2542,20 +2565,48 @@ function getGptQuality() {
 // Direct file handler — called from inline onchange on slot inputs
 // No programmatic .click() needed, browser allows this from real user gesture
 async function handleSlotFile(e, gi, slotKey) {
-  const f = e.target.files[0]; if(!f) return;
+  const files = Array.from(e.target.files); if(!files.length) return;
   try {
-    const b64 = await compressImage(f, 1400, 0.9);
-    const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
-    if(!groups[gi]) return;
-    if(!groups[gi].slots) groups[gi].slots = {};
-    if(slotKey === 'accessory') {
-      if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
-      groups[gi].slots.accessories.push(imgObj);
-    } else {
-      groups[gi].slots[slotKey] = imgObj;
+    for(const f of files) {
+      const b64 = await compressImage(f, 1400, 0.9);
+      const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
+      if(!groups[gi]) return;
+      if(!groups[gi].slots) groups[gi].slots = {};
+      if(slotKey === 'accessory') {
+        if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
+        groups[gi].slots.accessories.push(imgObj);
+      } else {
+        if(!Array.isArray(groups[gi].slots[slotKey])) groups[gi].slots[slotKey] = [];
+        groups[gi].slots[slotKey].push(imgObj);
+      }
     }
     renderGroups();
-    toast(label(slotKey) + ' image added ✓', 'ok');
+    toast(`${files.length} ${label(slotKey)} image${files.length!==1?'s':''} added ✓`, 'ok');
+  } catch(err) {
+    toast('Error reading image: ' + err.message, 'err');
+  }
+}
+
+// Drag-and-drop handler for slot boxes — same logic as handleSlotFile
+async function handleSlotDrop(e, gi, slotKey) {
+  const files = Array.from(e.dataTransfer?.files||[]).filter(f=>f.type.startsWith('image/'));
+  if(!files.length) return;
+  try {
+    for(const f of files) {
+      const b64 = await compressImage(f, 1400, 0.9);
+      const imgObj = {b64, mimeType: f.type||'image/jpeg', slot: slotKey};
+      if(!groups[gi]) return;
+      if(!groups[gi].slots) groups[gi].slots = {};
+      if(slotKey === 'accessory') {
+        if(!groups[gi].slots.accessories) groups[gi].slots.accessories = [];
+        groups[gi].slots.accessories.push(imgObj);
+      } else {
+        if(!Array.isArray(groups[gi].slots[slotKey])) groups[gi].slots[slotKey] = [];
+        groups[gi].slots[slotKey].push(imgObj);
+      }
+    }
+    renderGroups();
+    toast(`${files.length} ${label(slotKey)} image${files.length!==1?'s':''} added ✓`, 'ok');
   } catch(err) {
     toast('Error reading image: ' + err.message, 'err');
   }
@@ -2575,22 +2626,32 @@ function rmAccSlot(gi, ai) {
   renderGroups();
 }
 
+function rmSlotImg(gi, slotKey, imgIndex) {
+  if(!Array.isArray(groups[gi].slots?.[slotKey])) return;
+  groups[gi].slots[slotKey].splice(imgIndex, 1);
+  if(groups[gi].slots[slotKey].length === 0) delete groups[gi].slots[slotKey];
+  renderGroups();
+}
+
 // Build productImages array from slots — all slot images with their slot labels
-// If no slots set, fall back to g.images (the original pool-based images)
+// Supports multiple images per slot (front/back/side each accept arrays).
+// Falls back to g.images (pool-based) if no slots are set.
 function getProductImagesForGroup(g) {
   const slots = g.slots || {};
   const slotImages = [];
-  
-  // Add labeled slot images in logical order
+
   const orderedSlots = ['front','back','left_side','right_side'];
   for(const key of orderedSlots) {
-    if(slots[key]) {
+    // Normalize: handle legacy single-object slots and new array slots
+    const imgs = Array.isArray(slots[key]) ? slots[key] : (slots[key] ? [slots[key]] : []);
+    const baseLabel = key.replace('_',' ') + ' view';
+    imgs.forEach((img, i) => {
       slotImages.push({
-        base64: slots[key].b64,
-        mimeType: slots[key].mimeType,
-        slot: key.replace('_',' ') + ' view',
+        base64: img.b64,
+        mimeType: img.mimeType,
+        slot: imgs.length > 1 ? `${baseLabel} ${i+1}` : baseLabel,
       });
-    }
+    });
   }
   // Add accessories
   for(let i=0; i<(slots.accessories||[]).length; i++) {
@@ -2601,9 +2662,9 @@ function getProductImagesForGroup(g) {
       slot: `accessory ${i+1}`,
     });
   }
-  
-  // If user set slots, use those. If not, fall back to pool images (old behavior)
+
   if(slotImages.length > 0) return slotImages;
+  // Fallback: pool-based images (old behavior)
   return (g.images||[]).map((im,i) => ({
     base64: im.b64,
     mimeType: im.mimeType,
