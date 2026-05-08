@@ -229,37 +229,37 @@ function buildPromptWithGarment(item, garmentDesc){
   }[shotKey]||'front-facing';
 
   if(isNB2){
-    const replacePrefix = item.replaceModel ? 'Replace the model with a new '+modelStr+'. ' : '';
-    const desc=(replacePrefix+angleDesc).slice(0,320);
-    const parts=[desc, shotStr, modelStr, bg||'', REAL[item.realism||'ultra']||REAL.ultra];
-    const p=parts.filter(Boolean).join(', ');
+    const replacePrefix = item.replaceModel ? `New ${modelStr}. Replace model entirely. ` : `${modelStr}. `;
+    const accSuffix = accListStr ? ` Also wearing/carrying: ${accListStr}.` : '';
+    const nb2Prompt = `${replacePrefix}Wearing exactly the garment in the reference images, unchanged.${accSuffix} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.trim();
+    const p = nb2Prompt.replace(/\s+/g,' ');
     return p.length>480?p.slice(0,477)+'...':p;
   } else {
-    // ── GPT2 prompt — structured for maximum accuracy ─────────────────────
+    // ── GPT2 prompt — image-anchored, minimal text ────────────────────────
+    // GPT Image 2 is a vision model: it can SEE the reference product images.
+    // Over-describing the garment in text causes it to hallucinate a different
+    // outfit (text overrides visual input). Instead, anchor to the images and
+    // only add text for things images can't convey: accessories, feet rule,
+    // model swap, pose, background.
     const feetRule = /hem covers feet|floor.length|maxi/i.test(angleDesc)
-      ? 'DO NOT show feet or toes — hemline reaches the floor.' : '';
+      ? 'Full-length garment — DO NOT show feet or toes.' : '';
     const accRule = accListStr
-      ? `Model MUST carry/wear: ${accListStr}. Reproduce every accessory EXACTLY — same color, hardware, no omissions.`
+      ? `Must also carry/wear: ${accListStr} — reproduce exactly, same color and hardware.`
       : '';
     const replaceRule = item.replaceModel
-      ? `REPLACE the person from the reference images ENTIRELY — new face, new hair, new body. Use references ONLY for the clothing. The old model must NOT appear.`
+      ? `REPLACE the model ENTIRELY — completely new face, new hair, new body. Use the reference images ONLY for the clothing. The original model must NOT appear.`
       : '';
-    const constraints=[
-      replaceRule,
-      'Reproduce the EXACT garment — same color, length, hemline, fabric, and every structural detail.',
-      feetRule,
-      accRule,
-      'Do NOT add, remove, or alter any garment detail or accessory.',
-    ].filter(Boolean).join(' ');
 
-    // When replacing model, lead with the replacement instruction so GPT2 sees it first
-    const garmentLine = item.replaceModel
-      ? `${shotAngleHint} fashion photo. New ${modelStr} wearing: ${angleDesc}`
-      : `${shotAngleHint} fashion photo. Wearing: ${angleDesc}`;
+    // Core garment instruction: point to the images, don't describe in words
+    const wearInstruction = `wearing EXACTLY the garment shown in the product reference images — same color, fabric, silhouette, and every detail. Do NOT change, add, or remove any clothing.`;
 
-    const parts=[garmentLine, constraints, shotStr, item.replaceModel?'':modelStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
+    const intro = item.replaceModel
+      ? `${shotAngleHint} fashion photo. New ${modelStr} ${wearInstruction}`
+      : `${shotAngleHint} fashion photo. ${modelStr} ${wearInstruction}`;
+
+    const parts=[intro, replaceRule, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
     const p=parts.filter(Boolean).join(', ');
-    return p.length>750?p.slice(0,747)+'...':p;
+    return p.length>650?p.slice(0,647)+'...':p;
   }
 }
 
