@@ -169,46 +169,46 @@ function buildPromptWithGarment(item, garmentDesc){
   const shotKey=item.shotType||(item.shotLabel||'').toLowerCase().replace(/\s+view$/,'').replace(/\s+/g,'_')||'front';
   const isNB2 = item.aiModel==='nb2';
 
-  // Extract angle-specific garment section from Claude's structured description
-  // Uses [\s\S] instead of . so the match works across newlines
+  // ── 1. Strip the opposite-angle section ──────────────────────────────────
   let angleDesc=garmentDesc;
-
   if(shotKey==='front'||shotKey==='threeq'){
-    // Remove back: [...] section — keep garment/front/sides/accessories/feet
     angleDesc=garmentDesc.replace(/,?\s*back:\s*\[[\s\S]*?\]/gi,'').trim();
-    // Fallback: section without brackets
     angleDesc=angleDesc.replace(/,?\s*back:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
   } else if(shotKey==='back'){
-    // Remove front: [...] section — keep garment/back/sides/accessories/feet
     angleDesc=garmentDesc.replace(/,?\s*front:\s*\[[\s\S]*?\]/gi,'').trim();
-    // Fallback: section without brackets
     angleDesc=angleDesc.replace(/,?\s*front:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
   }
-  // sides, accessories, feet always kept regardless of angle
 
-  // Replace structured labels with clean text for the prompt
+  // ── 2. Clean structural labels and ALL brackets ───────────────────────────
   angleDesc=angleDesc
-    .replace(/\bfront:\s*/gi,'')
-    .replace(/\bback:\s*/gi,'')
-    .replace(/\bsides:\s*/gi,'')
-    .replace(/\baccessories:\s*/gi,'including accessories: ')
+    .replace(/\bfront:\s*/gi,'').replace(/\bback:\s*/gi,'').replace(/\bsides:\s*/gi,'')
+    .replace(/\baccessories:\s*/gi,'ACCESSORIES: ')
     .replace(/\bfeet:\s*/gi,'')
-    .replace(/\[garment:\s*/gi,'')
-    .replace(/\]/g,'')
-    .replace(/,\s*,/g,',')
-    .trim();
+    .replace(/\[garment:\s*/gi,'').replace(/[\[\]]/g,'')
+    .replace(/,\s*,/g,',').trim();
 
-  // Model identity string — shot-aware:
-  // Back shots face away so "identical face" is irrelevant and confuses the AI;
-  // we ask for hair/body match only. Side shots are in-between.
+  // ── 3. Pull accessories out as a separate explicit string ─────────────────
+  // Repeating accessories as a standalone constraint is the only reliable way
+  // to prevent GPT Image 2 from dropping bags/jewelry mid-generation.
+  const accIdx = angleDesc.toUpperCase().indexOf('ACCESSORIES:');
+  let accListStr = '';
+  if(accIdx >= 0){
+    accListStr = angleDesc.slice(accIdx + 'ACCESSORIES:'.length)
+      .split(/,\s*(?:hem covers|do not|feet)/i)[0].trim().replace(/,\s*$/, '');
+  }
+
+  // ── 4. Model string — shot-aware ──────────────────────────────────────────
   const isFrontFacing = !['back','side'].includes(shotKey);
   let modelStr;
   if(item.modelLocked){
     modelStr = isFrontFacing
-      ? 'same model as reference photo, identical face, skin tone, and hair'
-      : 'same model as reference photo, identical hair color and body type, facing away from camera';
+      ? 'same model as reference photo, identical face skin tone and hair'
+      : 'same model as reference photo, identical hair color and body type, facing away';
   } else if(item.replaceModel){
-    modelStr=(item.modelDescText||GENDER[item.gender||'female']||GENDER.female)+', different person from the product photo';
+    // replaceModel: the reference images show the PRODUCT only — the person must change.
+    // Lead with the new model description; the strong replacement rules go in constraints below.
+    const newModelDesc = item.modelDescText || GENDER[item.gender||'female'] || GENDER.female;
+    modelStr = newModelDesc;
   } else if(item.modelDescText){
     modelStr=item.modelDescText;
   } else {
@@ -218,8 +218,7 @@ function buildPromptWithGarment(item, garmentDesc){
   const bg=item.bgOption==='custom'?item.bgCustom:(BG[item.bgOption]||'');
   const shotStr=SHOT[shotKey]||SHOT.front;
 
-  // Shot-specific angle label for prompts
-  const shotAngleHint = {
+  const shotAngleHint={
     front:'front-facing',back:'rear-facing',side:'side-profile',threeq:'three-quarter angle',
     detail:'close-up detail',face:'portrait close-up',sitting:'seated pose',walking:'walking mid-stride',
     dynamic:'dynamic action pose',hands:'hands and wrists close-up',flat_lay:'flat lay overhead',
@@ -230,39 +229,37 @@ function buildPromptWithGarment(item, garmentDesc){
   }[shotKey]||'front-facing';
 
   if(isNB2){
-    // NB2: concise but complete — garment first, model second, bg third
-    const desc = angleDesc.slice(0,300);
+    const replacePrefix = item.replaceModel ? 'Replace the model with a new '+modelStr+'. ' : '';
+    const desc=(replacePrefix+angleDesc).slice(0,320);
     const parts=[desc, shotStr, modelStr, bg||'', REAL[item.realism||'ultra']||REAL.ultra];
     const p=parts.filter(Boolean).join(', ');
-    return p.length>450?p.slice(0,447)+'...':p;
+    return p.length>480?p.slice(0,477)+'...':p;
   } else {
-    // GPT2: highly structured prompt — reference → what to reproduce → hard rules → shot/model/bg
-    // Leading with the garment gets maximum attention from the image edit model
-    const feetRule = angleDesc.toLowerCase().includes('hem covers feet') || angleDesc.toLowerCase().includes('floor-length')
-      ? 'DO NOT show feet or toes — hem reaches the floor.'
+    // ── GPT2 prompt — structured for maximum accuracy ─────────────────────
+    const feetRule = /hem covers feet|floor.length|maxi/i.test(angleDesc)
+      ? 'DO NOT show feet or toes — hemline reaches the floor.' : '';
+    const accRule = accListStr
+      ? `Model MUST carry/wear: ${accListStr}. Reproduce every accessory EXACTLY — same color, hardware, no omissions.`
       : '';
-    const accRule = angleDesc.toLowerCase().includes('including accessories')
-      ? 'Reproduce ALL accessories EXACTLY — same color, shape, hardware, no substitutions.'
+    const replaceRule = item.replaceModel
+      ? `REPLACE the person from the reference images ENTIRELY — new face, new hair, new body. Use references ONLY for the clothing. The old model must NOT appear.`
       : '';
-    const constraints = [
-      'EXACT garment color, fabric, length, hemline — zero deviation from reference.',
-      'NEVER add any item not visible in the reference (no shoes added, no extra jewelry, no invented clothing).',
+    const constraints=[
+      replaceRule,
+      'Reproduce the EXACT garment — same color, length, hemline, fabric, and every structural detail.',
       feetRule,
       accRule,
-      'Do NOT change or invent any detail.',
+      'Do NOT add, remove, or alter any garment detail or accessory.',
     ].filter(Boolean).join(' ');
 
-    const parts=[
-      `${shotAngleHint} fashion photo. Wearing: ${angleDesc}`,
-      constraints,
-      shotStr,
-      modelStr,
-      bg||'',
-      item.userPrompt||'',
-      REAL[item.realism||'ultra']||REAL.ultra,
-    ];
+    // When replacing model, lead with the replacement instruction so GPT2 sees it first
+    const garmentLine = item.replaceModel
+      ? `${shotAngleHint} fashion photo. New ${modelStr} wearing: ${angleDesc}`
+      : `${shotAngleHint} fashion photo. Wearing: ${angleDesc}`;
+
+    const parts=[garmentLine, constraints, shotStr, item.replaceModel?'':modelStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
     const p=parts.filter(Boolean).join(', ');
-    return p.length>700?p.slice(0,697)+'...':p;
+    return p.length>750?p.slice(0,747)+'...':p;
   }
 }
 
