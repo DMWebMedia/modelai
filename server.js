@@ -275,35 +275,53 @@ function buildPromptWithGarment(item, garmentDesc){
   const feetRule = /hem covers feet|floor.length|maxi/i.test(angleDesc)
     ? 'Full-length garment — DO NOT show feet or toes.' : '';
 
-  // Accessories are the #1 constraint — they must appear FIRST in the prompt
-  // so GPT Image 2 treats them as non-negotiable requirements.
-  // Build a strong, placement-aware accessory rule.
+  // Accessories: always explicit + placement-aware
   const accRule = accListStr
-    ? `ACCESSORIES REQUIRED — model MUST wear/carry ALL of these EXACTLY as described: ${accListStr}. Wrong color, missing item, or wrong placement = failure.`
-    : `Reproduce EVERY accessory shown in the reference images EXACTLY — same color, style, and placement on the model.`;
+    ? `MUST wear/carry ALL of these EXACTLY — ${accListStr}. Same color, material, hardware, placement. No substitutions.`
+    : (item.productImages?.some(img=>(img.slot||'').toLowerCase().startsWith('accessory'))
+        ? `Reproduce EVERY accessory from the reference images EXACTLY — same color, style, and how it is worn.`
+        : '');
 
-  const replaceRule = item.replaceModel
-    ? `REPLACE the model ENTIRELY — completely new face, new hair, new body. Use reference images ONLY for the clothing and accessories.`
-    : '';
+  // ── Build the final prompt (two different strategies) ─────────────────────
+  //
+  // REPLACE MODEL path: no garment reference images are sent (stripped in step 2.5)
+  //   → GPT2 has no face to anchor to → generates the described model freely
+  //   → garment must come from FULL text description (no visual reference)
+  //
+  // NORMAL / LOCKED path: garment reference images ARE sent
+  //   → short textual anchor + "exact garment from images" (hybrid)
+  //   → GPT2 uses images as primary garment source, text pins color+type
+  // ──────────────────────────────────────────────────────────────────────────
 
   if(isNB2){
-    const replacePrefix = item.replaceModel ? `New ${modelStr}. Replace model entirely. ` : `${modelStr}. `;
-    const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
-    const nb2Prompt = `${replacePrefix}${accRule} Wearing exactly: ${anchorStr}as shown in reference images, unchanged. ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.trim().replace(/\s+/g,' ');
-    return nb2Prompt.length>480?nb2Prompt.slice(0,477)+'...':nb2Prompt;
+    if(item.replaceModel){
+      const garmentFull=(accIdx>=0?angleDesc.slice(0,accIdx):angleDesc).replace(/ACCESSORIES:.*/i,'').trim().slice(0,300);
+      const p=`New ${modelStr}. ${garmentFull}. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
+      return p.length>480?p.slice(0,477)+'...':p;
+    } else {
+      const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
+      const p=`${modelStr}. Wearing exactly: ${anchorStr}as shown in reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
+      return p.length>480?p.slice(0,477)+'...':p;
+    }
   } else {
-    // ── GPT2: accessories first, then garment anchor, then constraints ────
-    // Order: accessories (mandatory) → garment description → model swap → feet → shot/bg
-    const anchorDetail = garmentAnchor ? ` Garment: ${garmentAnchor}.` : '';
-    const wearInstruction = `wearing the EXACT garment from the reference product images — do NOT change design, color, or silhouette.${anchorDetail}`;
+    // ── GPT2 ──────────────────────────────────────────────────────────────
+    let intro, garmentConstraint;
 
-    const intro = item.replaceModel
-      ? `${shotAngleHint} fashion photo. New ${modelStr} ${wearInstruction}`
-      : `${shotAngleHint} fashion photo. ${modelStr} ${wearInstruction}`;
+    if(item.replaceModel){
+      // No visual garment reference → full text description drives the garment
+      const garmentFull=(accIdx>=0?angleDesc.slice(0,accIdx):angleDesc)
+        .replace(/ACCESSORIES:.*/i,'').replace(/feet:.*/i,'').trim().slice(0,380);
+      intro=`${shotAngleHint} professional fashion photograph.`;
+      garmentConstraint=`NEW MODEL: ${modelStr}. Generate a BRAND NEW person — completely different face, hair, body from any reference. Wearing: ${garmentFull}.`;
+    } else {
+      // Visual garment reference present → short textual anchor
+      const anchorDetail = garmentAnchor ? ` This is: ${garmentAnchor}.` : '';
+      intro=`${shotAngleHint} professional fashion photograph. ${modelStr}.`;
+      garmentConstraint=`Wearing the EXACT garment shown in the product reference images — do NOT change design, color, or silhouette.${anchorDetail}`;
+    }
 
-    // Accessories come FIRST after intro — highest priority for GPT Image 2
-    const parts=[intro, accRule, replaceRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
-    const p=parts.filter(Boolean).join(', ');
+    const parts=[intro, garmentConstraint, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
+    const p=parts.filter(Boolean).join(' ');
     return p.length>700?p.slice(0,697)+'...':p;
   }
 }
@@ -350,48 +368,54 @@ function sanitizeForGPT2(prompt){
 async function generateGPT2(item, modelAnchorUrls=[]){
   item.status='uploading';
   const imgs=item.productImages||[];
-  console.log('[GPT2] shot='+item.shotType+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
+  console.log('[GPT2] shot='+item.shotType+' replaceModel='+!!item.replaceModel+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
   const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-  // Order: angle-specific product images first, model anchor last
-  const allUrls=[...productUrls,...modelAnchorUrls];
+  // Order: product/accessory images first, model anchor last
+  // For replaceModel: productUrls is accessory-only (garment refs stripped in processItem)
+  // so anchor is also excluded (we don't want any face reference)
+  const anchorUrls = item.replaceModel ? [] : modelAnchorUrls;
+  const allUrls=[...productUrls,...anchorUrls];
   item.status='generating';
+
+  const fallbackPrompt=`${GENDER[item.gender||'female']||GENDER.female} wearing the clothing shown in the reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`;
 
   // Try up to 3 times with progressively simpler prompts if content flagged
   const prompts=[
     sanitizeForGPT2(item.prompt),
-    // Level 2: strip to 220 chars, remove adjectives that might trigger filters
-    sanitizeForGPT2(item.prompt).slice(0,220).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
-    // Level 3: minimal but still references the product images
-    `${GENDER[item.gender||'female']||GENDER.female} wearing the clothing shown in the reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography, do not add any items not in the reference`,
+    sanitizeForGPT2(item.prompt).slice(0,250).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
+    fallbackPrompt,
   ];
 
   let sub=null;
+  // Choose endpoint: edit (with reference images) or generate (text-only)
+  // replaceModel with zero refs → use generate endpoint so no old face bleeds in
+  const useGenerateEndpoint = allUrls.length === 0;
+  const endpoint = useGenerateEndpoint ? '/openai/gpt-image-2' : '/openai/gpt-image-2/edit';
+  console.log('[GPT2] endpoint='+endpoint+' totalRefs='+allUrls.length);
+
   for(let attempt=0;attempt<prompts.length;attempt++){
     const p=prompts[attempt];
-    console.log('[GPT2] attempt',attempt+1,'prompt:',p.slice(0,100)+'...');
-    sub=await falQ('/openai/gpt-image-2/edit',{
-      prompt:p,
-      image_urls:allUrls,
-      quality:item.gptQuality||'medium',
-      image_size:toGPT2Size(item.aspectRatio||'3:4'),
-      content_moderation:'permissive',
-    });
+    console.log('[GPT2] attempt',attempt+1,'prompt:',p.slice(0,120)+'...');
+    const body = useGenerateEndpoint
+      ? {prompt:p, quality:item.gptQuality||'medium', image_size:toGPT2Size(item.aspectRatio||'3:4'), content_moderation:'permissive'}
+      : {prompt:p, image_urls:allUrls, quality:item.gptQuality||'medium', image_size:toGPT2Size(item.aspectRatio||'3:4'), content_moderation:'permissive'};
+    sub=await falQ(endpoint, body);
     if(sub.request_id) break;
     const msg=Array.isArray(sub.detail)?sub.detail.map(d=>d.msg||d).join('; '):(sub.detail||sub.error||JSON.stringify(sub).slice(0,200));
     console.warn('[GPT2] attempt',attempt+1,'rejected:',msg.slice(0,120));
     if(attempt===prompts.length-1) throw new Error('GPT2 all attempts failed: '+msg);
-    // Wait before retry
     await new Promise(r=>setTimeout(r,1500));
   }
 
   item.requestId=sub.request_id;item.statusUrl=sub.status_url;item.responseUrl=sub.response_url;
+  const baseEndpoint=useGenerateEndpoint?'/openai/gpt-image-2':'/openai/gpt-image-2/edit';
 
   for(let i=0;i<120;i++){
     await new Promise(r=>setTimeout(r,3000));
-    const sp=item.statusUrl?item.statusUrl.replace('https://queue.fal.run',''):`/openai/gpt-image-2/edit/requests/${item.requestId}/status`;
+    const sp=item.statusUrl?item.statusUrl.replace('https://queue.fal.run',''):`${baseEndpoint}/requests/${item.requestId}/status`;
     const st=await falGet(sp);
     if(st.status==='COMPLETED'){
-      const rp=item.responseUrl?item.responseUrl.replace('https://queue.fal.run',''):`/openai/gpt-image-2/edit/requests/${item.requestId}`;
+      const rp=item.responseUrl?item.responseUrl.replace('https://queue.fal.run',''):`${baseEndpoint}/requests/${item.requestId}`;
       const res=await falGet(rp);
       const url=res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url||res?.data?.[0]?.url||res?.data?.images?.[0]?.url;
       if(!url){
@@ -422,9 +446,10 @@ async function generateGPT2(item, modelAnchorUrls=[]){
 async function generateNB2(item, modelAnchorUrls=[]){
   item.status='uploading';
   const imgs=item.productImages||[];
-  console.log('[NB2] shot='+item.shotType+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
+  console.log('[NB2] shot='+item.shotType+' replaceModel='+!!item.replaceModel+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
   const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-  const allUrls=[...productUrls,...modelAnchorUrls];
+  const anchorUrls=item.replaceModel?[]:modelAnchorUrls; // no face anchor when replacing model
+  const allUrls=[...productUrls,...anchorUrls];
   item.status='generating';
   const sub=await falQ('/fal-ai/nano-banana-2/edit',{prompt:item.prompt,image_urls:allUrls,num_images:1,aspect_ratio:toAR(item.aspectRatio||'3:4'),output_format:'jpeg',safety_tolerance:'4',resolution:item.resolution||'1K'});
   if(!sub.request_id){throw new Error('NB2 submit failed: '+(sub.detail||sub.error||JSON.stringify(sub).slice(0,200)));}
@@ -555,14 +580,22 @@ async function processItem(batchId, itemId){
       }
     }
 
-    // STEP 2.5: Filter product images to ONLY the angle for this shot.
-    // This is the critical fix: sending front+back images to a back shot
-    // causes GPT Image 2 to composite both models into one frame.
-    // Claude vision already analyzed ALL images (step 1), so filtering here
-    // doesn't lose any garment knowledge — it only stops the visual confusion.
+    // STEP 2.5: Filter product images to angle + handle replaceModel
     if(batch.type !== 'website'){
       item.productImages = filterImagesForShot(item.productImages, item.shotType);
       console.log('[filter] shot='+item.shotType+' → '+item.productImages.length+' images: '+item.productImages.map(i=>i.slot).join(', '));
+
+      if(item.replaceModel){
+        // CRITICAL: GPT Image 2's edit endpoint identity-locks to ANY face in
+        // reference images. No text instruction can override this. The ONLY fix
+        // is to not send model-containing garment images. Without them GPT2 has
+        // no face to anchor to and will generate the new model from text.
+        // Garment accuracy comes from Claude's full text description instead.
+        const sl = s=>(s||'').toLowerCase();
+        const accOnly = item.productImages.filter(img=>sl(img.slot).startsWith('accessory'));
+        item.productImages = accOnly.length ? accOnly : []; // accessories carry no face
+        console.log('[replaceModel] stripped garment refs → '+item.productImages.length+' acc-only refs remaining');
+      }
     }
 
     // STEP 3: Generate
