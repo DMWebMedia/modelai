@@ -275,57 +275,59 @@ function buildPromptWithGarment(item, garmentDesc){
   const feetRule = /hem covers feet|floor.length|maxi/i.test(angleDesc)
     ? 'Full-length garment — DO NOT show feet or toes.' : '';
 
+  // Detect accessory-only products (no garment images, only accessories like bag/jewelry)
+  const hasGarmentImage = item.productImages?.some(img => {
+    const s=(img.slot||'').toLowerCase();
+    return !s.startsWith('accessory');
+  });
+  const isAccessoryOnly = !hasGarmentImage && item.productImages?.some(img=>(img.slot||'').toLowerCase().startsWith('accessory'));
+
   // Accessories: always explicit + placement-aware
   const accRule = accListStr
-    ? `MUST wear/carry ALL of these EXACTLY — ${accListStr}. Same color, material, hardware, placement. No substitutions.`
+    ? `MUST wear/carry ALL of these EXACTLY — ${accListStr}. Same color, material, hardware, placement. No substitutions, no omissions.`
     : (item.productImages?.some(img=>(img.slot||'').toLowerCase().startsWith('accessory'))
         ? `Reproduce EVERY accessory from the reference images EXACTLY — same color, style, and how it is worn.`
         : '');
 
-  // ── Build the final prompt (two different strategies) ─────────────────────
-  //
-  // REPLACE MODEL path: no garment reference images are sent (stripped in step 2.5)
-  //   → GPT2 has no face to anchor to → generates the described model freely
-  //   → garment must come from FULL text description (no visual reference)
-  //
-  // NORMAL / LOCKED path: garment reference images ARE sent
-  //   → short textual anchor + "exact garment from images" (hybrid)
-  //   → GPT2 uses images as primary garment source, text pins color+type
-  // ──────────────────────────────────────────────────────────────────────────
-
   if(isNB2){
-    if(item.replaceModel){
-      const garmentFull=(accIdx>=0?angleDesc.slice(0,accIdx):angleDesc).replace(/ACCESSORIES:.*/i,'').trim().slice(0,300);
-      const p=`New ${modelStr}. ${garmentFull}. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
+    if(isAccessoryOnly){
+      const p=`${modelStr}. ${accRule} Wearing simple neutral outfit. ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
       return p.length>480?p.slice(0,477)+'...':p;
-    } else {
+    }
+    if(item.replaceModel){
       const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
-      const p=`${modelStr}. Wearing exactly: ${anchorStr}as shown in reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
+      const p=`Person from first reference image, wearing exactly: ${anchorStr}as shown in product reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
       return p.length>480?p.slice(0,477)+'...':p;
     }
-  } else {
-    // ── GPT2 ──────────────────────────────────────────────────────────────
-    let intro, garmentConstraint;
-
-    if(item.replaceModel){
-      // Garment images ARE sent (for visual accuracy).
-      // The desired model identity image is placed FIRST in the reference list
-      // by generateGPT2 so GPT2 anchors to that person, not the product model.
-      // Prompt: use the identity-first reference, wear clothes from product images.
-      const anchorDetail = garmentAnchor ? ` Garment: ${garmentAnchor}.` : '';
-      intro=`${shotAngleHint} professional fashion photograph.`;
-      garmentConstraint=`Use the person from the FIRST reference image as the model — same face, hair, body. That person wearing the EXACT same clothes as shown in the product reference images — same color, design, length, every detail unchanged.${anchorDetail}`;
-    } else {
-      // Normal: image-anchored + short textual anchor
-      const anchorDetail = garmentAnchor ? ` This is: ${garmentAnchor}.` : '';
-      intro=`${shotAngleHint} professional fashion photograph. ${modelStr}.`;
-      garmentConstraint=`Wearing the EXACT garment shown in the product reference images — do NOT change design, color, or silhouette.${anchorDetail}`;
-    }
-
-    const parts=[intro, garmentConstraint, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
-    const p=parts.filter(Boolean).join(' ');
-    return p.length>700?p.slice(0,697)+'...':p;
+    const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
+    const p=`${modelStr}. Wearing exactly: ${anchorStr}as shown in reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
+    return p.length>480?p.slice(0,477)+'...':p;
   }
+
+  // ── GPT2 ──────────────────────────────────────────────────────────────────
+  let intro, garmentConstraint;
+
+  if(isAccessoryOnly){
+    // Only accessories provided (no garment) — model wears simple neutral outfit
+    // and showcases the accessory exactly as in the reference image
+    intro=`${shotAngleHint} professional fashion photograph. ${item.replaceModel?'New model: ':''}${modelStr}.`;
+    garmentConstraint=`Wearing simple neutral coordinated outfit suitable to showcase the accessory. ${accRule || 'Reproduce the accessory shown in the reference image EXACTLY — same color, material, hardware, and placement.'}`;
+  } else if(item.replaceModel){
+    // Identity image placed FIRST in reference list by generateGPT2.
+    // GPT2 anchors face to first ref, garment from product refs.
+    const anchorDetail = garmentAnchor ? ` Garment: ${garmentAnchor}.` : '';
+    intro=`${shotAngleHint} professional fashion photograph.`;
+    garmentConstraint=`Use the person from the FIRST reference image as the model — same face, hair, body, skin tone. That person wearing the EXACT same clothes shown in the product reference images — same color, design, length, fabric, every detail unchanged.${anchorDetail}`;
+  } else {
+    // Normal: image-anchored + short textual anchor
+    const anchorDetail = garmentAnchor ? ` This is: ${garmentAnchor}.` : '';
+    intro=`${shotAngleHint} professional fashion photograph. ${modelStr}.`;
+    garmentConstraint=`Wearing the EXACT garment shown in the product reference images — do NOT change design, color, or silhouette.${anchorDetail}`;
+  }
+
+  const parts=[intro, garmentConstraint, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
+  const p=parts.filter(Boolean).join(' ');
+  return p.length>700?p.slice(0,697)+'...':p;
 }
 
 // Sanitize prompt for GPT Image 2 content filter
@@ -366,20 +368,22 @@ function sanitizeForGPT2(prompt){
     .replace(/\bwaist.?cinch\b/gi,'waist detail');
 }
 
-// ── Generate a base model image from text description (Flux Schnell) ───────
+// ── Generate a base model image from text description (Flux Dev) ───────────
 // Used when replaceModel=true but no savedModelUrl is available.
-// Returns a fal.ai URL of a clean model photo we can use as identity reference.
+// Returns a fal.ai URL of a clean model photo we use as identity reference.
+// Flux Dev gives better facial fidelity to descriptions than Schnell.
 async function generateBaseModel(modelDesc, aspectRatio){
-  const prompt=sanitizeForGPT2(`${modelDesc}, full body, standing naturally, plain white background, fashion editorial, sharp focus, studio lighting, no clothing detail needed`);
-  console.log('[baseModel] generating from desc:',prompt.slice(0,80));
-  const sub=await falQ('/fal-ai/flux/schnell',{prompt,image_size:toGPT2Size(aspectRatio||'3:4'),num_inference_steps:4,num_images:1});
+  const cleanDesc=(modelDesc||'').trim()||'professional fashion model';
+  const prompt=sanitizeForGPT2(`Professional fashion model portrait: ${cleanDesc}. Full body, facing camera, neutral standing pose, wearing simple neutral clothing, plain white seamless studio background, sharp focus, professional photography, single person, hyperrealistic, photographic quality`);
+  console.log('[baseModel] generating:',cleanDesc.slice(0,80));
+  const sub=await falQ('/fal-ai/flux/dev',{prompt,image_size:toGPT2Size(aspectRatio||'3:4'),num_inference_steps:28,guidance_scale:3.5,num_images:1,enable_safety_checker:false});
   if(!sub.request_id) throw new Error('BaseModel submit failed: '+(sub.error||sub.detail||JSON.stringify(sub).slice(0,100)));
-  for(let i=0;i<30;i++){
+  for(let i=0;i<60;i++){
     await new Promise(r=>setTimeout(r,2000));
-    const sp=sub.status_url?sub.status_url.replace('https://queue.fal.run',''):`/fal-ai/flux/schnell/requests/${sub.request_id}/status`;
+    const sp=sub.status_url?sub.status_url.replace('https://queue.fal.run',''):`/fal-ai/flux/dev/requests/${sub.request_id}/status`;
     const st=await falGet(sp);
     if(st.status==='COMPLETED'){
-      const rp=sub.response_url?sub.response_url.replace('https://queue.fal.run',''):`/fal-ai/flux/schnell/requests/${sub.request_id}`;
+      const rp=sub.response_url?sub.response_url.replace('https://queue.fal.run',''):`/fal-ai/flux/dev/requests/${sub.request_id}`;
       const res=await falGet(rp);
       const url=res?.images?.[0]?.url||res?.image?.url||res?.output?.images?.[0]?.url;
       if(!url) throw new Error('BaseModel no URL');
@@ -412,24 +416,18 @@ async function generateGPT2(item, modelAnchorUrls=[]){
 
   let allUrls;
   if(item.replaceModel){
-    // Step 1: get the desired model identity image
-    let modelIdentityUrl = modelAnchorUrls[0] || null; // savedModelUrl / cached Flux result
-    if(!modelIdentityUrl){
-      // No saved model — generate one from the text description using Flux Schnell
+    // Step 1: get desired model identity image (savedModel, shot0 result, or Flux gen)
+    let modelIdentityUrl = modelAnchorUrls[0] || null;
+    if(!modelIdentityUrl && !item._skipBaseModelGen){
       item.status='generating model';
       const modelDesc = item.modelDescText || GENDER[item.gender||'female'] || GENDER.female;
       try{
         modelIdentityUrl = await generateBaseModel(modelDesc, item.aspectRatio);
-        // Cache on batch so all shots for this product use the same generated face
-        if(item._batchRef && item.productKey){
-          if(!item._batchRef.generatedModelUrls) item._batchRef.generatedModelUrls={};
-          item._batchRef.generatedModelUrls[item.productKey] = modelIdentityUrl;
-        }
       }catch(e){
-        console.warn('[replaceModel] base model generation failed:',e.message,'. Proceeding without identity anchor.');
+        console.warn('[replaceModel] base model generation failed:',e.message);
       }
     }
-    // Step 2: build refs — desired model identity FIRST, then garment + accessories
+    // Step 2: identity FIRST, then garment + accessories
     const garmentUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
     allUrls = modelIdentityUrl ? [modelIdentityUrl, ...garmentUrls] : garmentUrls;
     console.log('[GPT2] replaceModel: identity='+(modelIdentityUrl?'yes':'none')+' garmentRefs='+garmentUrls.length);
@@ -548,32 +546,36 @@ function filterImagesForShot(productImages, shotType){
   const sl = s => (s||'').toLowerCase();
   const isAcc = img => sl(img.slot).startsWith('accessory');
 
-  // Product-only shots: give the AI all angles so it can lay them flat / show all
+  // Product-only shots (flat-lay, mannequin, alone_*): give the AI all garment
+  // angles so it can present the full product. Accessories included.
   if(PRODUCT_ONLY_SHOTS.has(shotType)) return productImages;
 
   const accessories = productImages.filter(isAcc);
 
-  // Determine which slot label corresponds to this shot
+  // Side shot: pick ONE side (left preferred, else right) to avoid GPT2
+  // compositing both into the same frame.
   let angleImages;
   if(shotType === 'side'){
-    angleImages = productImages.filter(img => !isAcc(img) && (
-      sl(img.slot).startsWith('left side view') || sl(img.slot).startsWith('right side view')
-    ));
+    const leftImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith('left side view'));
+    const rightImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith('right side view'));
+    angleImages = leftImages.length ? leftImages : rightImages;
   } else {
     const target = SHOT_TO_SLOT[shotType] || 'front view';
     angleImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith(target));
   }
 
   if(angleImages.length > 0){
-    // Use ONLY this angle's images + accessories — never mix angles
     return [...angleImages, ...accessories];
   }
 
-  // No images for this angle: fall back gracefully
+  // Fallback: this angle missing → use front view as best approximation
   const frontImages = productImages.filter(img => !isAcc(img) && sl(img.slot).startsWith('front view'));
   if(frontImages.length) return [...frontImages, ...accessories];
 
-  // Last resort: all non-accessory images + accessories
+  // Accessory-only product (no garment images at all): return accessories only
+  if(accessories.length) return accessories;
+
+  // Last resort: whatever we have
   return productImages;
 }
 
@@ -624,19 +626,22 @@ async function processItem(batchId, itemId){
       modelAnchorUrls=Array.isArray(item.savedModelUrls)&&item.savedModelUrls.length?item.savedModelUrls:[item.savedModelUrl];
     } else if(item.replaceModel && batch.type!=='website'){
       // replaceModel without saved photo:
-      // Shot 0 generates the Flux base model and caches it on the batch.
-      // Shots > 0 wait for that cached URL so all shots use the SAME generated face.
-      if(item.shotIndex===0){
-        // generateGPT2 will produce the base model and we cache it on completion
-        // (handled in generateGPT2 — modelAnchorUrls stays empty here, Flux runs inside)
-      } else {
-        item.status='waiting';
-        for(let w=0;w<60;w++){
-          if(batch.generatedModelUrls?.[item.productKey]) break;
-          await new Promise(r=>setTimeout(r,3000));
-        }
-        if(batch.generatedModelUrls?.[item.productKey]){
-          modelAnchorUrls=[batch.generatedModelUrls[item.productKey]];
+      // Shot 0 generates Flux base model + garment → produces the canonical result.
+      // Shots > 0 use shot 0's RESULT as the anchor (same person, same clothes).
+      if(item.shotIndex>0){
+        const shot0=batch.items.find(i=>i.productKey===item.productKey&&i.shotIndex===0);
+        if(shot0){
+          item.status='waiting';
+          for(let w=0;w<100;w++){
+            if(shot0.status==='done'&&shot0.resultUrl)break;
+            if(shot0.status==='error')break;
+            await new Promise(r=>setTimeout(r,3000));
+          }
+          if(shot0.resultUrl){
+            modelAnchorUrls=[shot0.resultUrl];
+            // shot 0 result already has the right identity — skip Flux regen in generateGPT2
+            item._skipBaseModelGen=true;
+          }
         }
       }
     } else if(item.shotIndex>0 && batch.type!=='website'){
@@ -712,7 +717,7 @@ app.post('/api/batch/create',async(req,res)=>{
       const prompt=buildPrompt({userPrompt:groupShotPrompt||globalPrompt||'',shotType:shot.shotType||'group',category,styleKey:shot.styleKey||styleKey||'',bgOption:shot.bg||bgOption||'ai',bgCustom:shot.bgCustom||bgCustom||'',gender,realism:realism||'ultra',modelDesc,productNames,modelCount,multiModelDesc:multiDesc});
       items.push({id:uuidv4(),name:`Group Shot${shotList.length>1?' — '+(shot.label||shot.shotType):''}`,productName:'Group Shot',productKey:'gs',shotLabel:shot.label||shot.shotType,shotType:shot.shotType||'group',shotIndex:si,savedModelUrl:anchorUrls[0]||savedModelUrl||null,savedModelUrls:anchorUrls,productImages:allImages,prompt,aspectRatio:shot.aspectRatio||aspectRatio||'16:9',resolution:shot.resolution||resolution||'1K',replaceModel:false,aiModel:aiModel||'gpt2',gptQuality,status:'queued',requestId:null,resultUrl:null,error:null});
     }
-    jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items};
+    jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items,garmentDescs:{},generatedModelUrls:{}};
     res.json({batchId,total:items.length});
     runBatch(batchId);return;
   }
@@ -755,7 +760,7 @@ app.post('/api/batch/create',async(req,res)=>{
     }
   }
 
-  jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items};
+  jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items,garmentDescs:{},generatedModelUrls:{}};
   res.json({batchId,total:items.length});
   runBatch(batchId);
 });
