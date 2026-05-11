@@ -315,14 +315,16 @@ function buildPromptWithGarment(item, garmentDesc){
   } else if(item.replaceModel){
     // Identity image placed FIRST in reference list by generateGPT2.
     // GPT2 anchors face to first ref, garment from product refs.
-    const anchorDetail = garmentAnchor ? ` Garment: ${garmentAnchor}.` : '';
+    // CRITICAL wording: tell GPT2 to TAKE ONLY THE FACE from first ref,
+    // and IGNORE the placeholder clothing in the first ref.
+    const anchorDetail = garmentAnchor ? ` The clothing is: ${garmentAnchor}.` : '';
     intro=`${shotAngleHint} professional fashion photograph.`;
-    garmentConstraint=`Use the person from the FIRST reference image as the model — same face, hair, body, skin tone. That person wearing the EXACT same clothes shown in the product reference images — same color, design, length, fabric, every detail unchanged.${anchorDetail}`;
+    garmentConstraint=`TAKE ONLY THE FACE, HAIR, SKIN TONE, AND BODY TYPE from the FIRST reference image (ignore the placeholder clothing in that image). DRESS that person in the EXACT clothing shown in the OTHER product reference images — preserve every detail of the product clothing: same color, fabric, length, silhouette, neckline, every design element. The final clothing must match the product reference images exactly, NOT the first image's clothing.${anchorDetail}`;
   } else {
     // Normal: image-anchored + short textual anchor
     const anchorDetail = garmentAnchor ? ` This is: ${garmentAnchor}.` : '';
     intro=`${shotAngleHint} professional fashion photograph. ${modelStr}.`;
-    garmentConstraint=`Wearing the EXACT garment shown in the product reference images — do NOT change design, color, or silhouette.${anchorDetail}`;
+    garmentConstraint=`Reproduce the EXACT garment from the product reference images with perfect fidelity — preserve every detail: color, fabric, length, silhouette, neckline, straps, hemline, prints, structural seams. Do NOT redesign, recolor, or restyle the garment in any way.${anchorDetail}`;
   }
 
   const parts=[intro, garmentConstraint, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
@@ -374,7 +376,10 @@ function sanitizeForGPT2(prompt){
 // Flux Dev gives better facial fidelity to descriptions than Schnell.
 async function generateBaseModel(modelDesc, aspectRatio){
   const cleanDesc=(modelDesc||'').trim()||'professional fashion model';
-  const prompt=sanitizeForGPT2(`Professional fashion model portrait: ${cleanDesc}. Full body, facing camera, neutral standing pose, wearing simple neutral clothing, plain white seamless studio background, sharp focus, professional photography, single person, hyperrealistic, photographic quality`);
+  // Critical: dress the Flux model in plain BLACK fitted basics so the clothing
+  // is visually distinct from any product (which is rarely all black & plain).
+  // This prevents GPT Image 2 from confusing the Flux base outfit with the real product clothes.
+  const prompt=sanitizeForGPT2(`Headshot focus portrait of professional fashion model: ${cleanDesc}. Half body framing, facing camera directly with clear visible face, neutral expression, plain solid black fitted tank top, plain white seamless studio background, sharp focus on face, professional studio photography, single person isolated, hyperrealistic photographic quality`);
   console.log('[baseModel] generating:',cleanDesc.slice(0,80));
   const sub=await falQ('/fal-ai/flux/dev',{prompt,image_size:toGPT2Size(aspectRatio||'3:4'),num_inference_steps:28,guidance_scale:3.5,num_images:1,enable_safety_checker:false});
   if(!sub.request_id) throw new Error('BaseModel submit failed: '+(sub.error||sub.detail||JSON.stringify(sub).slice(0,100)));
@@ -585,24 +590,51 @@ async function processItem(batchId, itemId){
   const item=batch.items.find(i=>i.id===itemId);if(!item)return;
   item._batchRef=batch; // gives generateGPT2 access to batch-level caches
   try{
-    // STEP 1: Claude vision — shot 0 runs analysis; other shots wait for it
-    if(item.shotIndex===0 && batch.type!=='website' && item.productImages?.length){
+    // STEP 1: Run Claude vision AND Flux base model in PARALLEL for shot 0
+    // — they don't depend on each other, so parallelizing cuts latency in half.
+    if(item.shotIndex===0 && batch.type!=='website'){
       item.status='analyzing';
       if(!batch.garmentDescs)batch.garmentDescs={};
-      batch.garmentDescs[item.productKey]='__pending__'; // flag: analysis started
-      try{
-        const desc=await getGarmentDescription(item.productImages);
-        if(desc){
-          batch.garmentDescs[item.productKey]=desc;
-          item.prompt=buildPromptWithGarment(item,desc);
-          console.log('[prompt built with Claude vision for',item.productName,']');
-          console.log('[prompt]',item.prompt.slice(0,200));
-        } else {
+      if(!batch.generatedModelUrls)batch.generatedModelUrls={};
+
+      const tasks=[];
+
+      // Vision task (only if we have product images)
+      if(item.productImages?.length){
+        batch.garmentDescs[item.productKey]='__pending__';
+        tasks.push(getGarmentDescription(item.productImages).then(desc=>{
+          if(desc){
+            batch.garmentDescs[item.productKey]=desc;
+            item.prompt=buildPromptWithGarment(item,desc);
+            console.log('[vision] done for',item.productName);
+          } else {
+            delete batch.garmentDescs[item.productKey];
+          }
+        }).catch(e=>{
+          console.error('[vision error]',e.message);
           delete batch.garmentDescs[item.productKey];
-        }
-      }catch(e){
-        console.error('[vision error]',e.message);
-        delete batch.garmentDescs[item.productKey];
+        }));
+      }
+
+      // Base model task (only if replaceModel without saved photo)
+      if(item.replaceModel && !item.savedModelUrl){
+        batch.generatedModelUrls[item.productKey]='__pending__';
+        const modelDesc=item.modelDescText||GENDER[item.gender||'female']||GENDER.female;
+        tasks.push(generateBaseModel(modelDesc,item.aspectRatio).then(url=>{
+          batch.generatedModelUrls[item.productKey]=url;
+          console.log('[baseModel] done for',item.productName);
+        }).catch(e=>{
+          console.warn('[baseModel error]',e.message);
+          delete batch.generatedModelUrls[item.productKey];
+        }));
+      }
+
+      if(tasks.length) await Promise.all(tasks);
+
+      // Rebuild prompt now that vision is done (in case it wasn't built in the .then)
+      if(batch.garmentDescs[item.productKey] && batch.garmentDescs[item.productKey]!=='__pending__'){
+        item.prompt=buildPromptWithGarment(item,batch.garmentDescs[item.productKey]);
+        console.log('[prompt]',item.prompt.slice(0,200));
       }
     } else if(item.shotIndex>0 && batch.type!=='website'){
       // Wait up to 2 min for shot 0's Claude analysis to finish before building prompt
@@ -626,9 +658,15 @@ async function processItem(batchId, itemId){
       modelAnchorUrls=Array.isArray(item.savedModelUrls)&&item.savedModelUrls.length?item.savedModelUrls:[item.savedModelUrl];
     } else if(item.replaceModel && batch.type!=='website'){
       // replaceModel without saved photo:
-      // Shot 0 generates Flux base model + garment → produces the canonical result.
-      // Shots > 0 use shot 0's RESULT as the anchor (same person, same clothes).
-      if(item.shotIndex>0){
+      // Shot 0: uses pre-generated Flux base model from STEP 1 (parallel)
+      // Shots > 0: use shot 0's RESULT as anchor (same identity carried forward)
+      if(item.shotIndex===0){
+        const fluxUrl=batch.generatedModelUrls?.[item.productKey];
+        if(fluxUrl && fluxUrl!=='__pending__'){
+          modelAnchorUrls=[fluxUrl];
+          item._skipBaseModelGen=true;
+        }
+      } else {
         const shot0=batch.items.find(i=>i.productKey===item.productKey&&i.shotIndex===0);
         if(shot0){
           item.status='waiting';
@@ -639,7 +677,6 @@ async function processItem(batchId, itemId){
           }
           if(shot0.resultUrl){
             modelAnchorUrls=[shot0.resultUrl];
-            // shot 0 result already has the right identity — skip Flux regen in generateGPT2
             item._skipBaseModelGen=true;
           }
         }
