@@ -81,36 +81,55 @@ async function claudeMsg(messages, maxTokens=300){
 
 // Analyze ONE image with full awareness of its slot/angle
 async function analyzeOneImage(base64, mimeType, slotLabel){
-  const isAcc = slotLabel.toLowerCase().includes('accessor');
+  const sl=slotLabel.toLowerCase();
+  const isAcc = sl.includes('accessor');
+  const isBack = sl.startsWith('back');
+  const isSide = sl.includes('side');
+  const angleHint = isBack ? 'BACK VIEW (rear of garment, model facing away)'
+                  : isSide ? 'SIDE VIEW (profile of garment)'
+                  : 'FRONT VIEW (front of garment, model facing camera)';
+
   const prompt = isAcc
     ? `This product photo shows an ACCESSORY labeled "${slotLabel}".
 
 Describe with extreme precision:
-1. EXACT TYPE: bag/handbag/clutch/earring/necklace/bracelet/bangle/ring/belt/watch/sunglasses/hat/scarf/etc — be specific
+1. EXACT TYPE: bag/handbag/clutch/earring/necklace/bracelet/bangle/ring/belt/watch/sunglasses/hat/scarf/shoe/heels/sneaker/boot/etc
 2. EXACT COLOR(S): every color present, including hardware
 3. MATERIAL: leather/suede/gold/silver/fabric/stone/etc
 4. SHAPE & SIZE: silhouette, approximate size
 5. ALL HARDWARE: every clasp/chain/buckle/zipper/lock/ring/stud — exact color and finish
 6. SURFACE DETAILS: logos, patterns, embossing, stitching, lining color, texture
-7. HOW WORN/CARRIED: state exactly — e.g. "worn as crossbody on shoulder" / "clip-on earrings on both ears" / "draped necklace around neck" / "cinched belt at waist" / "worn on left wrist" / "carried in hand as clutch"
+7. HOW WORN/CARRIED: state exactly — e.g. "worn as crossbody on shoulder" / "clip-on earrings on both ears" / "draped necklace around neck" / "cinched belt at waist" / "worn on left wrist" / "carried in hand as clutch" / "worn on feet"
 
 Output: dense comma-separated description ending with the HOW WORN line. Max 160 words. No model/person descriptions.`
-    : `This product photo is the "${slotLabel}" angle.
-Describe with extreme precision ONLY what is visible from THIS specific angle:
-- ALL garment pieces visible (e.g. top + bottom separately if both shown)
-- Exact type of each piece, exact color(s), fabric/material
-- Exact length of each piece (floor-length/maxi/midi/knee/cropped/etc — be very specific)
-- Silhouette, fit, cut of each piece
-- Neckline, collar, or opening style
-- Strap/sleeve details
-- Every structural detail: seams, zippers, buttons, pockets, pleats, ruffles, tiers, embroidery, prints
+    : `This product photo is the ${angleHint}, labeled "${slotLabel}".
+
+Identify FIRST: Is this a SINGLE GARMENT (e.g. dress, jumpsuit, coat) or MULTIPLE PIECES (e.g. top + pants, top + skirt, top + shorts, jacket + dress)?
+
+Then describe with extreme precision ONLY what is visible from THIS specific angle:
+- PIECE COUNT: state "1 piece" or "2 pieces" or "3 pieces" — list each piece separately
+- For EACH piece: exact type, exact color(s), fabric/material, exact length (maxi/midi/knee/cropped/short/etc), silhouette, fit
+${isBack ? `- BACK-SPECIFIC DESIGN (CRITICAL — this is what makes the back distinct):
+  • Back closure: lace-up corset / zipper / buttons / hook & eye / open back / tie back / cutout
+  • Back neckline cut: scoop / V / square / halter strap meeting / criss-cross straps
+  • Strap configuration at back: thin straps / thick straps / halter / racerback / strapless / open shoulder
+  • Any back cutouts, ruching, draping, bow, train, pleating, ribbon detail
+  • If garment has unique back feature (corset lace-up, bow, low scoop), describe in detail`
+  : isSide ? `- SIDE-SPECIFIC DETAILS: side slits, side seams, hip detail, side closures, profile silhouette`
+  : `- FRONT-SPECIFIC DESIGN (CRITICAL — this is what makes the front distinct):
+  • Neckline: V-neck / scoop / square / sweetheart / halter / high / crew / off-shoulder — exact shape
+  • Front closure: buttons / zipper / wrap / tie / none — describe position and count
+  • Strap/sleeve: spaghetti / thick / cap / short / long / sleeveless — exact style
+  • Bodice/torso details: ruching, embroidery, beading, lace, mesh, cutouts, prints, panels`}
+- Every other structural detail: seams, pockets, pleats, ruffles, tiers, prints
 - Feet/shoes: write "hem covers feet completely" if garment reaches floor. ONLY describe shoes if clearly visible.
-Output: dense comma-separated, max 160 words. No model/person descriptions. Miss nothing.`;
+
+Output: dense comma-separated, max 180 words. No model/person/skin descriptions. Miss nothing.`;
 
   return claudeMsg([{role:'user',content:[
     {type:'image',source:{type:'base64',media_type:mimeType||'image/jpeg',data:base64}},
     {type:'text',text:prompt}
-  ]}], 350);
+  ]}], 400);
 }
 
 // Analyze ALL images in a product group — each separately, then combine
@@ -135,26 +154,30 @@ async function getGarmentDescription(images){
   const garmentAngles=analyses.filter(a=>!a.label.toLowerCase().includes('accessor'));
   const accessories=analyses.filter(a=>a.label.toLowerCase().includes('accessor'));
 
-  const combinePrompt=`I analyzed a product group. Per-image findings:
+  const combinePrompt=`I analyzed a fashion product group. Per-image findings:
 
 GARMENT ANGLES:
 ${garmentAngles.map(a=>a.label.toUpperCase()+': '+a.desc).join('\n')}
 ${accessories.length?'\nACCESSORIES (separate product images):\n'+accessories.map(a=>a.label.toUpperCase()+': '+a.desc).join('\n'):''}
 
-Write ONE combined description in EXACTLY this format:
+Synthesize ONE structured description in this EXACT format (each field on its own line, prefix exactly as shown):
 
-PROMPT: [MAX 150 CHARS. ALL garment pieces (exact colors + lengths/styles) PLUS ALL accessories (exact color + type + how worn). Used directly in an AI image generator — must be precise. Examples: "floor-length ivory maxi dress, black leather crossbody bag on shoulder, gold hoop earrings" | "black blazer, ivory wide-leg trousers, brown leather tote bag, silver chain necklace around neck" | "white crop top, blue high-waist jeans, gold bangle bracelet on wrist". Include EVERY piece and EVERY accessory with placement.]
-[garment: all pieces — type/exact color/fabric/length/silhouette/neckline/straps/sleeves for EACH piece], front: [front-angle details ONLY], back: [back-angle details ONLY], sides: [side details if any], accessories: [EVERY accessory from EVERY image — type/exact color/material/ALL hardware/HOW WORN OR CARRIED e.g. "black leather structured bag worn as crossbody on left shoulder" or "gold hoop earrings on both ears" or "silver layered necklace draped around neck" or "tan suede belt cinched at waist"], feet: [hem covers feet completely, do not show feet or toes / or describe visible footwear]
+PROMPT: <≤150 chars. EVERY garment piece (exact color + length/style) + EVERY accessory (color + type + placement). Used directly in image generator. e.g. "ivory chiffon maxi dress with strapless lace-up back, black leather crossbody bag on shoulder, gold hoop earrings" or "white silk halter crop top, black high-waist wide-leg trousers, brown leather tote bag, silver chain necklace">
+PIECES: <list each piece numerically. e.g. "1) ivory chiffon maxi dress" or "1) white silk halter crop top; 2) black high-waist wide-leg trousers" or "1) tan blazer; 2) white silk shirt; 3) black wide-leg trousers". Identify if SINGLE garment or SEPARATES.>
+FRONT_DESIGN: <≤80 words. Front-specific design ONLY: neckline shape, front closure, strap/sleeve style, front bodice details, front prints. Be specific enough that no other dress could match. Skip if no front image.>
+BACK_DESIGN: <≤80 words. Back-specific design ONLY: back closure (lace-up corset / zipper / buttons / open back / tie back / cutout), back neckline shape, back strap configuration, any back bow/ruching/train/cutout/draping. Be specific enough that no other dress could match the back. If no back image: write exactly "NO_BACK_IMAGE — infer matching back from front".>
+SIDE_DESIGN: <≤40 words. Side profile details: side slits, side closures, side seams. Write "none" if no side image.>
+ACCESSORIES_DETAIL: <Every accessory with exact color, material, hardware, AND placement. e.g. "black leather structured crossbody bag worn on left shoulder; gold hoop earrings on both ears". Write "none" if no accessories.>
+FOOTWEAR: <"hem covers feet completely, do not show feet or toes" OR describe visible footwear OR "feet not visible">
 
 ABSOLUTE RULES:
-- PROMPT line: garment pieces + accessories + placement. Under 150 chars. No structural detail.
-- accessories: section = EVERY accessory — include exact color, material, and HOW WORN/CARRIED
-- front: = front image details ONLY. back: = back image details ONLY.
-- Missing even one accessory from accessories: section is NOT acceptable
-- If multiple images show the same angle, combine into one section
-- 350 words max. Zero model/person descriptions.`;
+- Each field on its own line, prefix in CAPS followed by colon.
+- PROMPT line ≤150 chars total. FRONT_DESIGN and BACK_DESIGN must be DISTINCT — never mix front details into back or vice versa.
+- ACCESSORIES_DETAIL must include EVERY accessory observed in ANY image. Missing one = unacceptable.
+- Zero person/model/skin descriptions. Garment + accessories only.
+- 450 words max total.`;
 
-  const combined=await claudeMsg([{role:'user',content:[{type:'text',text:combinePrompt}]}],700);
+  const combined=await claudeMsg([{role:'user',content:[{type:'text',text:combinePrompt}]}],900);
   if(combined){
     garmentCache.set(cacheKey,combined);
     if(garmentCache.size>200)garmentCache.delete(garmentCache.keys().next().value);
@@ -182,68 +205,72 @@ function buildPrompt(opts={}){
   return p.length>380?p.slice(0,377)+'...':p;
 }
 
-// Build prompt using Claude vision's precise garment description
-// Strategy differs by model: NB2 needs SHORT prompts, GPT2 can handle longer
+// Parse Claude's structured analysis into fields
+function parseClaudeFields(desc){
+  if(!desc) return {};
+  const get=(label)=>{
+    const re=new RegExp('^'+label+':\\s*(.+?)(?=\\n[A-Z_]+:|$)','ims');
+    const m=desc.match(re);
+    return m ? m[1].trim().replace(/^[\s\n]+|[\s\n]+$/g,'') : '';
+  };
+  return {
+    prompt: get('PROMPT').slice(0,150),
+    pieces: get('PIECES'),
+    front:  get('FRONT_DESIGN'),
+    back:   get('BACK_DESIGN'),
+    side:   get('SIDE_DESIGN'),
+    acc:    get('ACCESSORIES_DETAIL'),
+    foot:   get('FOOTWEAR'),
+  };
+}
+
+// Build prompt using Claude vision's structured per-angle description
 function buildPromptWithGarment(item, garmentDesc){
   const shotKey=item.shotType||(item.shotLabel||'').toLowerCase().replace(/\s+view$/,'').replace(/\s+/g,'_')||'front';
-  const isNB2 = item.aiModel==='nb2';
+  const F=parseClaudeFields(garmentDesc);
 
-  // ── 0. Extract Claude's concise PROMPT: anchor line ──────────────────────
-  // Multi-image analysis outputs "PROMPT: <120-char anchor>" as the first line.
-  // This is purpose-built for generation: all garment pieces, exact colors,
-  // exact lengths — works for dresses, suits, separates, outerwear, anything.
-  let garmentAnchor='';
-  const promptLineMatch=(garmentDesc||'').match(/^PROMPT:\s*(.+)/im);
-  if(promptLineMatch) garmentAnchor=promptLineMatch[1].trim().slice(0,120);
-
-  // Strip the PROMPT: line before further processing
-  let cleanDesc=(garmentDesc||'').replace(/^PROMPT:\s*[^\n]+\n?/im,'').trim();
-
-  // ── 1. Strip the opposite-angle section ──────────────────────────────────
-  let angleDesc=cleanDesc;
-  if(shotKey==='front'||shotKey==='threeq'){
-    angleDesc=cleanDesc.replace(/,?\s*back:\s*\[[\s\S]*?\]/gi,'').trim();
-    angleDesc=angleDesc.replace(/,?\s*back:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
-  } else if(shotKey==='back'){
-    angleDesc=cleanDesc.replace(/,?\s*front:\s*\[[\s\S]*?\]/gi,'').trim();
-    angleDesc=angleDesc.replace(/,?\s*front:\s*(?:(?!(?:front|back|sides|accessories|feet):)[\s\S])+/gi,'').trim();
-  }
-
-  // ── 2. Clean structural labels and ALL brackets ───────────────────────────
-  angleDesc=angleDesc
-    .replace(/\bfront:\s*/gi,'').replace(/\bback:\s*/gi,'').replace(/\bsides:\s*/gi,'')
-    .replace(/\baccessories:\s*/gi,'ACCESSORIES: ')
-    .replace(/\bfeet:\s*/gi,'')
-    .replace(/\[garment:\s*/gi,'').replace(/[\[\]]/g,'')
-    .replace(/,\s*,/g,',').trim();
-
-  // ── 3. Pull accessories out as a separate explicit string ─────────────────
-  const accIdx = angleDesc.toUpperCase().indexOf('ACCESSORIES:');
-  let accListStr = '';
-  if(accIdx >= 0){
-    accListStr = angleDesc.slice(accIdx + 'ACCESSORIES:'.length)
-      .split(/,\s*(?:hem covers|do not|feet)/i)[0].trim().replace(/,\s*$/, '');
-  }
-
-  // ── 4. Fallback garment anchor (single-image or no PROMPT: line) ──────────
-  // For single-image analysis, Claude doesn't output a PROMPT: line.
-  // Extract anchor heuristically: first clause before structural details.
-  if(!garmentAnchor){
-    const garmentBody = (accIdx >= 0 ? angleDesc.slice(0, accIdx) : angleDesc)
-      .replace(/ACCESSORIES:.*/i,'').trim();
-    // Walk comma-parts and stop before pure structural/detail terms
-    const detailRe = /^(front|back|sides|silhouette|seam|pleat|ruffle|tier|zipper|button|pocket|embroid|hem\b|waist\b|strap\b|sleeve\b|neckline\b)/i;
-    const anchorParts=[];
-    for(const part of garmentBody.split(',')){
-      const t=part.trim();
-      if(detailRe.test(t) && anchorParts.length>=2) break;
-      anchorParts.push(t);
-      if(anchorParts.join(', ').length>120) break;
+  // ── Resolve angle-specific design emphasis ───────────────────────────────
+  let angleDesignEmphasis='';
+  let angleLabel='';
+  if(shotKey==='back'){
+    angleLabel='BACK';
+    if(F.back && !/NO_BACK_IMAGE/i.test(F.back)){
+      angleDesignEmphasis=F.back;
+    } else if(F.front){
+      angleDesignEmphasis=`matching back of: ${F.front}`;
     }
-    garmentAnchor=anchorParts.join(', ').slice(0,120).replace(/,\s*$/,'');
+  } else if(shotKey==='side'){
+    angleLabel='SIDE';
+    angleDesignEmphasis=F.side && F.side!=='none' ? F.side : (F.front||'');
+  } else {
+    angleLabel='FRONT';
+    angleDesignEmphasis=F.front||F.back||'';
   }
 
-  // ── 5. Model string — shot-aware ──────────────────────────────────────────
+  // ── Garment anchor: Claude's PROMPT line, fallback heuristic ─────────────
+  let garmentAnchor=F.prompt||'';
+  if(!garmentAnchor){
+    // Fallback for single-image analyses with no structured fields
+    const body=(garmentDesc||'').replace(/^[A-Z_]+:.*$/gim,'').trim();
+    const parts=body.split(',').slice(0,4).map(s=>s.trim()).filter(Boolean);
+    garmentAnchor=parts.join(', ').slice(0,150);
+  }
+
+  // ── Accessories: prefer ACCESSORIES_DETAIL, fall back to scan ────────────
+  let accListStr = F.acc && F.acc.toLowerCase()!=='none' ? F.acc : '';
+  if(accListStr) accListStr = accListStr.replace(/[\[\]]/g,'').replace(/\s+/g,' ').trim();
+
+  // ── Pieces line ──────────────────────────────────────────────────────────
+  const piecesLine = F.pieces ? F.pieces.replace(/[\[\]]/g,'').trim() : '';
+
+  // ── Footwear rule ────────────────────────────────────────────────────────
+  const footwearText = (F.foot||'').toLowerCase();
+  const feetRule = /hem covers feet|do not show feet/i.test(footwearText) || /floor.length|maxi|hem covers/i.test(garmentAnchor)
+    ? 'Hem covers feet completely — DO NOT show feet or toes.'
+    : footwearText && footwearText!=='feet not visible'
+      ? `Footwear: ${F.foot}.` : '';
+
+  // ── Model string — shot-aware ────────────────────────────────────────────
   const isFrontFacing = !['back','side'].includes(shotKey);
   let modelStr;
   if(item.modelLocked){
@@ -251,8 +278,7 @@ function buildPromptWithGarment(item, garmentDesc){
       ? 'same model as reference photo, identical face skin tone and hair'
       : 'same model as reference photo, identical hair color and body type, facing away';
   } else if(item.replaceModel){
-    const newModelDesc = item.modelDescText || GENDER[item.gender||'female'] || GENDER.female;
-    modelStr = newModelDesc;
+    modelStr = item.modelDescText || GENDER[item.gender||'female'] || GENDER.female;
   } else if(item.modelDescText){
     modelStr=item.modelDescText;
   } else {
@@ -263,73 +289,60 @@ function buildPromptWithGarment(item, garmentDesc){
   const shotStr=SHOT[shotKey]||SHOT.front;
 
   const shotAngleHint={
-    front:'front-facing',back:'rear-facing',side:'side-profile',threeq:'three-quarter angle',
-    detail:'close-up detail',face:'portrait close-up',sitting:'seated pose',walking:'walking mid-stride',
-    dynamic:'dynamic action pose',hands:'hands and wrists close-up',flat_lay:'flat lay overhead',
-    mannequin:'ghost mannequin, no model',alone_white:'product only, no model',
-    alone_grey:'product only, no model',alone_natural:'product on natural surface, no model',
-    lookbook:'lifestyle editorial',street_life:'urban street candid',
-    banner:'wide cinematic banner',group:'group composition',
-  }[shotKey]||'front-facing';
+    front:'Front-facing',back:'Rear/back view',side:'Side-profile',threeq:'Three-quarter angle',
+    detail:'Close-up detail',face:'Portrait close-up',sitting:'Seated pose',walking:'Walking mid-stride',
+    dynamic:'Dynamic action pose',hands:'Hands and wrists close-up',flat_lay:'Flat lay overhead',
+    mannequin:'Ghost mannequin, no model',alone_white:'Product only, no model',
+    alone_grey:'Product only, no model',alone_natural:'Product on natural surface, no model',
+    lookbook:'Lifestyle editorial',street_life:'Urban street candid',
+    banner:'Wide cinematic banner',group:'Group composition',
+  }[shotKey]||'Front-facing';
 
-  const feetRule = /hem covers feet|floor.length|maxi/i.test(angleDesc)
-    ? 'Full-length garment — DO NOT show feet or toes.' : '';
-
-  // Detect accessory-only products (no garment images, only accessories like bag/jewelry)
+  // Detect accessory-only products
   const hasGarmentImage = item.productImages?.some(img => {
     const s=(img.slot||'').toLowerCase();
     return !s.startsWith('accessory');
   });
   const isAccessoryOnly = !hasGarmentImage && item.productImages?.some(img=>(img.slot||'').toLowerCase().startsWith('accessory'));
 
-  // Accessories: always explicit + placement-aware
   const accRule = accListStr
-    ? `MUST wear/carry ALL of these EXACTLY — ${accListStr}. Same color, material, hardware, placement. No substitutions, no omissions.`
+    ? `MANDATORY ACCESSORIES — ${accListStr}. Reproduce EVERY accessory EXACTLY: same color, material, hardware, placement on body. No substitutions, no omissions.`
     : (item.productImages?.some(img=>(img.slot||'').toLowerCase().startsWith('accessory'))
-        ? `Reproduce EVERY accessory from the reference images EXACTLY — same color, style, and how it is worn.`
-        : '');
+        ? `Reproduce EVERY accessory shown in reference images EXACTLY — exact color, style, placement.` : '');
 
-  if(isNB2){
-    if(isAccessoryOnly){
-      const p=`${modelStr}. ${accRule} Wearing simple neutral outfit. ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
-      return p.length>480?p.slice(0,477)+'...':p;
-    }
-    if(item.replaceModel){
-      const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
-      const p=`Person from first reference image, wearing exactly: ${anchorStr}as shown in product reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
-      return p.length>480?p.slice(0,477)+'...':p;
-    }
-    const anchorStr = garmentAnchor ? `${garmentAnchor}. ` : '';
-    const p=`${modelStr}. Wearing exactly: ${anchorStr}as shown in reference images, unchanged. ${accRule} ${shotStr}. ${bg||''} ${REAL[item.realism||'ultra']||REAL.ultra}`.replace(/\s+/g,' ').trim();
-    return p.length>480?p.slice(0,477)+'...':p;
-  }
-
-  // ── GPT2 ──────────────────────────────────────────────────────────────────
-  let intro, garmentConstraint;
+  // ── Build prompt blocks ──────────────────────────────────────────────────
+  let intro, identityRule, garmentBlock;
 
   if(isAccessoryOnly){
-    // Only accessories provided (no garment) — model wears simple neutral outfit
-    // and showcases the accessory exactly as in the reference image
     intro=`${shotAngleHint} professional fashion photograph. ${item.replaceModel?'New model: ':''}${modelStr}.`;
-    garmentConstraint=`Wearing simple neutral coordinated outfit suitable to showcase the accessory. ${accRule || 'Reproduce the accessory shown in the reference image EXACTLY — same color, material, hardware, and placement.'}`;
+    identityRule='';
+    garmentBlock=`Wearing simple neutral coordinated outfit to showcase the accessory. ${accRule || 'Reproduce the accessory in the reference EXACTLY — same color, material, hardware, placement.'}`;
   } else if(item.replaceModel){
-    // Identity image placed FIRST in reference list by generateGPT2.
-    // GPT2 anchors face to first ref, garment from product refs.
-    // CRITICAL wording: tell GPT2 to TAKE ONLY THE FACE from first ref,
-    // and IGNORE the placeholder clothing in the first ref.
-    const anchorDetail = garmentAnchor ? ` The clothing is: ${garmentAnchor}.` : '';
     intro=`${shotAngleHint} professional fashion photograph.`;
-    garmentConstraint=`TAKE ONLY THE FACE, HAIR, SKIN TONE, AND BODY TYPE from the FIRST reference image (ignore the placeholder clothing in that image). DRESS that person in the EXACT clothing shown in the OTHER product reference images — preserve every detail of the product clothing: same color, fabric, length, silhouette, neckline, every design element. The final clothing must match the product reference images exactly, NOT the first image's clothing.${anchorDetail}`;
+    identityRule=`IDENTITY: Take ONLY the face, hair, skin tone, body type from the FIRST reference image. IGNORE that image's placeholder clothing. The OTHER reference images show the actual product clothing — that is what the model must wear.`;
+    garmentBlock = buildGarmentBlock({garmentAnchor, piecesLine, angleLabel, angleDesignEmphasis, accRule, isReplace:true});
   } else {
-    // Normal: image-anchored + short textual anchor
-    const anchorDetail = garmentAnchor ? ` This is: ${garmentAnchor}.` : '';
     intro=`${shotAngleHint} professional fashion photograph. ${modelStr}.`;
-    garmentConstraint=`Reproduce the EXACT garment from the product reference images with perfect fidelity — preserve every detail: color, fabric, length, silhouette, neckline, straps, hemline, prints, structural seams. Do NOT redesign, recolor, or restyle the garment in any way.${anchorDetail}`;
+    identityRule='';
+    garmentBlock = buildGarmentBlock({garmentAnchor, piecesLine, angleLabel, angleDesignEmphasis, accRule, isReplace:false});
   }
 
-  const parts=[intro, garmentConstraint, accRule, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
+  const parts=[intro, identityRule, garmentBlock, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
   const p=parts.filter(Boolean).join(' ');
-  return p.length>700?p.slice(0,697)+'...':p;
+  return p.length>900?p.slice(0,897)+'...':p;
+}
+
+// Garment block: angle-specific emphasis + accessories — works for all shot types
+function buildGarmentBlock({garmentAnchor, piecesLine, angleLabel, angleDesignEmphasis, accRule, isReplace}){
+  const anchorLine = garmentAnchor ? `OUTFIT: ${garmentAnchor}.` : '';
+  const piecesNote = piecesLine ? ` PIECES: ${piecesLine}.` : '';
+  const angleDesignLine = angleDesignEmphasis
+    ? ` ${angleLabel} DESIGN (CRITICAL — visible in ${angleLabel.toLowerCase()} reference image, MUST match exactly): ${angleDesignEmphasis}`
+    : '';
+  const baseInstruction = isReplace
+    ? `That model wears the EXACT clothing shown in the product reference images.`
+    : `Reproduce the EXACT clothing from the product reference images with perfect fidelity. Do NOT redesign, recolor, restyle, or substitute any element.`;
+  return `${baseInstruction} ${anchorLine}${piecesNote}${angleDesignLine} ${accRule}`.replace(/\s+/g,' ').trim();
 }
 
 // Sanitize prompt for GPT Image 2 content filter
@@ -504,33 +517,7 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   throw new Error('GPT2 timed out');
 }
 
-async function generateNB2(item, modelAnchorUrls=[]){
-  item.status='uploading';
-  const imgs=item.productImages||[];
-  console.log('[NB2] shot='+item.shotType+' replaceModel='+!!item.replaceModel+' refs='+imgs.map(i=>i.slot).join(',')+' anchors='+modelAnchorUrls.length);
-  const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-  // For replaceModel: model anchor (savedModel or Flux-generated) goes FIRST for identity
-  const anchorUrls=modelAnchorUrls;
-  const allUrls=item.replaceModel?[...anchorUrls,...productUrls]:[...productUrls,...anchorUrls];
-  item.status='generating';
-  const sub=await falQ('/fal-ai/nano-banana-2/edit',{prompt:item.prompt,image_urls:allUrls,num_images:1,aspect_ratio:toAR(item.aspectRatio||'3:4'),output_format:'jpeg',safety_tolerance:'4',resolution:item.resolution||'1K'});
-  if(!sub.request_id){throw new Error('NB2 submit failed: '+(sub.detail||sub.error||JSON.stringify(sub).slice(0,200)));}
-  item.requestId=sub.request_id;item.statusUrl=sub.status_url;item.responseUrl=sub.response_url;
-  for(let i=0;i<150;i++){
-    await new Promise(r=>setTimeout(r,3000));
-    const sp=item.statusUrl?item.statusUrl.replace('https://queue.fal.run',''):`/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
-    const st=await falGet(sp);
-    if(st.status==='COMPLETED'){
-      const rp=item.responseUrl?item.responseUrl.replace('https://queue.fal.run',''):`/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
-      const res=await falGet(rp);
-      const url=res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url||res?.data?.images?.[0]?.url;
-      if(!url)throw new Error('NB2 no image URL');
-      return url;
-    }
-    if(st.status==='FAILED')throw new Error(st.error||'NB2 failed');
-  }
-  throw new Error('NB2 timed out');
-}
+// NB2 / Nano-Banana removed — GPT Image 2 is the only generation engine.
 
 // ── Per-shot image filter ──────────────────────────────────────────────────
 // CRITICAL: only send images that belong to the shot's angle.
@@ -710,10 +697,8 @@ async function processItem(batchId, itemId){
       // Garment images stay so GPT2 can visually reproduce the exact clothing.
     }
 
-    // STEP 3: Generate
-    const url = item.aiModel==='nb2'
-      ? await generateNB2(item, modelAnchorUrls)
-      : await generateGPT2(item, modelAnchorUrls);
+    // STEP 3: Generate (always GPT Image 2)
+    const url = await generateGPT2(item, modelAnchorUrls);
 
     item.resultUrl=url; item.status='done';
     batch.completedCount=(batch.completedCount||0)+1;
@@ -735,8 +720,9 @@ function runBatch(batchId, concurrency=4){
 app.post('/api/batch/create',async(req,res)=>{
   const{type='model',products,globalPrompt,promptMode,category,styleKey,bgOption,bgCustom,
         gender,realism,resolution,aspectRatio,modelDesc,shots,savedModelUrl,
-        aiModel='gpt2',gptQuality='medium',
+        gptQuality='medium',
         groupShot=false,groupShotModels=[],groupShotPrompt=''}=req.body;
+  const aiModel='gpt2'; // NB2 deprecated — GPT Image 2 only
   if(!products?.length)return res.status(400).json({error:'No products'});
   if(products.length>100)return res.status(400).json({error:'Max 100'});
 
@@ -752,7 +738,7 @@ app.post('/api/batch/create',async(req,res)=>{
     for(let si=0;si<shotList.length;si++){
       const shot=shotList[si];
       const prompt=buildPrompt({userPrompt:groupShotPrompt||globalPrompt||'',shotType:shot.shotType||'group',category,styleKey:shot.styleKey||styleKey||'',bgOption:shot.bg||bgOption||'ai',bgCustom:shot.bgCustom||bgCustom||'',gender,realism:realism||'ultra',modelDesc,productNames,modelCount,multiModelDesc:multiDesc});
-      items.push({id:uuidv4(),name:`Group Shot${shotList.length>1?' — '+(shot.label||shot.shotType):''}`,productName:'Group Shot',productKey:'gs',shotLabel:shot.label||shot.shotType,shotType:shot.shotType||'group',shotIndex:si,savedModelUrl:anchorUrls[0]||savedModelUrl||null,savedModelUrls:anchorUrls,productImages:allImages,prompt,aspectRatio:shot.aspectRatio||aspectRatio||'16:9',resolution:shot.resolution||resolution||'1K',replaceModel:false,aiModel:aiModel||'gpt2',gptQuality,status:'queued',requestId:null,resultUrl:null,error:null});
+      items.push({id:uuidv4(),name:`Group Shot${shotList.length>1?' — '+(shot.label||shot.shotType):''}`,productName:'Group Shot',productKey:'gs',shotLabel:shot.label||shot.shotType,shotType:shot.shotType||'group',shotIndex:si,savedModelUrl:anchorUrls[0]||savedModelUrl||null,savedModelUrls:anchorUrls,productImages:allImages,prompt,aspectRatio:shot.aspectRatio||aspectRatio||'16:9',resolution:shot.resolution||resolution||'1K',replaceModel:false,aiModel:'gpt2',gptQuality,status:'queued',requestId:null,resultUrl:null,error:null});
     }
     jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items,garmentDescs:{},generatedModelUrls:{}};
     res.json({batchId,total:items.length});
@@ -786,7 +772,7 @@ app.post('/api/batch/create',async(req,res)=>{
         aspectRatio:shot.aspectRatio||aspectRatio||'3:4',
         resolution:shot.resolution||resolution||'1K',
         replaceModel,modelLocked,
-        aiModel:aiModel||'gpt2',gptQuality:gptQuality||'medium',
+        aiModel:'gpt2',gptQuality:gptQuality||'medium',
         modelDescText:prod.modelDesc||modelDesc||'',
         userPrompt:perPrompt+extra,
         bgOption:iBg,bgCustom:iBgC,
