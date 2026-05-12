@@ -463,6 +463,7 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
       <button class="chip" data-v="jewelry">Jewelry</button><button class="chip" data-v="hats">Hats</button>
       <button class="chip" data-v="other">Other</button>
       <button class="chip" data-v="outfit" style="grid-column:span 2">👗 Full Outfit</button>
+      <button class="chip" data-v="outfit_set" style="grid-column:span 2">👔 Full Outfit Set (two pieces)</button>
     </div>
   </div>
 
@@ -1441,11 +1442,31 @@ function renderGroups(){
       </div>
       <div class="gcbody">
         ${(()=>{
-          const total = ['front','back','left_side','right_side'].reduce((n,k)=>{const a=slots[k];return n+(Array.isArray(a)?a.length:a?1:0);},0) + (slots.accessories||[]).length;
+          const _slotKeys = selCat==='outfit_set'
+            ? ['p1_front','p1_back','p1_left_side','p1_right_side','p2_front','p2_back','p2_left_side','p2_right_side']
+            : ['front','back','left_side','right_side'];
+          const total = _slotKeys.reduce((n,k)=>{const a=slots[k];return n+(Array.isArray(a)?a.length:a?1:0);},0) + (slots.accessories||[]).length;
           const score = total===0?{cls:'poor',icon:'⚠️',txt:'No images — add product photos'}:total===1?{cls:'poor',icon:'⚠️',txt:'Only 1 image — accuracy will be low'}:total===2?{cls:'ok',icon:'🟡',txt:'2 images — decent accuracy'}:total<=4?{cls:'ok',icon:'🟡',txt:`${total} images — good accuracy`}:{cls:'great',icon:'✅',txt:`${total} images — excellent accuracy`};
           return `<span class="acc-score ${score.cls}">${score.icon} ${score.txt}</span>`;
         })()}
-        <div style="font-size:11px;font-weight:600;color:var(--bl);margin-top:8px;margin-bottom:8px">📷 Image Slots <span style="font-size:10px;font-weight:400;color:var(--t3)">add multiple per angle for accuracy OR for two-piece outfits (e.g. top + pants)</span></div>
+        <div style="font-size:11px;font-weight:600;color:var(--bl);margin-top:8px;margin-bottom:8px">📷 Image Slots <span style="font-size:10px;font-weight:400;color:var(--t3)">${selCat==='outfit_set'?'add each piece separately — Piece 1 (e.g. top) and Piece 2 (e.g. pants), each with their own angles':'add multiple per angle for accuracy OR for two-piece outfits (e.g. top + pants)'}</span></div>
+        ${selCat==='outfit_set' ? `
+        <div style="font-size:11px;font-weight:700;color:var(--t2);margin:6px 0 4px;letter-spacing:.4px">PIECE 1 (e.g. top, jacket, dress)</div>
+        <div class="slots-grid">
+          ${mkSlot('p1_front','Front')}
+          ${mkSlot('p1_back','Back')}
+          ${mkSlot('p1_left_side','Left Side')}
+          ${mkSlot('p1_right_side','Right Side')}
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--t2);margin:14px 0 4px;letter-spacing:.4px">PIECE 2 (e.g. pants, skirt, bottoms)</div>
+        <div class="slots-grid">
+          ${mkSlot('p2_front','Front')}
+          ${mkSlot('p2_back','Back')}
+          ${mkSlot('p2_left_side','Left Side')}
+          ${mkSlot('p2_right_side','Right Side')}
+        </div>
+        <div style="margin-top:10px">${accHtml}</div>
+        ` : `
         <div class="slots-grid">
           ${mkSlot('front','Front')}
           ${mkSlot('back','Back')}
@@ -1453,6 +1474,7 @@ function renderGroups(){
           ${mkSlot('right_side','Right Side')}
           ${accHtml}
         </div>
+        `}
         <div onclick="toggleReplaceModel('${g.id}')" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 10px;border-radius:var(--r);cursor:pointer;border:1.5px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ybg)':'var(--bg)'}">
           <div style="width:16px;height:16px;border-radius:4px;border:2px solid ${g.replaceModel?'var(--ylw)':'var(--br2)'};background:${g.replaceModel?'var(--ylw)':'var(--w)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0">${g.replaceModel?'✓':''}</div>
           <div style="font-size:11px;font-weight:600;color:${g.replaceModel?'#92400e':'var(--t2)'}">⚠️ Product photo has a model — replace with mine</div>
@@ -1832,8 +1854,8 @@ async function doEditWithImage(){
   try{
     const r=await fetch(`/api/item/${batchId}/${id}/edit-image`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,extraImageBase64:eiExtraB64,extraImageMime:eiExtraMime,engine,useClaude})});
     const d=await r.json(); if(d.error) throw new Error(d.error);
-    if(card){const img=card.querySelector('img'); if(img){img.src=d.url+'?t='+Date.now();img.style.opacity='1';}}
     const it=allItems.find(x=>x.id===id); if(it) it.resultUrl=d.url;
+    if(it) renderResultCard(it);
     if(d.refinedPrompt) console.log('[Claude refined edit]', d.refinedPrompt);
     toast('Edited ✓','ok');
   }catch(e){
@@ -2730,18 +2752,32 @@ function getProductImagesForGroup(g) {
   const slots = g.slots || {};
   const slotImages = [];
 
-  const orderedSlots = ['front','back','left_side','right_side'];
-  for(const key of orderedSlots) {
-    // Normalize: handle legacy single-object slots and new array slots
-    const imgs = Array.isArray(slots[key]) ? slots[key] : (slots[key] ? [slots[key]] : []);
-    const baseLabel = key.replace('_',' ') + ' view';
-    imgs.forEach((img, i) => {
-      slotImages.push({
-        base64: img.b64,
-        mimeType: img.mimeType,
-        slot: imgs.length > 1 ? `${baseLabel} ${i+1}` : baseLabel,
+  // When Full Outfit Set mode is active, pull from p1_/p2_ keys and label
+  // each image with its piece so Claude vision/the prompt builder know they
+  // are two separate garments of one outfit. Server slot filters use
+  // .startsWith('front view') / 'back view' etc, so the "piece N" suffix is
+  // a hint to vision without breaking the angle filter.
+  const isOutfitSet = selCat==='outfit_set';
+  const angleKeys = ['front','back','left_side','right_side'];
+  const sources = isOutfitSet
+    ? [{prefix:'p1_', piece:1}, {prefix:'p2_', piece:2}]
+    : [{prefix:'',    piece:0}];
+
+  for(const {prefix, piece} of sources){
+    for(const key of angleKeys){
+      const slotKey = prefix + key;
+      const imgs = Array.isArray(slots[slotKey]) ? slots[slotKey] : (slots[slotKey] ? [slots[slotKey]] : []);
+      const baseLabel = key.replace('_',' ') + ' view';
+      imgs.forEach((img, i) => {
+        const idxSuffix = imgs.length > 1 ? ` ${i+1}` : '';
+        const pieceSuffix = piece ? ` (piece ${piece})` : '';
+        slotImages.push({
+          base64: img.b64,
+          mimeType: img.mimeType,
+          slot: baseLabel + idxSuffix + pieceSuffix,
+        });
       });
-    });
+    }
   }
   // Add accessories
   for(let i=0; i<(slots.accessories||[]).length; i++) {
