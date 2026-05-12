@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const app  = express();
 const PORT = process.env.PORT || 3456;
 app.use(express.json({ limit: '200mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // ── Storage ────────────────────────────────────────────────────────────────
 const DATA_DIR = path.join(__dirname, 'data');
@@ -329,19 +329,19 @@ function buildPromptWithGarment(item, garmentDesc){
 
   const parts=[intro, identityRule, garmentBlock, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
   const p=parts.filter(Boolean).join(' ');
-  return p.length>900?p.slice(0,897)+'...':p;
+  return p.length>1400?p.slice(0,1397)+'...':p;
 }
 
 // Garment block: angle-specific emphasis + accessories — works for all shot types
 function buildGarmentBlock({garmentAnchor, piecesLine, angleLabel, angleDesignEmphasis, accRule, isReplace}){
   const anchorLine = garmentAnchor ? `OUTFIT: ${garmentAnchor}.` : '';
-  const piecesNote = piecesLine ? ` PIECES: ${piecesLine}.` : '';
+  const piecesNote = piecesLine ? ` PIECES (reproduce every piece — no omissions, no substitutions): ${piecesLine}.` : '';
   const angleDesignLine = angleDesignEmphasis
-    ? ` ${angleLabel} DESIGN (CRITICAL — visible in ${angleLabel.toLowerCase()} reference image, MUST match exactly): ${angleDesignEmphasis}`
+    ? ` ${angleLabel} DESIGN (CRITICAL — visible in ${angleLabel.toLowerCase()} reference image, MUST match pixel-for-pixel — same neckline shape, same color, same fabric, same trim, same hardware): ${angleDesignEmphasis}`
     : '';
   const baseInstruction = isReplace
-    ? `That model wears the EXACT clothing shown in the product reference images.`
-    : `Reproduce the EXACT clothing from the product reference images with perfect fidelity. Do NOT redesign, recolor, restyle, or substitute any element.`;
+    ? `STRICT GARMENT FIDELITY: the model wears the EXACT clothing shown in the product reference images. Match every color, fabric, print, seam, stitch, neckline, sleeve length, hem length, closure, button count, zipper position, trim, embellishment, and hardware exactly. Do NOT redesign, recolor, simplify, embellish, restyle, shorten, lengthen, or substitute ANY element. If a piece has a print, reproduce the exact print pattern and scale. If it has a logo, reproduce it exactly.`
+    : `STRICT GARMENT FIDELITY: reproduce the EXACT clothing from the product reference images with photographic fidelity. Match every color, fabric, print, seam, stitch, neckline, sleeve length, hem length, closure, button count, zipper position, trim, embellishment, and hardware exactly. Do NOT redesign, recolor, simplify, embellish, restyle, shorten, lengthen, or substitute ANY element. If a piece has a print, reproduce the exact print pattern and scale. If it has a logo, reproduce it exactly.`;
   return `${baseInstruction} ${anchorLine}${piecesNote}${angleDesignLine} ${accRule}`.replace(/\s+/g,' ').trim();
 }
 
@@ -517,7 +517,82 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   throw new Error('GPT2 timed out');
 }
 
-// NB2 / Nano-Banana removed — GPT Image 2 is the only generation engine.
+// ── Nano-Banana (Gemini 2.5 Flash Image) ───────────────────────────────────
+// Better at preserving exact garment details from reference images than GPT2.
+// This is the SAME model gemini.google.com uses — it's why their output is
+// so faithful to the reference clothing. For accurate product reproduction we
+// route here by default.
+async function generateNanoBanana(item, modelAnchorUrls=[]){
+  item.status='uploading';
+  const imgs=item.productImages||[];
+
+  let allUrls;
+  if(item.replaceModel){
+    let modelIdentityUrl = modelAnchorUrls[0] || null;
+    if(!modelIdentityUrl && !item._skipBaseModelGen){
+      item.status='generating model';
+      const modelDesc = item.modelDescText || GENDER[item.gender||'female'] || GENDER.female;
+      try{ modelIdentityUrl = await generateBaseModel(modelDesc, item.aspectRatio); }
+      catch(e){ console.warn('[replaceModel/NB] base model gen failed:',e.message); }
+    }
+    const garmentUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
+    allUrls = modelIdentityUrl ? [modelIdentityUrl, ...garmentUrls] : garmentUrls;
+  } else {
+    const productUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
+    allUrls = [...productUrls, ...modelAnchorUrls];
+  }
+
+  item.status='generating';
+  console.log('[NB] shot='+item.shotType+' totalRefs='+allUrls.length);
+
+  // Nano-banana is much less filter-aggressive but we still sanitize for safety
+  const prompt = sanitizeForGPT2(item.prompt||'');
+
+  const sub = await falQ('/fal-ai/nano-banana/edit',{
+    prompt,
+    image_urls: allUrls,
+    num_images: 1,
+    output_format: 'jpeg',
+    aspect_ratio: toAR(item.aspectRatio||'3:4'),
+  });
+
+  if(!sub.request_id){
+    const msg=Array.isArray(sub.detail)?sub.detail.map(d=>d.msg||d).join('; '):(sub.detail||sub.error||JSON.stringify(sub).slice(0,200));
+    throw new Error('NanoBanana submit failed: '+msg);
+  }
+
+  item.requestId=sub.request_id;item.statusUrl=sub.status_url;item.responseUrl=sub.response_url;
+  const endpoint='/fal-ai/nano-banana/edit';
+
+  for(let i=0;i<120;i++){
+    await new Promise(r=>setTimeout(r,3000));
+    const sp=item.statusUrl?item.statusUrl.replace('https://queue.fal.run',''):`${endpoint}/requests/${item.requestId}/status`;
+    const st=await falGet(sp);
+    if(st.status==='COMPLETED'){
+      const rp=item.responseUrl?item.responseUrl.replace('https://queue.fal.run',''):`${endpoint}/requests/${item.requestId}`;
+      const res=await falGet(rp);
+      const url=res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url;
+      if(!url){
+        console.error('[NB result]',JSON.stringify(res).slice(0,300));
+        throw new Error('NanoBanana no image URL');
+      }
+      return url;
+    }
+    if(st.status==='FAILED'){
+      const errMsg=st.error||st.detail||'NanoBanana generation failed';
+      throw new Error(errMsg);
+    }
+  }
+  throw new Error('NanoBanana timed out');
+}
+
+// Engine router: dispatch to GPT Image 2 or Nano Banana based on item.aiModel.
+async function generateImage(item, modelAnchorUrls=[]){
+  const engine = (item.aiModel||'nanobanana').toLowerCase();
+  if(engine==='gpt2' || engine==='gpt-image-2') return generateGPT2(item, modelAnchorUrls);
+  // Default: nano-banana (best clothing fidelity)
+  return generateNanoBanana(item, modelAnchorUrls);
+}
 
 // ── Per-shot image filter ──────────────────────────────────────────────────
 // CRITICAL: only send images that belong to the shot's angle.
@@ -697,8 +772,8 @@ async function processItem(batchId, itemId){
       // Garment images stay so GPT2 can visually reproduce the exact clothing.
     }
 
-    // STEP 3: Generate (always GPT Image 2)
-    const url = await generateGPT2(item, modelAnchorUrls);
+    // STEP 3: Generate (engine routed per-item)
+    const url = await generateImage(item, modelAnchorUrls);
 
     item.resultUrl=url; item.status='done';
     batch.completedCount=(batch.completedCount||0)+1;
@@ -721,8 +796,9 @@ app.post('/api/batch/create',async(req,res)=>{
   const{type='model',products,globalPrompt,promptMode,category,styleKey,bgOption,bgCustom,
         gender,realism,resolution,aspectRatio,modelDesc,shots,savedModelUrl,
         gptQuality='medium',
+        aiModel: rawAiModel='nanobanana',
         groupShot=false,groupShotModels=[],groupShotPrompt=''}=req.body;
-  const aiModel='gpt2'; // NB2 deprecated — GPT Image 2 only
+  const aiModel = (rawAiModel==='gpt2'||rawAiModel==='gpt-image-2') ? 'gpt2' : 'nanobanana';
   if(!products?.length)return res.status(400).json({error:'No products'});
   if(products.length>100)return res.status(400).json({error:'Max 100'});
 
@@ -738,7 +814,7 @@ app.post('/api/batch/create',async(req,res)=>{
     for(let si=0;si<shotList.length;si++){
       const shot=shotList[si];
       const prompt=buildPrompt({userPrompt:groupShotPrompt||globalPrompt||'',shotType:shot.shotType||'group',category,styleKey:shot.styleKey||styleKey||'',bgOption:shot.bg||bgOption||'ai',bgCustom:shot.bgCustom||bgCustom||'',gender,realism:realism||'ultra',modelDesc,productNames,modelCount,multiModelDesc:multiDesc});
-      items.push({id:uuidv4(),name:`Group Shot${shotList.length>1?' — '+(shot.label||shot.shotType):''}`,productName:'Group Shot',productKey:'gs',shotLabel:shot.label||shot.shotType,shotType:shot.shotType||'group',shotIndex:si,savedModelUrl:anchorUrls[0]||savedModelUrl||null,savedModelUrls:anchorUrls,productImages:allImages,prompt,aspectRatio:shot.aspectRatio||aspectRatio||'16:9',resolution:shot.resolution||resolution||'1K',replaceModel:false,aiModel:'gpt2',gptQuality,status:'queued',requestId:null,resultUrl:null,error:null});
+      items.push({id:uuidv4(),name:`Group Shot${shotList.length>1?' — '+(shot.label||shot.shotType):''}`,productName:'Group Shot',productKey:'gs',shotLabel:shot.label||shot.shotType,shotType:shot.shotType||'group',shotIndex:si,savedModelUrl:anchorUrls[0]||savedModelUrl||null,savedModelUrls:anchorUrls,productImages:allImages,prompt,aspectRatio:shot.aspectRatio||aspectRatio||'16:9',resolution:shot.resolution||resolution||'1K',replaceModel:false,aiModel,gptQuality,status:'queued',requestId:null,resultUrl:null,error:null});
     }
     jobs[batchId]={type,status:'processing',created:Date.now(),completedCount:0,items,garmentDescs:{},generatedModelUrls:{}};
     res.json({batchId,total:items.length});
@@ -772,7 +848,7 @@ app.post('/api/batch/create',async(req,res)=>{
         aspectRatio:shot.aspectRatio||aspectRatio||'3:4',
         resolution:shot.resolution||resolution||'1K',
         replaceModel,modelLocked,
-        aiModel:'gpt2',gptQuality:gptQuality||'medium',
+        aiModel,gptQuality:gptQuality||'medium',
         modelDescText:prod.modelDesc||modelDesc||'',
         userPrompt:perPrompt+extra,
         bgOption:iBg,bgCustom:iBgC,
@@ -813,6 +889,78 @@ app.post('/api/batch/:id/edit',async(req,res)=>{
   b.items.forEach(it=>{if(globalPrompt)it.prompt=globalPrompt;if(resolution)it.resolution=resolution;it.status='queued';it.resultUrl=null;it.error=null;});
   res.json({ok:true});
   runBatch(req.params.id);
+});
+
+// ── Edit a generated image with prompt + optional extra reference image ────
+// Uses nano-banana by default (best at honoring "change X, keep Y" edits).
+// Caller supplies: sourceUrl (the generated image to edit) OR sourceBase64,
+// prompt (the edit instruction), and optionally extraImageBase64 to use as
+// an additional reference (e.g. "make the shoes look like THIS image").
+async function runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio='3:4', engine='nanobanana'}){
+  if(!prompt||!prompt.trim()) throw new Error('Prompt required');
+  if(!sourceUrl && !sourceBase64) throw new Error('Source image required');
+
+  const srcUrl = sourceUrl || await uploadToFal(sourceBase64, sourceMime||'image/jpeg');
+  const extraUrl = extraImageUrl || (extraImageBase64 ? await uploadToFal(extraImageBase64, extraImageMime||'image/jpeg') : null);
+
+  // Source image FIRST (anchor — preserve everything we don't explicitly change).
+  // Extra image SECOND (modifier — what to bring in).
+  const imageUrls = extraUrl ? [srcUrl, extraUrl] : [srcUrl];
+
+  const fullPrompt = (extraUrl
+    ? `Edit the FIRST image. Use the SECOND image as a reference for what to change. PRESERVE everything in the first image (model, face, pose, lighting, composition, background, framing) EXCEPT what the instruction below explicitly modifies. Match identity, body proportions and skin tone of the first image exactly.\n\nINSTRUCTION: ${prompt.trim()}`
+    : `Edit this image. PRESERVE the model, face, pose, lighting, composition, background and framing exactly. Only change what the instruction below says.\n\nINSTRUCTION: ${prompt.trim()}`);
+
+  const useGPT2 = engine==='gpt2'||engine==='gpt-image-2';
+  const endpoint = useGPT2 ? '/openai/gpt-image-2/edit' : '/fal-ai/nano-banana/edit';
+  const body = useGPT2
+    ? {prompt:sanitizeForGPT2(fullPrompt), image_urls:imageUrls, quality:'medium', image_size:toGPT2Size(aspectRatio), content_moderation:'permissive'}
+    : {prompt:sanitizeForGPT2(fullPrompt), image_urls:imageUrls, num_images:1, output_format:'jpeg', aspect_ratio:toAR(aspectRatio)};
+
+  const sub = await falQ(endpoint, body);
+  if(!sub.request_id) throw new Error(sub.detail||sub.error||'Edit submit failed');
+
+  for(let i=0;i<90;i++){
+    await new Promise(r=>setTimeout(r,3000));
+    const sp=sub.status_url?sub.status_url.replace('https://queue.fal.run',''):`${endpoint}/requests/${sub.request_id}/status`;
+    const st=await falGet(sp);
+    if(st.status==='COMPLETED'){
+      const rp=sub.response_url?sub.response_url.replace('https://queue.fal.run',''):`${endpoint}/requests/${sub.request_id}`;
+      const result=await falGet(rp);
+      const url=result?.images?.[0]?.url||result?.output?.images?.[0]?.url||result?.image?.url;
+      if(!url) throw new Error('Edit returned no image');
+      return url;
+    }
+    if(st.status==='FAILED') throw new Error(st.error||st.detail||'Edit failed');
+  }
+  throw new Error('Edit timed out');
+}
+
+// Edit an item's already-generated image with prompt (+ optional new image)
+app.post('/api/item/:bid/:iid/edit-image',async(req,res)=>{
+  const item=jobs[req.params.bid]?.items.find(i=>i.id===req.params.iid);
+  if(!item?.resultUrl) return res.status(400).json({error:'No image to edit yet'});
+  try{
+    const{prompt, extraImageBase64, extraImageMime, engine}=req.body;
+    const url = await runImageEdit({
+      sourceUrl: item.resultUrl,
+      extraImageBase64, extraImageMime,
+      prompt,
+      aspectRatio: item.aspectRatio||'3:4',
+      engine: engine||item.aiModel||'nanobanana',
+    });
+    item.resultUrl = url;
+    res.json({url});
+  }catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// Standalone edit endpoint (works on any URL, not just batch items)
+app.post('/api/image/edit',async(req,res)=>{
+  try{
+    const{sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio, engine}=req.body;
+    const url = await runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio:aspectRatio||'3:4', engine:engine||'nanobanana'});
+    res.json({url});
+  }catch(e){ res.status(500).json({error:e.message}); }
 });
 
 app.post('/api/item/:bid/:iid/upscale',async(req,res)=>{
@@ -914,5 +1062,5 @@ app.get('/api/video/:id/status',(req,res)=>{
   res.json({status:job.status,total:job.clips.length,completed:job.completedCount,clips:job.clips.map(({id,prompt,status,resultUrl,error,aspectRatio,duration})=>({id,prompt,status,resultUrl,error,aspectRatio,duration}))});
 });
 
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
+app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
 app.listen(PORT,()=>console.log('\n✅ Fashion AI Studio v4.0 → http://localhost:'+PORT+'\n'));
