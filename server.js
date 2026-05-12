@@ -478,7 +478,7 @@ async function generateGPT2(item, modelAnchorUrls=[]){
     ? ` CRITICAL: the FIRST image is front-facing but the output is ${isBackShot?'a REAR/BACK view — model rotated 180°, facing away from camera, face NOT visible':'a SIDE PROFILE — model rotated 90°'}. Use the FIRST image only for face/hair/skin/body identity, NOT for pose or orientation.`
     : '';
   const identityHead = hasIdentityAnchor
-    ? `IDENTITY LOCK: the FIRST reference image defines the model's face, hair, skin tone and body — copy them exactly.${orientCarve} The other reference images are GARMENT references only — copy the clothing details exactly but DO NOT copy the face, hair, identity or pose from them. `
+    ? `IDENTITY LOCK: the FIRST reference image defines the model's face, hair, skin tone and body — copy them exactly. IGNORE any clothing or accessories the model wears in the FIRST image — they MUST NOT appear in the output.${orientCarve} The other reference images are GARMENT references only — copy the clothing details exactly but DO NOT copy the face, hair, identity or pose from them. `
     : '';
   const fallbackPrompt = item.replaceModel
     ? sanitizeForGPT2(`${identityHead}${item.modelDescText||GENDER[item.gender||'female']||GENDER.female} wearing the exact clothes from the product reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`)
@@ -588,9 +588,9 @@ function buildNanoBananaPrompt(item, {identityFirst, refMatchesAngle}){
     const styleHint = item.modelDescText ? ` The model should look like: ${item.modelDescText}.` : '';
     identity = `Recreate the scene shown in the reference image(s) with the same garment and same back/side pose, on a clean studio background.${styleHint}`;
   } else if(identityFirst && (shot==='back'||shot==='side')){
-    identity = `Use the FIRST image only for the model's identity (face, hair, skin tone, body type). Do NOT copy its pose — the pose for this output is defined below.`;
+    identity = `Use the FIRST image only for the model's identity (face, hair, skin tone, body type). IGNORE whatever clothing or accessories that model is wearing in the FIRST image — they do not belong in the output. Do NOT copy its pose — the pose for this output is defined below.`;
   } else if(identityFirst){
-    identity = `Use the FIRST image for the model's identity (face, hair, skin tone, body). The other image(s) are garment references — copy clothing details exactly, ignore their faces.`;
+    identity = `Use the FIRST image for the model's identity (face, hair, skin tone, body). IGNORE whatever clothing or accessories the model is wearing in the FIRST image — only the OTHER image(s) define what the model wears in the output. Copy clothing details from the OTHER image(s) exactly, ignore their faces.`;
   } else if(item.replaceModel && item.modelDescText){
     identity = `The model: ${item.modelDescText}.`;
   } else {

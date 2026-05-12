@@ -1431,15 +1431,37 @@ function renderGroups(){
       :savedModels.length?`<div class="gcmrow" style="margin-top:8px"><div style="flex:1;font-size:11px;color:var(--t3)">No per-group model</div><select onchange="setGM(${gi},this.value)" style="font-size:11px;padding:3px 6px;border:1px solid var(--br2);border-radius:6px;font-family:'Inter',sans-serif"><option value="">Assign model...</option>${savedModels.map((m,i)=>`<option value="${i}">${m.name}</option>`).join('')}</select></div>`
       :'';
 
-    return`<div class="gc${sel?' gc-sel':''}" style="cursor:pointer;border:2px solid ${sel?'var(--bl)':'var(--br)'};" onclick="toggleGrpSel('${g.id}',event)">
-      <div class="gchd">
+    const _slotKeysForCount = selCat==='outfit_set'
+      ? ['p1_front','p1_back','p1_left_side','p1_right_side','p2_front','p2_back','p2_left_side','p2_right_side']
+      : ['front','back','left_side','right_side'];
+    const _imgCount = _slotKeysForCount.reduce((n,k)=>{const a=slots[k];return n+(Array.isArray(a)?a.length:a?1:0);},0) + (slots.accessories||[]).length;
+    const _firstThumb = (()=>{
+      for(const k of _slotKeysForCount){const a=slots[k];const arr=Array.isArray(a)?a:(a?[a]:[]);if(arr[0])return arr[0];}
+      const acc=(slots.accessories||[])[0];return acc||null;
+    })();
+    const collapsed = !!g.collapsed;
+
+    return`<div class="gc${sel?' gc-sel':''}" style="border:2px solid ${sel?'var(--bl)':'var(--br)'};">
+      <div class="gchd" onclick="toggleGrpSel('${g.id}',event)" style="cursor:pointer">
         <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${sel?'var(--bl)':'var(--br2)'};background:${sel?'var(--bl)':'var(--w)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2 6 5 9 10 3" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}
         </div>
         <div class="gcnum">${gi+1}</div>
         <input class="gcname" value="${safeName}" onclick="event.stopPropagation()" onchange="groups[${gi}].name=this.value"/>
+        <button class="btn bout bxs" onclick="event.stopPropagation();toggleCollapseG(${gi})" style="margin-right:6px" title="${collapsed?'Expand to edit':'Collapse'}">${collapsed?'✏ Edit':'▾ Collapse'}</button>
         <button class="gcdel" onclick="event.stopPropagation();delG(${gi})">✕</button>
       </div>
+      ${collapsed ? `
+      <div class="gcbody" style="padding:8px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="toggleGrpSel('${g.id}',event)">
+        ${_firstThumb?`<img src="data:${_firstThumb.mimeType};base64,${_firstThumb.b64}" style="width:44px;height:54px;object-fit:cover;border-radius:6px;border:1px solid var(--br)"/>`:'<div style="width:44px;height:54px;border:1.5px dashed var(--br);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t3)">📷</div>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--t1)">${safeName}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px">${_imgCount} image${_imgCount!==1?'s':''}${g.replaceModel?' · 🔄 replace model':''}${g.modelName?' · 🔒 '+g.modelName:''}</div>
+        </div>
+        <span style="font-size:11px;color:${sel?'var(--bl)':'var(--t3)'};font-weight:600">${sel?'✓ Will generate':'Not selected'}</span>
+        <button class="btn bout bxs" onclick="event.stopPropagation();toggleCollapseG(${gi})">✏ Edit</button>
+      </div>
+      ` : `
       <div class="gcbody">
         ${(()=>{
           const _slotKeys = selCat==='outfit_set'
@@ -1480,7 +1502,9 @@ function renderGroups(){
           <div style="font-size:11px;font-weight:600;color:${g.replaceModel?'#92400e':'var(--t2)'}">⚠️ Product photo has a model — replace with mine</div>
         </div>
         ${mrow}
+        <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn bpri bsm" onclick="event.stopPropagation();saveCollapseG(${gi})">💾 Save & Collapse</button></div>
       </div>
+      `}
     </div>`;
   }).join('')+'</div>';
   updateGrpToolbar();
@@ -1513,7 +1537,9 @@ function delG(i){const id=groups[i].id;groups.splice(i,1);selGroups.delete(id);r
 function rmGI(gi,ii){groups[gi].images.splice(ii,1);if(!groups[gi].images.length)groups.splice(gi,1);renderGroups();updContinue();}
 function rmGM(gi){groups[gi].modelId=null;groups[gi].modelUrl=null;groups[gi].modelName=null;renderGroups();}
 function setGM(gi,idx){if(idx==='')return;const m=savedModels[parseInt(idx)];if(!m)return;groups[gi].modelId=m.id;groups[gi].modelUrl=m.imageUrl;groups[gi].modelName=m.name;renderGroups();}
-function updContinue(){if(groups.length>0&&selGroups.size===0){grpSelAll();}updateGrpToolbar();if(curView==='gen')updateReview();}
+function updContinue(){updateGrpToolbar();if(curView==='gen')updateReview();}
+function toggleCollapseG(i){if(!groups[i])return;groups[i].collapsed=!groups[i].collapsed;renderGroups();}
+function saveCollapseG(i){if(!groups[i])return;groups[i].collapsed=true;renderGroups();toast(`"${groups[i].name}" saved & collapsed`,'ok');}
 
 // ════ SHOTS ════
 function addPack(name){
