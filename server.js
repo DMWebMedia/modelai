@@ -539,6 +539,88 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   throw new Error('GPT2 timed out');
 }
 
+// Build a SHORT Gemini-style instruction. Long multi-paragraph rules confuse
+// nano-banana and produce drift (tilted poses, swapped garments). Keep it
+// declarative, ≤ ~120 words.
+function buildNanoBananaPrompt(item, {identityFirst, refMatchesAngle}){
+  const desc = item._batchRef?.garmentDescs?.[item.productKey];
+  const F = desc ? parseClaudeFields(desc) : {};
+  const shot = item.shotType||'front';
+
+  // Concise garment line
+  const garment = (F.prompt && F.prompt.length<140) ? F.prompt
+                  : (F.pieces ? F.pieces.replace(/\d\)\s*/g,'').replace(/;\s*/g,', ').slice(0,140) : 'the exact outfit shown in the reference image(s)');
+
+  const accLine = F.acc && F.acc.toLowerCase()!=='none' ? ` Include: ${F.acc.slice(0,140)}.` : '';
+
+  // Background
+  const bg = item.bgOption==='custom' ? (item.bgCustom||'') : (BG[item.bgOption]||'');
+  const bgLine = bg ? ` Background: ${bg}.` : '';
+
+  // Per-shot orientation — short and direct
+  const orientation = {
+    front:'Full-body shot, model facing the camera.',
+    back:'Full-body rear view: the model is turned around with her BACK to the camera, only the back of her head and the back of the dress visible. Do not show her face.',
+    side:'Full-body side profile, model rotated 90 degrees.',
+    threeq:'Three-quarter angle full-body shot.',
+    detail:'Tight close-up on the garment detail.',
+    face:'Head-and-shoulders portrait.',
+    sitting:'Full-body seated pose.',
+    walking:'Full-body walking mid-stride.',
+    dynamic:'Full-body dynamic action pose.',
+    hands:'Close-up of hands and wrists.',
+    flat_lay:'Overhead flat-lay of the product on a clean surface, no model.',
+    mannequin:'Ghost-mannequin product shot, no model.',
+    alone_white:'Product alone on pure white background, no model.',
+    alone_grey:'Product alone on neutral grey background, no model.',
+    alone_natural:'Product alone on natural wood surface, no model.',
+    lookbook:'Editorial lookbook full-body shot.',
+    street_life:'Candid urban street full-body shot.',
+    banner:'Wide cinematic banner composition.',
+    group:'Group composition with all subjects in frame.',
+  }[shot] || 'Full-body shot, model facing the camera.';
+
+  // Identity line — depends on context
+  let identity;
+  if(refMatchesAngle){
+    // Back/side reference image is already correct — just keep it, optionally
+    // restyle the model.
+    const styleHint = item.modelDescText ? ` The model should look like: ${item.modelDescText}.` : '';
+    identity = `Recreate the scene shown in the reference image(s) with the same garment and same back/side pose, on a clean studio background.${styleHint}`;
+  } else if(identityFirst && (shot==='back'||shot==='side')){
+    identity = `Use the FIRST image only for the model's identity (face, hair, skin tone, body type). Do NOT copy its pose — the pose for this output is defined below.`;
+  } else if(identityFirst){
+    identity = `Use the FIRST image for the model's identity (face, hair, skin tone, body). The other image(s) are garment references — copy clothing details exactly, ignore their faces.`;
+  } else if(item.replaceModel && item.modelDescText){
+    identity = `The model: ${item.modelDescText}.`;
+  } else {
+    identity = `A ${GENDER[item.gender||'female']||'professional fashion model'}.`;
+  }
+
+  const userExtra = (item.userPrompt||'').trim();
+  const userLine = userExtra ? ` ${userExtra}.` : '';
+
+  const realism = REAL[item.realism||'ultra'] || REAL.ultra;
+
+  // Garment fidelity rule — short version
+  const fidelity = `Reproduce the garment(s) and accessories from the reference image(s) with exact fidelity — same colors, fabric, prints, neckline, closures, hem, length, hardware, no substitutions, no redesign.`;
+
+  const parts = [
+    orientation,
+    identity,
+    `Wearing ${garment}.`,
+    accLine.trim(),
+    fidelity,
+    bgLine.trim(),
+    userLine.trim(),
+    realism + '.',
+  ].filter(Boolean);
+
+  let p = parts.join(' ').replace(/\s+/g,' ').trim();
+  if(p.length > 900) p = p.slice(0, 897) + '...';
+  return p;
+}
+
 // ── Nano-Banana (Gemini 2.5 Flash Image) ───────────────────────────────────
 // Better at preserving exact garment details from reference images than GPT2.
 // This is the SAME model gemini.google.com uses — it's why their output is
@@ -547,6 +629,15 @@ async function generateGPT2(item, modelAnchorUrls=[]){
 async function generateNanoBanana(item, modelAnchorUrls=[]){
   item.status='uploading';
   const imgs=item.productImages||[];
+
+  // Detect if a back/side reference image is available — if so we ANCHOR on
+  // that (it already shows the correct pose) and SKIP chaining shot 0 as a
+  // misleading front-facing identity reference.
+  const slot = s => (s||'').toLowerCase();
+  const isAcc = i => slot(i.slot).startsWith('accessory');
+  const hasBackRef = item.shotType==='back' && imgs.some(i => !isAcc(i) && slot(i.slot).startsWith('back view'));
+  const hasSideRef = item.shotType==='side' && imgs.some(i => !isAcc(i) && (slot(i.slot).startsWith('left side') || slot(i.slot).startsWith('right side')));
+  const refMatchesAngle = hasBackRef || hasSideRef;
 
   let allUrls;
   let identityFirst = false;
@@ -561,12 +652,17 @@ async function generateNanoBanana(item, modelAnchorUrls=[]){
     const garmentUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
     allUrls = modelIdentityUrl ? [modelIdentityUrl, ...garmentUrls] : garmentUrls;
     identityFirst = !!modelIdentityUrl;
+  } else if(refMatchesAngle){
+    // For back/side shots WHERE the user uploaded a matching-angle reference,
+    // use ONLY the product references (no front-facing identity chain). The
+    // back-ref already shows the model facing away with the correct garment —
+    // that's the entire input Gemini needs. Mirrors how the user gets good
+    // results on gemini.google.com.
+    const productUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
+    allUrls = productUrls;
+    identityFirst = false;
   } else {
     const productUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-    // Identity anchor (shot 0 result for chained shots, or saved model photo)
-    // MUST come first — nano-banana strongly attaches identity to the FIRST
-    // image. Putting the back-view product reference first causes it to copy
-    // the original product model's face/hair instead of the chained identity.
     if(modelAnchorUrls.length){
       allUrls = [...modelAnchorUrls, ...productUrls];
       identityFirst = true;
@@ -575,24 +671,18 @@ async function generateNanoBanana(item, modelAnchorUrls=[]){
     }
   }
 
-  item.status='generating';
-  console.log('[NB] shot='+item.shotType+' identityFirst='+identityFirst+' totalRefs='+allUrls.length);
+  // Cap reference count — Gemini Flash Image performs noticeably worse with
+  // 4+ refs (drifts toward an averaged composite). 3 is the sweet spot.
+  if(allUrls.length > 3) allUrls = allUrls.slice(0, 3);
 
-  // Nano-banana is much less filter-aggressive but we still sanitize for safety.
-  // When we have an identity anchor, prepend an explicit rule so the model
-  // borrows ONLY garment details from the product references and identity
-  // (face, hair, skin tone, body) from the FIRST image.
-  let prompt = item.prompt||'';
-  if(identityFirst){
-    const isBack = item.shotType==='back';
-    const isSide = item.shotType==='side';
-    const orientationCarveOut = (isBack||isSide)
-      ? ` CRITICAL: the FIRST image is a FRONT-FACING photo, but the camera angle for THIS output is described later in the prompt (${isBack?'rear/back view, model facing AWAY from camera':'strict side profile, model rotated 90°'}). Use the FIRST image ONLY to copy face/hair/skin/body identity — do NOT copy its pose, orientation, or camera direction.`
-      : ' Match the pose/orientation from the prompt below, not from any reference image.';
-    const headRule = `IDENTITY LOCK: the FIRST reference image defines the model's face shape, hair color, hair length, hair style, skin tone, body proportions and overall identity — copy these identity attributes exactly.${orientationCarveOut} The OTHER reference images are GARMENT references only — copy the clothing, fabric, colors, prints, neckline, closures, hem, length, hardware and every visible design detail exactly, but DO NOT copy any face, hair, model identity, pose or background from them. `;
-    prompt = headRule + prompt;
-  }
-  prompt = sanitizeForGPT2(prompt);
+  item.status='generating';
+  console.log('[NB] shot='+item.shotType+' identityFirst='+identityFirst+' refMatchesAngle='+refMatchesAngle+' totalRefs='+allUrls.length);
+
+  // Gemini Flash Image works best with SHORT, declarative instructions — NOT
+  // the verbose multi-rule prompt that GPT Image 2 likes. We build a tight
+  // Gemini-style prompt here using the Claude vision data already on the item.
+  const prompt = sanitizeForGPT2(buildNanoBananaPrompt(item, {identityFirst, refMatchesAngle}));
+  console.log('[NB prompt]', prompt.slice(0,240));
 
   const sub = await falQ('/fal-ai/nano-banana/edit',{
     prompt,
