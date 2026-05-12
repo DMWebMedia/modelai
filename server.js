@@ -587,12 +587,18 @@ function buildNanoBananaPrompt(item, {identityFirst, refMatchesAngle}){
     // restyle the model.
     const styleHint = item.modelDescText ? ` The model should look like: ${item.modelDescText}.` : '';
     identity = `Recreate the scene shown in the reference image(s) with the same garment and same back/side pose, on a clean studio background.${styleHint}`;
+  } else if(identityFirst && item.replaceModel && (shot==='back'||shot==='side')){
+    identity = `REPLACE THE MODEL. The model in the garment reference image(s) must NOT appear in the output. Use the FIRST image (the new model reference) as the new model's face, hair, skin tone and body — this is a DIFFERENT PERSON than the one in the garment references. IGNORE the clothing on the FIRST image. Do NOT copy the FIRST image's pose — the pose is defined below.`;
+  } else if(identityFirst && item.replaceModel){
+    identity = `REPLACE THE MODEL. The model in the garment reference image(s) must NOT appear in the output. Use the FIRST image (the new model reference) for the new model's face, hair, skin tone, body — this is a DIFFERENT PERSON than the one in the garment references. IGNORE the clothing on the FIRST image — only the OTHER image(s) define what the model wears.`;
   } else if(identityFirst && (shot==='back'||shot==='side')){
     identity = `Use the FIRST image only for the model's identity (face, hair, skin tone, body type). IGNORE whatever clothing or accessories that model is wearing in the FIRST image — they do not belong in the output. Do NOT copy its pose — the pose for this output is defined below.`;
   } else if(identityFirst){
     identity = `Use the FIRST image for the model's identity (face, hair, skin tone, body). IGNORE whatever clothing or accessories the model is wearing in the FIRST image — only the OTHER image(s) define what the model wears in the output. Copy clothing details from the OTHER image(s) exactly, ignore their faces.`;
   } else if(item.replaceModel && item.modelDescText){
-    identity = `The model: ${item.modelDescText}.`;
+    identity = `REPLACE THE MODEL. The model shown wearing the garment in the reference image(s) must NOT appear in the output — replace her with a DIFFERENT person: ${item.modelDescText}. Keep the garment exactly as shown in the references but on this new model.`;
+  } else if(item.replaceModel){
+    identity = `REPLACE THE MODEL. The model shown wearing the garment in the reference image(s) must NOT appear in the output — replace her with a completely DIFFERENT professional ${GENDER[item.gender||'female']||'fashion model'} (different face, different hair, different look). Keep the garment exactly as shown in the references but on this new different model.`;
   } else {
     identity = `A ${GENDER[item.gender||'female']||'professional fashion model'}.`;
   }
