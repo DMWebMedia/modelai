@@ -140,13 +140,17 @@ async function getGarmentDescription(images){
   if(garmentCache.has(cacheKey)){console.log('[vision] cache hit');return garmentCache.get(cacheKey);}
 
   const positional=['front view','back view','left side view','right side view','detail view','accessory'];
-  const analyses=[];
-  for(let i=0;i<images.length;i++){
-    const img=images[i];
+  // Analyze ALL images in PARALLEL — was sequential before (huge speedup with multiple images)
+  const t0=Date.now();
+  const settled=await Promise.all(images.map((img,i)=>{
     const label=img.slot||positional[i]||`angle ${i+1}`;
-    const desc=await analyzeOneImage(img.base64,img.mimeType,label);
-    if(desc){analyses.push({label,desc});console.log(`[vision] [${label}]:`,desc.slice(0,80)+'...');}
-  }
+    return analyzeOneImage(img.base64,img.mimeType,label)
+      .then(desc=>desc?{label,desc}:null)
+      .catch(e=>{console.warn('[vision]',label,'failed:',e.message);return null;});
+  }));
+  const analyses=settled.filter(Boolean);
+  console.log('[vision] analyzed',analyses.length,'images in parallel in',Math.round((Date.now()-t0)/1000)+'s');
+  analyses.forEach(a=>console.log(`[vision] [${a.label}]:`,a.desc.slice(0,80)+'...'));
   if(!analyses.length) return null;
   if(analyses.length===1) return analyses[0].desc;
 
