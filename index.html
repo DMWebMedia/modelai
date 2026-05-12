@@ -1620,11 +1620,7 @@ async function startGen(){
       name:g.name,
       images:getProductImagesForGroup(g),  // uses slots if set, else falls back to pool images
       prompt:promptMode==='i'?(document.getElementById('pp'+i)?.value?.trim()||gp):gp,
-      // When user has explicitly enabled "replace model" for this group, DO NOT
-      // pass any saved-model anchor (per-group or global) — otherwise the
-      // server prefers the anchor and ignores the replaceModel intent, which
-      // makes the original product model leak into the output.
-      savedModelUrl: g.replaceModel ? null : (g.modelUrl||activeModel?.imageUrl||null),
+      savedModelUrl:g.modelUrl||activeModel?.imageUrl||null,
       componentNames:selCat==='outfit'?activeGroups.map(gg=>gg.name):[],
       replaceModel:g.replaceModel||false,
     }));
