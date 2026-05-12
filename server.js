@@ -140,17 +140,13 @@ async function getGarmentDescription(images){
   if(garmentCache.has(cacheKey)){console.log('[vision] cache hit');return garmentCache.get(cacheKey);}
 
   const positional=['front view','back view','left side view','right side view','detail view','accessory'];
-  // Analyze ALL images in PARALLEL — was sequential before (huge speedup with multiple images)
-  const t0=Date.now();
-  const settled=await Promise.all(images.map((img,i)=>{
+  const analyses=[];
+  for(let i=0;i<images.length;i++){
+    const img=images[i];
     const label=img.slot||positional[i]||`angle ${i+1}`;
-    return analyzeOneImage(img.base64,img.mimeType,label)
-      .then(desc=>desc?{label,desc}:null)
-      .catch(e=>{console.warn('[vision]',label,'failed:',e.message);return null;});
-  }));
-  const analyses=settled.filter(Boolean);
-  console.log('[vision] analyzed',analyses.length,'images in parallel in',Math.round((Date.now()-t0)/1000)+'s');
-  analyses.forEach(a=>console.log(`[vision] [${a.label}]:`,a.desc.slice(0,80)+'...'));
+    const desc=await analyzeOneImage(img.base64,img.mimeType,label);
+    if(desc){analyses.push({label,desc});console.log(`[vision] [${label}]:`,desc.slice(0,80)+'...');}
+  }
   if(!analyses.length) return null;
   if(analyses.length===1) return analyses[0].desc;
 
@@ -521,123 +517,7 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   throw new Error('GPT2 timed out');
 }
 
-// ── Nano Banana 2 generator (Standard tier — fast, garment-faithful) ─────
-async function generateNB2(item, modelAnchorUrls=[]){
-  item.status='uploading';
-  const imgs=item.productImages||[];
-  const productUrls=await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-  // For replaceModel: model anchor first; otherwise garment refs first
-  const allUrls=item.replaceModel?[...modelAnchorUrls,...productUrls]:[...productUrls,...modelAnchorUrls];
-  item.status='generating';
-  console.log('[NB2] shot='+item.shotType+' refs='+allUrls.length);
-  const sub=await falQ('/fal-ai/nano-banana-2/edit',{prompt:item.prompt,image_urls:allUrls,num_images:1,aspect_ratio:toAR(item.aspectRatio||'3:4'),output_format:'jpeg',safety_tolerance:'4',resolution:item.resolution||'1K'});
-  if(!sub.request_id) throw new Error('NB2 submit failed: '+(sub.detail||sub.error||JSON.stringify(sub).slice(0,200)));
-  item.requestId=sub.request_id;item.statusUrl=sub.status_url;item.responseUrl=sub.response_url;
-  for(let i=0;i<150;i++){
-    await new Promise(r=>setTimeout(r,3000));
-    const sp=item.statusUrl?item.statusUrl.replace('https://queue.fal.run',''):`/fal-ai/nano-banana-2/edit/requests/${item.requestId}/status`;
-    const st=await falGet(sp);
-    if(st.status==='COMPLETED'){
-      const rp=item.responseUrl?item.responseUrl.replace('https://queue.fal.run',''):`/fal-ai/nano-banana-2/edit/requests/${item.requestId}`;
-      const res=await falGet(rp);
-      const url=res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url||res?.data?.images?.[0]?.url;
-      if(!url) throw new Error('NB2 no image URL');
-      return url;
-    }
-    if(st.status==='FAILED') throw new Error(st.error||'NB2 failed');
-  }
-  throw new Error('NB2 timed out');
-}
-
-// ── Claude judge: compare candidates against product reference ────────────
-async function judgeOutputs(productImages, candidates, expectedAnchor){
-  // candidates: [{name, url}]
-  try{
-    const productB64s = productImages.slice(0,3).map(i=>({type:'image',source:{type:'base64',media_type:i.mimeType||'image/jpeg',data:i.base64}}));
-    const candImages = await Promise.all(candidates.map(async c=>{
-      const r=await fetch(c.url);
-      const buf=Buffer.from(await r.arrayBuffer());
-      return {type:'image',source:{type:'base64',media_type:'image/jpeg',data:buf.toString('base64')}};
-    }));
-    const content=[
-      {type:'text',text:`Reference product images first (the actual product), then candidate generations labeled A, B, etc.\n\nProduct anchor: ${expectedAnchor||'(none)'}\n\nFor each candidate, score 0-10 on:\n- garment_fidelity (color, design, length, silhouette match product)\n- accessory_accuracy (every accessory present, correct color/placement)\n- model_quality (realistic person, clean anatomy)\n- overall_quality\n\nOutput ONLY valid JSON: {"winner":"A"|"B"|...,"scores":{"A":{"garment":N,"accessories":N,"model":N,"overall":N},...},"reason":"<one sentence>"}`},
-      ...productB64s,
-      ...candidates.flatMap((c,i)=>[{type:'text',text:`Candidate ${String.fromCharCode(65+i)} (${c.name}):`}, candImages[i]]),
-    ];
-    const resp=await claudeMsg([{role:'user',content}],500);
-    const m=resp?.match(/\{[\s\S]*\}/);
-    if(m){
-      const parsed=JSON.parse(m[0]);
-      console.log('[judge]',JSON.stringify(parsed).slice(0,200));
-      return parsed;
-    }
-  }catch(e){console.warn('[judge] failed:',e.message);}
-  return {winner:'A',scores:{},reason:'judge unavailable, defaulted to first'};
-}
-
-// ── Pro tier: NB2 + GPT2 in parallel, Claude judge picks the winner ───────
-// Both engines preserve garment from reference images well. NB2 tends to win
-// on garment fidelity; GPT2 tends to win on complex compositions/scenes/
-// accessories. Running both and judging gives us the strengths of each.
-async function generateProTier(item, modelAnchorUrls=[], batch=null){
-  const nb2Item = {...item};
-  const gpt2Item = {...item};
-  const nb2Promise = generateNB2(nb2Item, modelAnchorUrls).catch(e=>({error:e.message,engine:'nb2'}));
-  const gpt2Promise = generateGPT2(gpt2Item, modelAnchorUrls).catch(e=>({error:e.message,engine:'gpt2'}));
-  const [nb2Result, gpt2Result] = await Promise.all([nb2Promise, gpt2Promise]);
-
-  const candidates=[];
-  if(typeof nb2Result === 'string') candidates.push({name:'nb2', url:nb2Result});
-  if(typeof gpt2Result === 'string') candidates.push({name:'gpt2', url:gpt2Result});
-
-  if(!candidates.length){
-    const errs=[nb2Result?.error, gpt2Result?.error].filter(Boolean).join('; ');
-    throw new Error('Pro: both engines failed — '+errs);
-  }
-  if(candidates.length===1){
-    console.log('[pro] only one engine succeeded:',candidates[0].name);
-    return candidates[0].url;
-  }
-
-  const F=parseClaudeFields(batch?.garmentDescs?.[item.productKey]||'');
-  const judgment = await judgeOutputs(item.productImages, candidates, F.prompt);
-  const winnerLabel = judgment.winner || 'A';
-  const idx = winnerLabel.charCodeAt(0)-65;
-  const winner = candidates[idx] || candidates[0];
-  console.log('[pro] judge picked',winner.name,'reason:',(judgment.reason||'').slice(0,100));
-  return winner.url;
-}
-
-// ── Polish pass: GPT2 high-quality refinement on an existing image ────────
-// Lightweight edit pass that improves resolution/detail without redesigning.
-async function polishImage(imageUrl, item){
-  try{
-    const prompt=sanitizeForGPT2(`Enhance this fashion photograph: sharpen face and eyes, refine skin texture, sharpen fabric and garment detail, clean up any anatomical inconsistencies (hands, fingers, proportions), preserve EVERYTHING else exactly — same model, same clothing, same accessories, same pose, same background. Output: hyperrealistic professional editorial photography quality.`);
-    const sub=await falQ('/openai/gpt-image-2/edit',{prompt,image_urls:[imageUrl],quality:'high',image_size:toGPT2Size(item.aspectRatio||'3:4'),content_moderation:'permissive'});
-    if(!sub.request_id) return imageUrl;
-    for(let i=0;i<80;i++){
-      await new Promise(r=>setTimeout(r,3000));
-      const sp=sub.status_url?sub.status_url.replace('https://queue.fal.run',''):`/openai/gpt-image-2/edit/requests/${sub.request_id}/status`;
-      const st=await falGet(sp);
-      if(st.status==='COMPLETED'){
-        const rp=sub.response_url?sub.response_url.replace('https://queue.fal.run',''):`/openai/gpt-image-2/edit/requests/${sub.request_id}`;
-        const res=await falGet(rp);
-        const url=res?.images?.[0]?.url||res?.output?.images?.[0]?.url||res?.image?.url;
-        if(url) return url;
-        return imageUrl;
-      }
-      if(st.status==='FAILED') return imageUrl;
-    }
-  }catch(e){console.warn('[polish] failed:',e.message);}
-  return imageUrl;
-}
-
-// ── Premium tier: Pro winner + GPT2 polish refinement pass ────────────────
-async function generatePremiumTier(item, modelAnchorUrls=[], batch=null){
-  const winner = await generateProTier(item, modelAnchorUrls, batch);
-  console.log('[premium] polishing winner...');
-  return await polishImage(winner, item);
-}
+// NB2 / Nano-Banana removed — GPT Image 2 is the only generation engine.
 
 // ── Per-shot image filter ──────────────────────────────────────────────────
 // CRITICAL: only send images that belong to the shot's angle.
@@ -817,20 +697,8 @@ async function processItem(batchId, itemId){
       // Garment images stay so GPT2 can visually reproduce the exact clothing.
     }
 
-    // STEP 3: Generate — route by quality tier
-    //   low    → Standard (NB2 alone): fast, garment-faithful, cheap
-    //   medium → Pro (NB2 + GPT2 parallel, Claude judge picks winner)
-    //   high   → Premium (Pro winner + GPT2 polish refinement pass)
-    const tier = (item.gptQuality||'medium').toLowerCase();
-    let url;
-    if(tier==='low'){
-      try{ url = await generateNB2(item, modelAnchorUrls); }
-      catch(e){ console.warn('[std] NB2 failed:',e.message,'— falling back to GPT2'); url = await generateGPT2(item, modelAnchorUrls); }
-    } else if(tier==='high'){
-      url = await generatePremiumTier(item, modelAnchorUrls, batch);
-    } else {
-      url = await generateProTier(item, modelAnchorUrls, batch);
-    }
+    // STEP 3: Generate (always GPT Image 2)
+    const url = await generateGPT2(item, modelAnchorUrls);
 
     item.resultUrl=url; item.status='done';
     batch.completedCount=(batch.completedCount||0)+1;
