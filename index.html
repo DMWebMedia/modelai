@@ -1083,16 +1083,18 @@ select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='ht
   <div class="macts"><button class="btn bout" onclick="closeM('m-savetemplate')">Cancel</button><button class="btn bpri" onclick="confirmSaveTemplate()">Save Template</button></div>
 </div></div>
 
-<div class="mbg" id="m-edititem"><div class="modal">
+<div class="mbg" id="m-edititem"><div class="modal" style="max-width:680px">
   <div class="mt">Edit Image</div><div class="ms" id="ei-name">—</div>
   <input type="hidden" id="ei-id"/>
+  <div id="ei-source-wrap" style="margin-bottom:10px;text-align:center;background:#0b0f17;border-radius:var(--rl);padding:10px"><img id="ei-source-img" style="max-height:280px;max-width:100%;border-radius:8px;object-fit:contain" alt="current image"/></div>
   <div class="tog" style="margin-bottom:8px"><button class="tgb on" id="ei-mode-edit" onclick="setEiMode('edit')">🎨 Edit current image (prompt + optional image)</button><button class="tgb" id="ei-mode-regen" onclick="setEiMode('regen')">🔁 Full regenerate from scratch</button></div>
-  <div class="fld"><label class="lbl" id="ei-prompt-lbl">Edit instruction — what to change (model, face, pose, background stay the same)</label><textarea id="ei-prompt" rows="4" placeholder="E.g. change the dress collar to a V-neck, keep everything else the same"></textarea></div>
-  <div class="fld" id="ei-extra-wrap"><label class="lbl">Optional reference image — drop or click (e.g. the exact fabric, shoes, or accessory the AI got wrong)</label>
+  <div class="fld"><label class="lbl" id="ei-prompt-lbl">Tell me what to change in plain words — Claude rewrites it into a precise edit instruction</label><textarea id="ei-prompt" rows="3" placeholder="E.g. her hair should be longer and brown, dress should be strapless without the choker strap, swap the bag for the one in the image i uploaded"></textarea></div>
+  <div class="fld" id="ei-extra-wrap"><label class="lbl">Optional reference image — drop or click (e.g. the exact fabric, shoes, accessory, or model face to use)</label>
     <div id="ei-drop" style="border:2px dashed var(--br);border-radius:var(--rl);padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--t2)">📎 Click or drop an image here</div>
     <input type="file" id="ei-file" accept="image/*" style="display:none"/>
     <div id="ei-prev" style="display:none;margin-top:8px;text-align:center"><img id="ei-prev-img" style="max-height:120px;border-radius:8px"/><button class="btn bout bxs" onclick="clearEiImage()" style="margin-left:8px">✕ Remove</button></div>
   </div>
+  <div class="fld"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--t2)"><input type="checkbox" id="ei-use-claude" checked/> Let Claude clarify my instruction (recommended — fixes vague asks)</label></div>
   <div class="m2c" id="ei-regen-fields" style="display:none">
     <div class="fld"><label class="lbl">Background</label><select id="ei-bg"><option value="ai">AI</option><option value="white">White</option><option value="grey">Grey</option><option value="lightgrey">Lt.Grey</option><option value="black">Black</option><option value="outdoor">Outdoor</option><option value="street">Street</option><option value="luxury">Luxury</option><option value="beach">Beach</option><option value="studio">Studio</option></select></div>
     <div class="fld"><label class="lbl">Quality</label><select id="ei-res"><option value="1K">1K</option><option value="2K">2K</option></select></div>
@@ -1763,6 +1765,12 @@ function openEditItem(id,name){
   document.getElementById('ei-prompt').value='';
   clearEiImage();
   setEiMode('edit');
+  const it = allItems.find(x=>x.id===id);
+  const src = it?.resultUrl || '';
+  const imgEl = document.getElementById('ei-source-img');
+  const wrap = document.getElementById('ei-source-wrap');
+  if(imgEl && src){ imgEl.src = src; wrap.style.display='block'; }
+  else if(wrap){ wrap.style.display='none'; }
   openM('m-edititem');
 }
 function setEiMode(mode){
@@ -1815,16 +1823,18 @@ async function doEditWithImage(){
   const id=document.getElementById('ei-id').value;
   const prompt=document.getElementById('ei-prompt').value.trim();
   const engine=document.getElementById('ei-engine').value;
+  const useClaude=document.getElementById('ei-use-claude')?.checked!==false;
   if(!prompt){toast('Enter an edit instruction','err');return;}
   closeM('m-edititem');
   const card=document.getElementById('rc-'+id);
   if(card){const img=card.querySelector('img'); if(img) img.style.opacity='0.4';}
-  toast('Editing… ~30-60s','');
+  toast(useClaude?'Claude is clarifying your edit…':'Editing… ~30-60s','');
   try{
-    const r=await fetch(`/api/item/${batchId}/${id}/edit-image`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,extraImageBase64:eiExtraB64,extraImageMime:eiExtraMime,engine})});
+    const r=await fetch(`/api/item/${batchId}/${id}/edit-image`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Key ${falKey}`},body:JSON.stringify({prompt,extraImageBase64:eiExtraB64,extraImageMime:eiExtraMime,engine,useClaude})});
     const d=await r.json(); if(d.error) throw new Error(d.error);
-    if(card){const img=card.querySelector('img'); if(img){img.src=d.url;img.style.opacity='1';}}
+    if(card){const img=card.querySelector('img'); if(img){img.src=d.url+'?t='+Date.now();img.style.opacity='1';}}
     const it=allItems.find(x=>x.id===id); if(it) it.resultUrl=d.url;
+    if(d.refinedPrompt) console.log('[Claude refined edit]', d.refinedPrompt);
     toast('Edited ✓','ok');
   }catch(e){
     toast(e.message,'err');

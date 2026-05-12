@@ -450,21 +450,27 @@ async function generateGPT2(item, modelAnchorUrls=[]){
     allUrls = modelIdentityUrl ? [modelIdentityUrl, ...garmentUrls] : garmentUrls;
     console.log('[GPT2] replaceModel: identity='+(modelIdentityUrl?'yes':'none')+' garmentRefs='+garmentUrls.length);
   } else {
-    // Normal: garment refs first, model face anchor last for shot consistency
+    // Chained shots / saved-model: identity anchor FIRST, then garment refs.
+    // Putting the back-view product image first causes the model to inherit
+    // the original product photo's face/hair (wrong person across shots).
     const productUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-    allUrls = [...productUrls, ...modelAnchorUrls];
+    allUrls = modelAnchorUrls.length ? [...modelAnchorUrls, ...productUrls] : productUrls;
   }
 
   item.status='generating';
   console.log('[GPT2] shot='+item.shotType+' totalRefs='+allUrls.length);
 
+  const hasIdentityAnchor = (item.replaceModel || modelAnchorUrls.length) ? true : false;
+  const identityHead = hasIdentityAnchor
+    ? `IDENTITY LOCK: the FIRST reference image defines the model's face, hair, skin tone and body — copy them exactly. The other reference images are GARMENT references only — copy the clothing details exactly but DO NOT copy the face, hair, identity or pose from them. `
+    : '';
   const fallbackPrompt = item.replaceModel
-    ? sanitizeForGPT2(`${item.modelDescText||GENDER[item.gender||'female']||GENDER.female} wearing the exact clothes from the product reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`)
-    : `${GENDER[item.gender||'female']||GENDER.female} wearing the clothing shown in the reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`;
+    ? sanitizeForGPT2(`${identityHead}${item.modelDescText||GENDER[item.gender||'female']||GENDER.female} wearing the exact clothes from the product reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`)
+    : sanitizeForGPT2(`${identityHead}${GENDER[item.gender||'female']||GENDER.female} wearing the clothing shown in the reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`);
 
   const prompts=[
-    sanitizeForGPT2(item.prompt),
-    sanitizeForGPT2(item.prompt).slice(0,280).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
+    sanitizeForGPT2(identityHead + (item.prompt||'')),
+    sanitizeForGPT2(identityHead + (item.prompt||'')).slice(0,420).replace(/tight|fitted|slim|snug|form.fitting|body.hugging|figure/gi,'elegant'),
     fallbackPrompt,
   ];
 
@@ -527,6 +533,7 @@ async function generateNanoBanana(item, modelAnchorUrls=[]){
   const imgs=item.productImages||[];
 
   let allUrls;
+  let identityFirst = false;
   if(item.replaceModel){
     let modelIdentityUrl = modelAnchorUrls[0] || null;
     if(!modelIdentityUrl && !item._skipBaseModelGen){
@@ -537,16 +544,34 @@ async function generateNanoBanana(item, modelAnchorUrls=[]){
     }
     const garmentUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
     allUrls = modelIdentityUrl ? [modelIdentityUrl, ...garmentUrls] : garmentUrls;
+    identityFirst = !!modelIdentityUrl;
   } else {
     const productUrls = await Promise.all(imgs.map(i=>uploadToFal(i.base64,i.mimeType)));
-    allUrls = [...productUrls, ...modelAnchorUrls];
+    // Identity anchor (shot 0 result for chained shots, or saved model photo)
+    // MUST come first — nano-banana strongly attaches identity to the FIRST
+    // image. Putting the back-view product reference first causes it to copy
+    // the original product model's face/hair instead of the chained identity.
+    if(modelAnchorUrls.length){
+      allUrls = [...modelAnchorUrls, ...productUrls];
+      identityFirst = true;
+    } else {
+      allUrls = productUrls;
+    }
   }
 
   item.status='generating';
-  console.log('[NB] shot='+item.shotType+' totalRefs='+allUrls.length);
+  console.log('[NB] shot='+item.shotType+' identityFirst='+identityFirst+' totalRefs='+allUrls.length);
 
-  // Nano-banana is much less filter-aggressive but we still sanitize for safety
-  const prompt = sanitizeForGPT2(item.prompt||'');
+  // Nano-banana is much less filter-aggressive but we still sanitize for safety.
+  // When we have an identity anchor, prepend an explicit rule so the model
+  // borrows ONLY garment details from the product references and identity
+  // (face, hair, skin tone, body) from the FIRST image.
+  let prompt = item.prompt||'';
+  if(identityFirst){
+    const headRule = `IDENTITY LOCK: the FIRST reference image defines the model's face, hair color, hair length, hair style, skin tone, body proportions and overall identity — copy them exactly. The OTHER reference images are GARMENT references only — copy the clothing, fabric, colors, prints, neckline, closures, hem, length, hardware and every visible design detail exactly, but DO NOT copy any face, hair, model identity, pose or background from them. `;
+    prompt = headRule + prompt;
+  }
+  prompt = sanitizeForGPT2(prompt);
 
   const sub = await falQ('/fal-ai/nano-banana/edit',{
     prompt,
@@ -896,20 +921,83 @@ app.post('/api/batch/:id/edit',async(req,res)=>{
 // Caller supplies: sourceUrl (the generated image to edit) OR sourceBase64,
 // prompt (the edit instruction), and optionally extraImageBase64 to use as
 // an additional reference (e.g. "make the shoes look like THIS image").
-async function runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio='3:4', engine='nanobanana'}){
+// Use Claude to rewrite a vague/messy user edit ask into a precise, actionable
+// instruction. Sees the source image AND the optional reference image so it
+// can describe exactly what to change.
+async function refineEditPromptWithClaude({userPrompt, sourceBase64, sourceMime, extraBase64, extraMime}){
+  if(!userPrompt) return userPrompt;
+  try{
+    const content=[];
+    content.push({type:'text', text:`You are an image-edit prompt engineer. The user wants to edit an image. You will see the SOURCE image first, then optionally a REFERENCE image, then the user's raw instruction (often vague, broken English, or short). Rewrite it into ONE precise edit instruction for an image-to-image model (Gemini 2.5 Flash Image / GPT Image 2).
+
+Rules:
+- Resolve every pronoun ("it", "the thing") to concrete nouns ("the dress's neckline", "the brown handbag", "the model's face").
+- Keep what the user already likes unchanged — never invent new changes.
+- If a REFERENCE image is provided, name what to copy from it ("copy the face/hair from the reference image" or "copy the bag style from the reference image").
+- If the user is asking to change the MODEL/FACE/HAIR/IDENTITY, say so clearly and explicitly — "replace the model's face and hair with the reference image" — never soften it.
+- Be specific about colors, shapes, lengths, positions.
+- Add: "preserve the garment, pose, lighting, framing and background unless the instruction overrides them".
+- Output ONLY the rewritten instruction, no preamble, no quotes, ≤ 220 words.`});
+    if(sourceBase64) content.push({type:'image', source:{type:'base64', media_type:sourceMime||'image/jpeg', data:sourceBase64}});
+    if(extraBase64) content.push({type:'image', source:{type:'base64', media_type:extraMime||'image/jpeg', data:extraBase64}});
+    content.push({type:'text', text:`USER RAW INSTRUCTION:\n${userPrompt}`});
+    const out=await claudeMsg([{role:'user', content}], 500);
+    return (out||'').trim() || userPrompt;
+  }catch(e){
+    console.warn('[claude refine] failed:',e.message);
+    return userPrompt;
+  }
+}
+
+// Download a URL into base64 so Claude can see it.
+async function urlToBase64(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok) return null;
+    const buf=Buffer.from(await r.arrayBuffer());
+    return buf.toString('base64');
+  }catch{return null;}
+}
+
+async function runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio='3:4', engine='nanobanana', useClaude=true}){
   if(!prompt||!prompt.trim()) throw new Error('Prompt required');
   if(!sourceUrl && !sourceBase64) throw new Error('Source image required');
+
+  // Run Claude refinement BEFORE upload so the model sees the raw user image.
+  let refinedPrompt = prompt;
+  if(useClaude){
+    let srcB64 = sourceBase64;
+    if(!srcB64 && sourceUrl) srcB64 = await urlToBase64(sourceUrl);
+    refinedPrompt = await refineEditPromptWithClaude({
+      userPrompt: prompt,
+      sourceBase64: srcB64,
+      sourceMime: sourceMime||'image/jpeg',
+      extraBase64: extraImageBase64,
+      extraMime: extraImageMime,
+    });
+    console.log('[edit refined]', refinedPrompt.slice(0,160));
+  }
 
   const srcUrl = sourceUrl || await uploadToFal(sourceBase64, sourceMime||'image/jpeg');
   const extraUrl = extraImageUrl || (extraImageBase64 ? await uploadToFal(extraImageBase64, extraImageMime||'image/jpeg') : null);
 
-  // Source image FIRST (anchor — preserve everything we don't explicitly change).
-  // Extra image SECOND (modifier — what to bring in).
+  // Source image FIRST. Extra image SECOND when supplied.
   const imageUrls = extraUrl ? [srcUrl, extraUrl] : [srcUrl];
 
-  const fullPrompt = (extraUrl
-    ? `Edit the FIRST image. Use the SECOND image as a reference for what to change. PRESERVE everything in the first image (model, face, pose, lighting, composition, background, framing) EXCEPT what the instruction below explicitly modifies. Match identity, body proportions and skin tone of the first image exactly.\n\nINSTRUCTION: ${prompt.trim()}`
-    : `Edit this image. PRESERVE the model, face, pose, lighting, composition, background and framing exactly. Only change what the instruction below says.\n\nINSTRUCTION: ${prompt.trim()}`);
+  const instruction = refinedPrompt.trim();
+  const wantsModelChange = /\b(change|swap|replace|different|new|another|use)\b.*\b(model|face|person|girl|man|woman|hair|skin|ethnicity|race)\b/i.test(instruction)
+    || /\b(model|face|person|hair|skin)\b.*\b(change|swap|replace|different|new)\b/i.test(instruction);
+
+  let fullPrompt;
+  if(extraUrl){
+    fullPrompt = wantsModelChange
+      ? `Apply this instruction to the FIRST image. Use the SECOND image as the visual reference for whatever the instruction asks to bring in (face/hair if the instruction is about the model, or the garment/accessory if it's about clothing). Keep the pose, framing, lighting and background of the FIRST image. INSTRUCTION: ${instruction}`
+      : `Edit the FIRST image using the SECOND image as the visual reference for the change. Keep the FIRST image's model identity (face, hair, skin), pose, framing, lighting and background EXCEPT where the instruction explicitly overrides. INSTRUCTION: ${instruction}`;
+  } else {
+    fullPrompt = wantsModelChange
+      ? `Edit this image. The instruction asks to change the model/identity — DO that change exactly as stated. Keep the garment, pose, framing, lighting and background. INSTRUCTION: ${instruction}`
+      : `Edit this image. Keep the model identity (face, hair, skin), pose, framing, lighting and background EXCEPT where the instruction explicitly overrides. INSTRUCTION: ${instruction}`;
+  }
 
   const useGPT2 = engine==='gpt2'||engine==='gpt-image-2';
   const endpoint = useGPT2 ? '/openai/gpt-image-2/edit' : '/fal-ai/nano-banana/edit';
@@ -929,7 +1017,7 @@ async function runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase
       const result=await falGet(rp);
       const url=result?.images?.[0]?.url||result?.output?.images?.[0]?.url||result?.image?.url;
       if(!url) throw new Error('Edit returned no image');
-      return url;
+      return {url, refinedPrompt};
     }
     if(st.status==='FAILED') throw new Error(st.error||st.detail||'Edit failed');
   }
@@ -941,25 +1029,26 @@ app.post('/api/item/:bid/:iid/edit-image',async(req,res)=>{
   const item=jobs[req.params.bid]?.items.find(i=>i.id===req.params.iid);
   if(!item?.resultUrl) return res.status(400).json({error:'No image to edit yet'});
   try{
-    const{prompt, extraImageBase64, extraImageMime, engine}=req.body;
-    const url = await runImageEdit({
+    const{prompt, extraImageBase64, extraImageMime, engine, useClaude}=req.body;
+    const out = await runImageEdit({
       sourceUrl: item.resultUrl,
       extraImageBase64, extraImageMime,
       prompt,
       aspectRatio: item.aspectRatio||'3:4',
       engine: engine||item.aiModel||'nanobanana',
+      useClaude: useClaude!==false,
     });
-    item.resultUrl = url;
-    res.json({url});
+    item.resultUrl = out.url;
+    res.json(out);
   }catch(e){ res.status(500).json({error:e.message}); }
 });
 
 // Standalone edit endpoint (works on any URL, not just batch items)
 app.post('/api/image/edit',async(req,res)=>{
   try{
-    const{sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio, engine}=req.body;
-    const url = await runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio:aspectRatio||'3:4', engine:engine||'nanobanana'});
-    res.json({url});
+    const{sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio, engine, useClaude}=req.body;
+    const out = await runImageEdit({sourceUrl, sourceBase64, sourceMime, extraImageBase64, extraImageMime, extraImageUrl, prompt, aspectRatio:aspectRatio||'3:4', engine:engine||'nanobanana', useClaude:useClaude!==false});
+    res.json(out);
   }catch(e){ res.status(500).json({error:e.message}); }
 });
 
