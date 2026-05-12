@@ -289,7 +289,10 @@ function buildPromptWithGarment(item, garmentDesc){
   const shotStr=SHOT[shotKey]||SHOT.front;
 
   const shotAngleHint={
-    front:'Front-facing',back:'Rear/back view',side:'Side-profile',threeq:'Three-quarter angle',
+    front:'Front-facing full-body shot, model facing the camera directly',
+    back:'STRICT REAR / BACK VIEW — model is rotated 180°, facing AWAY from the camera, back of head and back of garment fully visible, the face is NOT visible at all, only the back of the head and hair are seen',
+    side:'STRICT SIDE PROFILE — model rotated 90°, full body in profile, only one side of the face visible',
+    threeq:'Three-quarter angle, slightly turned',
     detail:'Close-up detail',face:'Portrait close-up',sitting:'Seated pose',walking:'Walking mid-stride',
     dynamic:'Dynamic action pose',hands:'Hands and wrists close-up',flat_lay:'Flat lay overhead',
     mannequin:'Ghost mannequin, no model',alone_white:'Product only, no model',
@@ -297,6 +300,14 @@ function buildPromptWithGarment(item, garmentDesc){
     lookbook:'Lifestyle editorial',street_life:'Urban street candid',
     banner:'Wide cinematic banner',group:'Group composition',
   }[shotKey]||'Front-facing';
+
+  // For non-front body shots, force the camera/orientation rule to the FRONT of
+  // the prompt so the identity-anchor image cannot bleed its pose in.
+  const cameraRule = shotKey==='back'
+    ? `CAMERA ANGLE (HIGHEST PRIORITY): rear view. The model must be turned 180° with her BACK to the camera. Show only the back of her head, hair from behind, shoulder blades, and the BACK of the garment. The face must NOT appear. Even though the identity reference image shows a front-facing model, that image is for FACE/HAIR IDENTITY ONLY — do NOT copy its orientation or pose. Pose: model standing, facing away.`
+    : shotKey==='side'
+    ? `CAMERA ANGLE (HIGHEST PRIORITY): strict side profile. The model must be rotated 90°. Do NOT copy the orientation of the identity reference image — that image is for face/hair identity only.`
+    : '';
 
   // Detect accessory-only products
   const hasGarmentImage = item.productImages?.some(img => {
@@ -327,9 +338,9 @@ function buildPromptWithGarment(item, garmentDesc){
     garmentBlock = buildGarmentBlock({garmentAnchor, piecesLine, angleLabel, angleDesignEmphasis, accRule, isReplace:false});
   }
 
-  const parts=[intro, identityRule, garmentBlock, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
+  const parts=[cameraRule, intro, identityRule, garmentBlock, feetRule, shotStr, bg||'', item.userPrompt||'', REAL[item.realism||'ultra']||REAL.ultra];
   const p=parts.filter(Boolean).join(' ');
-  return p.length>1400?p.slice(0,1397)+'...':p;
+  return p.length>1600?p.slice(0,1597)+'...':p;
 }
 
 // Garment block: angle-specific emphasis + accessories — works for all shot types
@@ -461,8 +472,13 @@ async function generateGPT2(item, modelAnchorUrls=[]){
   console.log('[GPT2] shot='+item.shotType+' totalRefs='+allUrls.length);
 
   const hasIdentityAnchor = (item.replaceModel || modelAnchorUrls.length) ? true : false;
+  const isBackShot = item.shotType==='back';
+  const isSideShot = item.shotType==='side';
+  const orientCarve = hasIdentityAnchor && (isBackShot||isSideShot)
+    ? ` CRITICAL: the FIRST image is front-facing but the output is ${isBackShot?'a REAR/BACK view — model rotated 180°, facing away from camera, face NOT visible':'a SIDE PROFILE — model rotated 90°'}. Use the FIRST image only for face/hair/skin/body identity, NOT for pose or orientation.`
+    : '';
   const identityHead = hasIdentityAnchor
-    ? `IDENTITY LOCK: the FIRST reference image defines the model's face, hair, skin tone and body — copy them exactly. The other reference images are GARMENT references only — copy the clothing details exactly but DO NOT copy the face, hair, identity or pose from them. `
+    ? `IDENTITY LOCK: the FIRST reference image defines the model's face, hair, skin tone and body — copy them exactly.${orientCarve} The other reference images are GARMENT references only — copy the clothing details exactly but DO NOT copy the face, hair, identity or pose from them. `
     : '';
   const fallbackPrompt = item.replaceModel
     ? sanitizeForGPT2(`${identityHead}${item.modelDescText||GENDER[item.gender||'female']||GENDER.female} wearing the exact clothes from the product reference images, ${SHOT[item.shotType]||SHOT.front}, ${BG[item.bgOption]||BG.white}, professional fashion photography`)
@@ -568,7 +584,12 @@ async function generateNanoBanana(item, modelAnchorUrls=[]){
   // (face, hair, skin tone, body) from the FIRST image.
   let prompt = item.prompt||'';
   if(identityFirst){
-    const headRule = `IDENTITY LOCK: the FIRST reference image defines the model's face, hair color, hair length, hair style, skin tone, body proportions and overall identity — copy them exactly. The OTHER reference images are GARMENT references only — copy the clothing, fabric, colors, prints, neckline, closures, hem, length, hardware and every visible design detail exactly, but DO NOT copy any face, hair, model identity, pose or background from them. `;
+    const isBack = item.shotType==='back';
+    const isSide = item.shotType==='side';
+    const orientationCarveOut = (isBack||isSide)
+      ? ` CRITICAL: the FIRST image is a FRONT-FACING photo, but the camera angle for THIS output is described later in the prompt (${isBack?'rear/back view, model facing AWAY from camera':'strict side profile, model rotated 90°'}). Use the FIRST image ONLY to copy face/hair/skin/body identity — do NOT copy its pose, orientation, or camera direction.`
+      : ' Match the pose/orientation from the prompt below, not from any reference image.';
+    const headRule = `IDENTITY LOCK: the FIRST reference image defines the model's face shape, hair color, hair length, hair style, skin tone, body proportions and overall identity — copy these identity attributes exactly.${orientationCarveOut} The OTHER reference images are GARMENT references only — copy the clothing, fabric, colors, prints, neckline, closures, hem, length, hardware and every visible design detail exactly, but DO NOT copy any face, hair, model identity, pose or background from them. `;
     prompt = headRule + prompt;
   }
   prompt = sanitizeForGPT2(prompt);
